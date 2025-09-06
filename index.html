@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="description" content="StudyBook - 学習ノートを電子ブック化して共有できるプラットフォーム">
+    <title>StudyBook</title>
+    
+    <!-- Firebase SDK v9 Modular -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where, orderBy, limit, updateDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
+        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-storage.js';
+
+        window.firebaseModules = {
+            initializeApp,
+            getAuth,
+            GoogleAuthProvider,
+            signInWithPopup,
+            signOut,
+            onAuthStateChanged,
+            getFirestore,
+            collection,
+            doc,
+            setDoc,
+            getDoc,
+            getDocs,
+            query,
+            where,
+            orderBy,
+            limit,
+            updateDoc,
+            deleteDoc,
+            serverTimestamp,
+            getStorage,
+            ref,
+            uploadBytes,
+            getDownloadURL,
+            deleteObject
+        };
+    </script>
+    
+    <!-- 外部ライブラリ -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #ffffff;
+            color: #333;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* シンプルなヘッダー */
+        .header {
+            background: #fff;
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid #e5e5e5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+            text-decoration: none;
+        }
+
+        /* アイコンボタン */
+        .icon-btn {
+            background: transparent;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: background 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .icon-btn.primary {
+            background: #FF9900;
+            color: white;
+        }
+
+        .icon-btn.primary:hover {
+            background: #e88500;
+        }
+
+        /* カードグリッド - 横に広がるレイアウト */
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            padding: 1rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: #fff;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            padding: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .card:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transform: translateY(-1px);
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-title {
+            font-size: 0.9rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* エディターUI - シンプル化 */
+        .editor-header {
+            background: #fff;
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid #e5e5e5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .editor-tools {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* ページコンテンツエリア */
+        .page-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .page-content {
+            background: #fff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            min-height: 400px;
+        }
+
+        /* シンプルな入力フィールド */
+        .input-field {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #e5e5e5;
+            border-radius: 4px;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #FF9900;
+        }
+
+        textarea.input-field {
+            min-height: 300px;
+            font-family: monospace;
+            resize: vertical;
+        }
+
+        /* ページナビゲーション */
+        .page-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            padding: 0 1rem;
+        }
+
+        /* トースト通知 */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            padding: 0.8rem 1.5rem;
+            background: #333;
+            color: white;
+            border-radius: 4px;
+            opacity: 0;
+            transition: all 0.3s;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* マイノート一覧 */
+        .books-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        .book-item {
+            background: #fff;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .book-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .book-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .book-meta {
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        .book-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.8rem;
+        }
+
+        /* レスポンシブ */
+        @media (max-width: 768px) {
+            .cards-container {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            
+            .page-content {
+                padding: 1rem;
+            }
+        }
+
+        /* ローディング */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid #e5e5e5;
+            border-top-color: #FF9900;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* シンプルなサイドバー */
+        .sidebar {
+            position: fixed;
+            left: -250px;
+            top: 0;
+            width: 250px;
+            height: 100vh;
+            background: #fff;
+            border-right: 1px solid #e5e5e5;
+            transition: left 0.3s;
+            z-index: 200;
+            overflow-y: auto;
+        }
+
+        .sidebar.open {
+            left: 0;
+        }
+
+        .sidebar-header {
+            padding: 1rem;
+            border-bottom: 1px solid #e5e5e5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .toc-item {
+            padding: 0.8rem 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .toc-item:hover {
+            background: #f5f5f5;
+        }
+
+        .toc-item.active {
+            background: #fff5e6;
+            border-left-color: #FF9900;
+        }
+
+        /* オーバーレイ */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.3);
+            display: none;
+            z-index: 199;
+        }
+
+        .overlay.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- ローディング -->
+    <div id="loadingScreen" class="loading" style="display: none;">
+        <div class="spinner"></div>
+        <p style="margin-top: 1rem;">読み込み中...</p>
+    </div>
+
+    <!-- ホーム画面 -->
+    <div id="homeView">
+        <header class="header">
+            <a href="/" class="logo">📚 StudyBook</a>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <button id="searchBtn" class="icon-btn" title="検索">🔍</button>
+                <button id="loginBtn" class="icon-btn primary" onclick="app.handleLogin()" title="ログイン">👤</button>
+            </div>
+        </header>
+
+        <div class="cards-container" style="margin-top: 2rem;">
+            <div class="card" onclick="app.createNewBook()">
+                <div class="card-icon">📝</div>
+                <div class="card-title">新規作成</div>
+            </div>
+            <div class="card" onclick="app.showPublicBooks()">
+                <div class="card-icon">🌍</div>
+                <div class="card-title">公開ノート</div>
+            </div>
+            <div class="card" onclick="app.showMyBooks()">
+                <div class="card-icon">📖</div>
+                <div class="card-title">マイノート</div>
+            </div>
+            <div class="card" onclick="app.showPopularTags()">
+                <div class="card-icon">🏷️</div>
+                <div class="card-title">人気タグ</div>
+            </div>
+        </div>
+
+        <div id="booksContainer" class="books-grid" style="margin-top: 2rem; display: none;"></div>
+    </div>
+
+    <!-- エディター/ビューアー -->
+    <div id="editorView" style="display: none;">
+        <header class="editor-header">
+            <div class="editor-tools">
+                <button class="icon-btn" onclick="app.toggleSidebar()" title="目次">☰</button>
+                <button class="icon-btn" onclick="app.goHome()" title="ホーム">🏠</button>
+                <button id="saveBtn" class="icon-btn" onclick="app.saveBook()" title="保存" style="display: none;">💾</button>
+                <button id="addPageBtn" class="icon-btn" onclick="app.addPage()" title="ページ追加" style="display: none;">➕</button>
+            </div>
+            
+            <div class="editor-tools">
+                <button id="visibilityBtn" class="icon-btn" onclick="app.toggleVisibility()" title="公開設定">🔒</button>
+                <button class="icon-btn" onclick="app.share()" title="共有">🔗</button>
+                <span id="pageInfo" style="margin-left: 1rem; color: #666; font-size: 0.9rem;">1/1</span>
+            </div>
+        </header>
+
+        <!-- サイドバー -->
+        <div id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <span style="font-weight: 600;">目次</span>
+                <button class="icon-btn" onclick="app.toggleSidebar()">✕</button>
+            </div>
+            <div id="tocList"></div>
+        </div>
+        <div id="overlay" class="overlay" onclick="app.toggleSidebar()"></div>
+
+        <!-- コンテンツ -->
+        <div class="page-container">
+            <div class="page-content">
+                <div id="viewMode">
+                    <h1 id="pageTitle"></h1>
+                    <div id="pageBody"></div>
+                </div>
+                
+                <div id="editMode" style="display: none;">
+                    <input type="text" id="pageTitleInput" class="input-field" placeholder="ページタイトル">
+                    <input type="text" id="pageTagsInput" class="input-field" placeholder="タグ（カンマ区切り）">
+                    <textarea id="pageContentInput" class="input-field" placeholder="Markdownで内容を入力"></textarea>
+                </div>
+            </div>
+
+            <div class="page-nav">
+                <button class="icon-btn" onclick="app.previousPage()" id="prevBtn">←</button>
+                <div id="pageDots" style="display: flex; gap: 0.5rem;"></div>
+                <button class="icon-btn" onclick="app.nextPage()" id="nextBtn">→</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- トースト -->
+    <div id="toast" class="toast"></div>
+
+    <script>
+        class StudyBookApp {
+            constructor() {
+                this.firebaseConfig = {
+                    apiKey: "YOUR_API_KEY",
+                    authDomain: "YOUR_AUTH_DOMAIN",
+                    projectId: "YOUR_PROJECT_ID",
+                    storageBucket: "YOUR_STORAGE_BUCKET",
+                    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+                    appId: "YOUR_APP_ID"
+                };
+
+                this.currentUser = null;
+                this.books = [];
+                this.currentBook = null;
+                this.currentPage = 0;
+                this.isEditing = false;
+
+                this.init();
+            }
+
+            init() {
+                // ローカルストレージから読み込み
+                this.loadFromLocalStorage();
+                
+                // イベントリスナー設定
+                this.setupEventListeners();
+                
+                // 初期表示
+                this.updateUI();
+            }
+
+            setupEventListeners() {
+                // キーボードショートカット
+                document.addEventListener('keydown', (e) => {
+                    if (this.currentBook) {
+                        if (e.key === 'ArrowLeft') this.previousPage();
+                        if (e.key === 'ArrowRight') this.nextPage();
+                        if (e.key === 'Escape') this.toggleSidebar();
+                    }
+                });
+
+                // タッチイベント
+                let touchStartX = 0;
+                const pageContent = document.querySelector('.page-content');
+                if (pageContent) {
+                    pageContent.addEventListener('touchstart', (e) => {
+                        touchStartX = e.touches[0].clientX;
+                    });
+                    
+                    pageContent.addEventListener('touchend', (e) => {
+                        const touchEndX = e.changedTouches[0].clientX;
+                        const diff = touchStartX - touchEndX;
+                        
+                        if (Math.abs(diff) > 50) {
+                            if (diff > 0) {
+                                this.nextPage();
+                            } else {
+                                this.previousPage();
+                            }
+                        }
+                    });
+                }
+            }
+
+            handleLogin() {
+                // シンプルなローカルログイン
+                this.currentUser = {
+                    uid: 'user_' + Date.now(),
+                    displayName: 'ユーザー',
+                    email: 'user@example.com'
+                };
+                
+                this.showToast('ログインしました');
+                this.updateUI();
+            }
+
+            createNewBook() {
+                if (!this.currentUser) {
+                    this.showToast('ログインが必要です');
+                    return;
+                }
+
+                const newBook = {
+                    id: 'book_' + Date.now(),
+                    title: '新しいノート',
+                    author: this.currentUser.displayName,
+                    authorId: this.currentUser.uid,
+                    isPublic: false,
+                    tags: [],
+                    pages: [
+                        {
+                            title: 'ページ1',
+                            content: '# 新しいノート\n\n内容を入力してください',
+                            tags: []
+                        }
+                    ],
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+
+                this.books.push(newBook);
+                this.saveToLocalStorage();
+                this.openBook(newBook.id, true);
+            }
+
+            openBook(bookId, editMode = false) {
+                const book = this.books.find(b => b.id === bookId);
+                if (!book) {
+                    this.showToast('ノートが見つかりません');
+                    return;
+                }
+
+                this.currentBook = book;
+                this.currentPage = 0;
+                this.isEditing = editMode && this.currentUser && book.authorId === this.currentUser.uid;
+
+                document.getElementById('homeView').style.display = 'none';
+                document.getElementById('editorView').style.display = 'block';
+
+                this.updateViewer();
+            }
+
+            updateViewer() {
+                if (!this.currentBook) return;
+
+                // ツールバー更新
+                document.getElementById('saveBtn').style.display = this.isEditing ? 'flex' : 'none';
+                document.getElementById('addPageBtn').style.display = this.isEditing ? 'flex' : 'none';
+                document.getElementById('pageInfo').textContent = `${this.currentPage + 1}/${this.currentBook.pages.length}`;
+                document.getElementById('visibilityBtn').textContent = this.currentBook.isPublic ? '🌍' : '🔒';
+
+                // 目次更新
+                this.updateTOC();
+
+                // ページコンテンツ更新
+                this.updatePageContent();
+
+                // ナビゲーション更新
+                this.updatePageNavigation();
+            }
+
+            updatePageContent() {
+                const page = this.currentBook.pages[this.currentPage];
+
+                if (this.isEditing) {
+                    document.getElementById('viewMode').style.display = 'none';
+                    document.getElementById('editMode').style.display = 'block';
+
+                    document.getElementById('pageTitleInput').value = page.title || '';
+                    document.getElementById('pageContentInput').value = page.content || '';
+                    document.getElementById('pageTagsInput').value = (page.tags || []).join(', ');
+                } else {
+                    document.getElementById('viewMode').style.display = 'block';
+                    document.getElementById('editMode').style.display = 'none';
+
+                    document.getElementById('pageTitle').textContent = page.title || 'ページ' + (this.currentPage + 1);
+                    
+                    const cleanContent = DOMPurify.sanitize(page.content || '');
+                    const htmlContent = marked.parse(cleanContent);
+                    document.getElementById('pageBody').innerHTML = DOMPurify.sanitize(htmlContent);
+                }
+            }
+
+            updateTOC() {
+                const tocList = document.getElementById('tocList');
+                tocList.innerHTML = this.currentBook.pages.map((page, index) => `
+                    <div class="toc-item ${index === this.currentPage ? 'active' : ''}" 
+                         onclick="app.goToPage(${index})">
+                        ${page.title || 'ページ' + (index + 1)}
+                    </div>
+                `).join('');
+            }
+
+            updatePageNavigation() {
+                document.getElementById('prevBtn').style.opacity = this.currentPage === 0 ? '0.3' : '1';
+                document.getElementById('nextBtn').style.opacity = this.currentPage === this.currentBook.pages.length - 1 ? '0.3' : '1';
+
+                const dots = document.getElementById('pageDots');
+                dots.innerHTML = this.currentBook.pages.map((_, index) => `
+                    <div style="width: 8px; height: 8px; border-radius: 50%; background: ${index === this.currentPage ? '#FF9900' : '#e5e5e5'}; cursor: pointer;"
+                         onclick="app.goToPage(${index})"></div>
+                `).join('');
+            }
+
+            previousPage() {
+                if (this.currentPage > 0) {
+                    if (this.isEditing) this.saveCurrentPage();
+                    this.currentPage--;
+                    this.updateViewer();
+                }
+            }
+
+            nextPage() {
+                if (this.currentPage < this.currentBook.pages.length - 1) {
+                    if (this.isEditing) this.saveCurrentPage();
+                    this.currentPage++;
+                    this.updateViewer();
+                }
+            }
+
+            goToPage(index) {
+                if (this.isEditing) this.saveCurrentPage();
+                this.currentPage = index;
+                this.updateViewer();
+                this.toggleSidebar();
+            }
+
+            saveCurrentPage() {
+                if (!this.isEditing) return;
+
+                const page = this.currentBook.pages[this.currentPage];
+                page.title = document.getElementById('pageTitleInput').value || 'ページ' + (this.currentPage + 1);
+                page.content = document.getElementById('pageContentInput').value || '';
+                
+                const tagsInput = document.getElementById('pageTagsInput').value;
+                page.tags = tagsInput ? tagsInput.split(',').map(tag => tag.trim()).filter(Boolean) : [];
+            }
+
+            saveBook() {
+                if (!this.isEditing) return;
+
+                this.saveCurrentPage();
+                this.currentBook.updatedAt = new Date().toISOString();
+                
+                if (this.currentBook.pages.length > 0) {
+                    this.currentBook.title = this.currentBook.pages[0].title;
+                }
+
+                this.saveToLocalStorage();
+                this.showToast('保存しました');
+            }
+
+            addPage() {
+                if (!this.isEditing) return;
+
+                this.saveCurrentPage();
+                
+                this.currentBook.pages.push({
+                    title: `ページ${this.currentBook.pages.length + 1}`,
+                    content: '',
+                    tags: []
+                });
+
+                this.currentPage = this.currentBook.pages.length - 1;
+                this.updateViewer();
+                this.showToast('ページを追加しました');
+            }
+
+            toggleVisibility() {
+                if (!this.currentUser || this.currentBook.authorId !== this.currentUser.uid) {
+                    this.showToast('権限がありません');
+                    return;
+                }
+
+                this.currentBook.isPublic = !this.currentBook.isPublic;
+                this.saveToLocalStorage();
+                this.updateViewer();
+                this.showToast(this.currentBook.isPublic ? '公開しました' : '非公開にしました');
+            }
+
+            toggleSidebar() {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('overlay');
+                
+                if (sidebar.classList.contains('open')) {
+                    sidebar.classList.remove('open');
+                    overlay.classList.remove('show');
+                } else {
+                    sidebar.classList.add('open');
+                    overlay.classList.add('show');
+                }
+            }
+
+            goHome() {
+                if (this.isEditing) {
+                    this.saveBook();
+                }
+
+                document.getElementById('homeView').style.display = 'block';
+                document.getElementById('editorView').style.display = 'none';
+                this.currentBook = null;
+                this.currentPage = 0;
+                this.isEditing = false;
+            }
+
+            share() {
+                const url = `${window.location.origin}?book=${this.currentBook.id}`;
+                
+                if (navigator.share) {
+                    navigator.share({
+                        title: this.currentBook.title,
+                        text: `「${this.currentBook.title}」を読んでいます`,
+                        url: url
+                    }).catch(() => {});
+                } else {
+                    navigator.clipboard.writeText(url).then(() => {
+                        this.showToast('URLをコピーしました');
+                    });
+                }
+            }
+
+            showMyBooks() {
+                if (!this.currentUser) {
+                    this.showToast('ログインが必要です');
+                    return;
+                }
+
+                const myBooks = this.books.filter(b => b.authorId === this.currentUser.uid);
+                this.displayBooks(myBooks, 'マイノート');
+            }
+
+            showPublicBooks() {
+                const publicBooks = this.books.filter(b => b.isPublic);
+                this.displayBooks(publicBooks, '公開ノート');
+            }
+
+            showPopularTags() {
+                this.showToast('タグ機能は準備中です');
+            }
+
+            displayBooks(books, title) {
+                const container = document.getElementById('booksContainer');
+                
+                if (books.length === 0) {
+                    container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: #666;">ノートがありません</div>`;
+                } else {
+                    container.innerHTML = books.map(book => `
+                        <div class="book-item" onclick="app.openBook('${book.id}', false)">
+                            <div class="book-title">${book.title}</div>
+                            <div class="book-meta">
+                                ${book.author} • ${book.pages.length}ページ
+                            </div>
+                            <div class="book-actions">
+                                <button class="icon-btn" onclick="event.stopPropagation(); app.openBook('${book.id}', false)">📖</button>
+                                ${this.currentUser && book.authorId === this.currentUser.uid ? 
+                                    `<button class="icon-btn" onclick="event.stopPropagation(); app.openBook('${book.id}', true)">✏️</button>` : ''}
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                
+                container.style.display = 'grid';
+            }
+
+            updateUI() {
+                const loginBtn = document.getElementById('loginBtn');
+                if (this.currentUser) {
+                    loginBtn.textContent = '👤';
+                    loginBtn.style.background = '#4CAF50';
+                } else {
+                    loginBtn.textContent = '👤';
+                    loginBtn.style.background = '#FF9900';
+                }
+            }
+
+            showToast(message) {
+                const toast = document.getElementById('toast');
+                toast.textContent = message;
+                toast.classList.add('show');
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+
+            loadFromLocalStorage() {
+                const savedBooks = localStorage.getItem('studybook_books');
+                const savedUser = localStorage.getItem('studybook_user');
+
+                if (savedBooks) {
+                    this.books = JSON.parse(savedBooks);
+                }
+
+                if (savedUser) {
+                    this.currentUser = JSON.parse(savedUser);
+                }
+
+                // サンプルデータ
+                if (this.books.length === 0) {
+                    this.books.push({
+                        id: 'sample1',
+                        title: 'StudyBookへようこそ',
+                        author: 'StudyBook Team',
+                        authorId: 'system',
+                        isPublic: true,
+                        tags: ['チュートリアル'],
+                        pages: [
+                            {
+                                title: 'StudyBookの使い方',
+                                content: `# StudyBookへようこそ！
+
+## 基本操作
+
+- **スワイプ**または**矢印キー**でページ移動
+- **☰**ボタンで目次表示
+- **➕**ボタンでページ追加
+- **💾**ボタンで保存
+
+## Markdown対応
+
+**太字**、*斜体*、~~取り消し線~~などが使えます。
+
+### コードブロック
+
+\`\`\`javascript
+console.log('Hello, StudyBook!');
+\`\`\`
+
+> 引用文も書けます
+
+横にスワイプして次のページへ →`,
+                                tags: []
+                            }
+                        ],
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
+                    });
+                }
+            }
+
+            saveToLocalStorage() {
+                localStorage.setItem('studybook_books', JSON.stringify(this.books));
+                
+                if (this.currentUser) {
+                    localStorage.setItem('studybook_user', JSON.stringify(this.currentUser));
+                }
+            }
+        }
+
+        const app = new StudyBookApp();
+        window.app = app;
+    </script>
+</body>
+</html>
