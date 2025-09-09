@@ -918,9 +918,16 @@
 
             // ===== 初期化 =====
             async init() {
-                try {
-                    // Firebase初期化
-                    await this.initFirebase();
+    try {
+        // Firebase SDKの読み込みを待つ
+        if (!window.firebaseReady) {
+            await new Promise((resolve) => {
+                window.addEventListener('firebaseReady', resolve, { once: true });
+            });
+        }
+        
+        // Firebase初期化
+        await this.initFirebase();
 
                     // PWA初期化
                     this.initPWA();
