@@ -1556,24 +1556,28 @@
 
             // ===== ページナビゲーション =====
             previousPage() {
-                if (this.currentPage > 0) {
+                if (this.currentNote && this.currentPage > 0) {
                     if (this.isEditing) {
                         this.saveCurrentPage();
                     }
                     this.currentPage--;
                     this.updateViewer();
-                    this.saveReadingProgress(this.currentNote.id, this.currentPage);
+                    if (this.currentNote) {
+                        this.saveReadingProgress(this.currentNote.id, this.currentPage);
+                    }
                 }
             }
 
             nextPage() {
-                if (this.currentPage < this.currentNote.pages.length - 1) {
+                if (this.currentNote && this.currentPage < this.currentNote.pages.length - 1) {
                     if (this.isEditing) {
                         this.saveCurrentPage();
                     }
                     this.currentPage++;
                     this.updateViewer();
-                    this.saveReadingProgress(this.currentNote.id, this.currentPage);
+                    if (this.currentNote) {
+                        this.saveReadingProgress(this.currentNote.id, this.currentPage);
+                    }
                 }
             }
 
