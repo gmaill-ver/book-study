@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="description" content="StudyBook - 学習ノートを電子ブック化して共有できるプラットフォーム">
+    <meta name="keywords" content="学習,ノート,電子書籍,共有,StudyBook">
+    <meta property="og:title" content="StudyBook - 学習ノート共有プラットフォーム">
+    <meta property="og:description" content="学習ノートを美しい電子ブックに変換して共有しよう">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="/og-image.png">
+    <meta name="twitter:card" content="summary_large_image">
+    
+    <!-- PWA対応 -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#667eea">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    
+    <title>StudyBook - 学習ノート共有プラットフォーム</title>
+    
+    <!-- Firebase SDK v9 Modular -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where, orderBy, limit, updateDoc, deleteDoc, serverTimestamp, addDoc, increment } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
+        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-storage.js';
+
+        // Firebaseをグローバルに公開
+        window.firebaseModules = {
+            initializeApp,
+            getAuth,
+            GoogleAuthProvider,
+            signInWithPopup,
+            signOut,
+            onAuthStateChanged,
+            getFirestore,
+            collection,
+            doc,
+            setDoc,
+            getDoc,
+            getDocs,
+            query,
+            where,
+            orderBy,
+            limit,
+            updateDoc,
+            deleteDoc,
+            serverTimestamp,
+            addDoc,     // 追加
+            increment,  // 追加
+            getStorage,
+            ref,
+            uploadBytes,
+            getDownloadURL,
+            deleteObject
+        };
+        
+        // Firebase準備完了を通知
+        window.firebaseReady = true;
+        window.dispatchEvent(new CustomEvent('firebaseReady'));
+        console.log('Firebase modules loaded successfully');
+    </script>
+    
+    <!-- 外部ライブラリ -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
+    
+    <style>
+        :root {
+            /* Kindle風カラーパレット */
+            --primary-color: #FF9900;  /* Amazonオレンジ */
+            --primary-dark: #e88500;
+            --secondary-color: #007AFF;  /* サブカラー：青 */
+            --success-color: #48bb78;
+            --error-color: #f56565;
+            --warning-color: #ed8936;
+            --bg-color: #FFFFFF;  /* 背景：純白 */
+            --bg-secondary: #FAFAF5;  /* サブ背景：アイボリー */
+            --dark-bg: #1a1a1a;  /* ビューアー背景 */
+            --text-primary: #333333;  /* 主要テキスト：ダークグレー */
+            --text-secondary: #666666;  /* サブテキスト */
+            --border-color: #E0E0E0;  /* 境界線：薄いグレー */
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+            --shadow-md: 0 2px 8px rgba(0,0,0,0.12);
+            --shadow-lg: 0 4px 16px rgba(0,0,0,0.15);
+            --shadow-xl: 0 8px 32px rgba(0,0,0,0.18);
+            --transition-base: all 0.2s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Georgia', 'Hiragino Mincho ProN', 'Yu Mincho', serif;  /* 読書体験向けフォント */
+            background: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            line-height: 1.6;  /* 読みやすい行間 */
+        }
+
+        /* セキュリティ: user-generated contentのサニタイズ */
+        .user-content {
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+
+        /* ローディング画面 */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s, visibility 0.5s;
+        }
+
+        .loading-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .loading-text {
+            color: var(--text-primary);
+            margin-top: 1rem;
+            font-size: 1rem;
+            font-weight: 400;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* デバッグ情報 */
+        .debug-info {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            max-width: 300px;
+            z-index: 10000;
+            display: none;
+        }
+
+        /* ヘッダー */
+        .header {
+            background: var(--bg-color);
+            padding: 1.2rem 2rem;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        /* 検索バー */
+        .search-container {
+            position: relative;
+            max-width: 400px;
+            flex: 1;
+            margin: 0 2rem;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.5rem 2.5rem 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.25rem;
+            font-size: 0.95rem;
+            transition: var(--transition-base);
+            background: var(--bg-color);
+            color: var(--text-primary);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(255, 153, 0, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        .search-results {
+            position: absolute;
+            top: calc(100% + 0.5rem);
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: var(--shadow-xl);
+            max-height: 400px;
+            overflow-y: auto;
+            z-index: 200;
+            display: none;
+        }
+
+        .search-results.active {
+            display: block;
+        }
+
+        .search-result-item {
+            padding: 1rem;
+            cursor: pointer;
+            transition: var(--transition-base);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .search-result-item:hover {
+            background: #f7fafc;
+        }
+
+        /* ボタン */
+        .btn {
+            padding: 0.7rem 1.8rem;
+            border-radius: 0.25rem;
+            border: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: var(--transition-base);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--primary-dark);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-secondary {
+            background: var(--bg-color);
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--bg-secondary);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--error-color);
+            color: white;
+        }
+
+        /* タグ */
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .tag {
+            padding: 0.25rem 0.75rem;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.25rem;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: var(--transition-base);
+        }
+
+        .tag:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* カードグリッド */
+        .books-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 2rem;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .book-card {
+            background: var(--bg-color);
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.25rem;
+            transition: var(--transition-base);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .book-card:hover {
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary-color);
+        }
+
+        /* ビューアー */
+        .viewer-container {
+            display: none;
+            background: var(--dark-bg);
+            min-height: 100vh;
+            color: white;
+        }
+
+        /* ページコンテンツ */
+        .page-content {
+            background: linear-gradient(135deg, #ffffff, #f8f9fa);
+            color: var(--text-primary);
+            padding: 3rem;
+            border-radius: 1rem;
+            min-height: 600px;
+            box-shadow: var(--shadow-xl);
+            position: relative;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            touch-action: pan-y;
+        }
+
+        /* Markdown強化スタイル */
+        .markdown-body {
+            line-height: 1.8;
+            font-size: 1.1rem;
+        }
+
+        .markdown-body h1 {
+            font-size: 2rem;
+            margin: 2rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .markdown-body h2 {
+            font-size: 1.6rem;
+            margin: 1.5rem 0 0.75rem;
+            color: var(--primary-color);
+        }
+
+        .markdown-body pre {
+            background: #1f2937;
+            color: #f3f4f6;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        .markdown-body code {
+            background: #f3f4f6;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            font-size: 0.9em;
+            font-family: 'Monaco', 'Courier New', monospace;
+        }
+
+        .markdown-body table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .markdown-body th,
+        .markdown-body td {
+            border: 1px solid var(--border-color);
+            padding: 0.75rem;
+            text-align: left;
+        }
+
+        .markdown-body th {
+            background: #f7fafc;
+            font-weight: bold;
+        }
+
+        /* トースト通知 */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            padding: 1rem 2rem;
+            border-radius: 2rem;
+            box-shadow: var(--shadow-xl);
+            z-index: 1000;
+            opacity: 0;
+            transition: var(--transition-base);
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 600;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+            pointer-events: auto;
+        }
+
+        .toast.success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .toast.error {
+            background: var(--error-color);
+            color: white;
+        }
+
+        .toast.warning {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .toast.info {
+            background: white;
+            color: var(--text-primary);
+            border: 2px solid var(--primary-color);
+        }
+
+        /* SNSシェアボタン */
+        .share-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .share-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: white;
+            transition: var(--transition-base);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .share-btn.twitter {
+            background: #1DA1F2;
+        }
+
+        .share-btn.twitter:hover {
+            background: #1a91da;
+        }
+
+        .share-btn.line {
+            background: #00B900;
+        }
+
+        .share-btn.line:hover {
+            background: #00a000;
+        }
+
+        .share-btn.facebook {
+            background: #1877F2;
+        }
+
+        .share-btn.facebook:hover {
+            background: #166FE5;
+        }
+
+        /* 続きから読むボタン */
+        .continue-reading {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            padding: 1rem 1.5rem;
+            border: 1px solid var(--primary-color);
+            border-radius: 0.25rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: var(--transition-base);
+        }
+
+        .continue-reading:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* レスポンシブ */
+        @media (max-width: 768px) {
+            .search-container {
+                display: none;
+            }
+
+            .books-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .page-content {
+                padding: 1.5rem;
+                border-radius: 0.5rem;
+            }
+
+            .header {
+                padding: 0.75rem 1rem;
+            }
+        }
+
+        /* PWA用オフライン表示 */
+        .offline-banner {
+            background: var(--warning-color);
+            color: white;
+            padding: 0.5rem;
+            text-align: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1001;
+            display: none;
+        }
+
+        .offline-banner.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- デバッグ情報 -->
+    <div id="debugInfo" class="debug-info">
+        <div id="debugContent">初期化中...</div>
+        <button onclick="toggleDebug()" style="margin-top: 10px; padding: 5px 10px; background: #007AFF; color: white; border: none; border-radius: 3px;">閉じる</button>
+    </div>
+
+    <!-- オフラインバナー -->
+    <div id="offlineBanner" class="offline-banner">
+        📵 オフラインモードです。一部機能が制限されています。
+    </div>
+
+    <!-- ローディング画面 -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loader"></div>
+        <div class="loading-text" id="loadingText">読み込み中...</div>
+    </div>
+
+    <!-- 進捗バー -->
+    <div id="progressBar" style="position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, var(--primary-color), var(--secondary-color)); transition: width 0.3s; z-index: 300; width: 0%;"></div>
+
+    <!-- ホーム画面 -->
+    <div id="homeView">
+        <header class="header">
+            <a href="/" class="logo" aria-label="StudyBook ホーム">
+                <span>📚</span>
+                <span>StudyBook</span>
+            </a>
+            
+            <div class="search-container">
+                <input 
+                    type="search" 
+                    id="searchInput" 
+                    class="search-input" 
+                    placeholder="ノートを検索..."
+                    aria-label="ノートを検索"
+                    maxlength="100"
+                >
+                <span class="search-icon">🔍</span>
+                <div id="searchResults" class="search-results"></div>
+            </div>
+
+            <div id="authSection">
+                <button class="btn btn-primary" onclick="app.handleLogin()" aria-label="Googleでログイン">
+                    <span>👤</span>
+                    <span>ログイン</span>
+                </button>
+            </div>
+        </header>
+
+        <main class="home-container" style="max-width: 1200px; margin: 3rem auto; padding: 0 2rem;">
+            <!-- 続きから読む -->
+            <div id="continueReading" style="display: none; margin-bottom: 2rem;"></div>
+
+            <!-- アクションカード -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-bottom: 4rem;">
+                <div class="book-card" onclick="app.createNewBook()" role="button" tabindex="0">
+                    <div style="font-size: 2.5rem; text-align: center; margin-bottom: 1.5rem;">📝</div>
+                    <h3 style="font-size: 1.25rem; text-align: center; margin-bottom: 0.75rem; color: var(--text-primary);">新規作成</h3>
+                    <p style="color: var(--text-secondary); text-align: center;">学習ノートを作成</p>
+                </div>
+                
+                <div class="book-card" onclick="app.showPublicBooks()" role="button" tabindex="0">
+                    <div style="font-size: 2.5rem; text-align: center; margin-bottom: 1.5rem;">📚</div>
+                    <h3 style="font-size: 1.25rem; text-align: center; margin-bottom: 0.75rem; color: var(--text-primary);">みんなのノート</h3>
+                    <p style="color: var(--text-secondary); text-align: center;">公開ノートを探す</p>
+                </div>
+                
+                <div class="book-card" onclick="app.showPopularTags()" role="button" tabindex="0">
+                    <div style="font-size: 2.5rem; text-align: center; margin-bottom: 1.5rem;">🏷️</div>
+                    <h3 style="font-size: 1.25rem; text-align: center; margin-bottom: 0.75rem; color: var(--text-primary);">人気のタグ</h3>
+                    <p style="color: var(--text-secondary); text-align: center;">タグから探す</p>
+                </div>
+            </div>
+
+            <!-- マイノート -->
+            <section id="myBooksSection" style="display: none;">
+                <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 2rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-color);">マイノート</h2>
+                <div id="myBooksList" class="books-grid"></div>
+            </section>
+
+            <!-- みんなのノート -->
+            <section id="publicBooksSection" style="display: none; margin-top: 4rem;">
+                <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 2rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-color);">みんなのノート</h2>
+                <div id="publicBooksList" class="books-grid"></div>
+            </section>
+
+            <!-- 人気タグ -->
+            <section id="popularTagsSection" style="display: none; margin-top: 4rem;">
+                <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 2rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-color);">人気のタグ</h2>
+                <div id="popularTagsList" class="tags-container" style="background: var(--bg-color); padding: 2rem; border: 1px solid var(--border-color); border-radius: 0.25rem;"></div>
+            </section>
+        </main>
+    </div>
+
+    <!-- トースト通知 -->
+    <div id="toast" class="toast" role="alert" aria-live="polite"></div>
+
+    <script>
+        // デバッグ機能
+        function updateDebugInfo(message) {
+            const debugContent = document.getElementById('debugContent');
+            const now = new Date().toLocaleTimeString();
+            debugContent.innerHTML += '<br>' + now + ': ' + message;
+            console.log('DEBUG:', message);
+        }
+
+        function showDebug() {
+            document.getElementById('debugInfo').style.display = 'block';
+        }
+
+        function toggleDebug() {
+            const debug = document.getElementById('debugInfo');
+            debug.style.display = debug.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // ===== StudyBook Application =====
+        class StudyBookApp {
+            constructor() {
+                updateDebugInfo('StudyBookApp constructor called');
+                
+                // Firebase設定
+                this.firebaseConfig = {
+                    apiKey: "AIzaSyCRRsnIRzveG6B7XzDhUR-OoBWq-SY-5Ew",
+                    authDomain: "book-study-1f25e.firebaseapp.com",
+                    projectId: "book-study-1f25e",
+                    storageBucket: "book-study-1f25e.firebasestorage.app",
+                    messagingSenderId: "716923175090",
+                    appId: "1:716923175090:web:2cc8c093c6cdf4ddbe09ab"
+                };
+
+                // 状態管理
+                this.currentUser = null;
+                this.booksMap = new Map();
+                this.currentBook = null;
+                this.currentPage = 0;
+                this.isEditing = false;
+
+                // Firebase インスタンス
+                this.firebaseApp = null;
+                this.auth = null;
+                this.db = null;
+                this.storage = null;
+
+                // 検索エンジン
+                this.fuseInstance = null;
+
+                // レート制限
+                this.rateLimiter = new Map();
+
+                // PWA
+                this.isOffline = false;
+
+                // エラーハンドリング
+                window.addEventListener('error', this.handleGlobalError.bind(this));
+                window.addEventListener('unhandledrejection', this.handleGlobalError.bind(this));
+
+                // 初期化
+                this.init();
+            }
+
+            // ===== 初期化 =====
+            async init() {
+                try {
+                    updateDebugInfo('初期化開始');
+                    document.getElementById('loadingText').textContent = 'Firebase初期化中...';
+
+                    // Firebase SDKの読み込みを待つ
+                    if (!window.firebaseReady) {
+                        updateDebugInfo('Firebase SDK待機中...');
+                        await new Promise((resolve) => {
+                            const timeout = setTimeout(() => {
+                                updateDebugInfo('Firebase SDK読み込みタイムアウト');
+                                resolve();
+                            }, 10000);
+                            
+                            window.addEventListener('firebaseReady', () => {
+                                clearTimeout(timeout);
+                                updateDebugInfo('Firebase SDK読み込み完了');
+                                resolve();
+                            }, { once: true });
+                        });
+                    }
+                    
+                    // Firebase初期化
+                    await this.initFirebase();
+
+                    // PWA初期化
+                    document.getElementById('loadingText').textContent = 'PWA初期化中...';
+                    this.initPWA();
+
+                    // イベントリスナー設定
+                    document.getElementById('loadingText').textContent = 'イベント設定中...';
+                    this.setupEventListeners();
+
+                    // 初期データロード
+                    document.getElementById('loadingText').textContent = 'データ読み込み中...';
+                    if (this.auth) {
+                        updateDebugInfo('Firebase認証監視開始');
+                        // Firebase認証状態の監視
+                        this.auth.onAuthStateChanged((user) => {
+                            if (user) {
+                                updateDebugInfo('ユーザー認証済み: ' + user.displayName);
+                                this.handleAuthSuccess(user);
+                            } else {
+                                updateDebugInfo('ユーザー未認証');
+                                this.handleAuthLogout();
+                            }
+                        });
+                    } else {
+                        updateDebugInfo('ローカルストレージモードで開始');
+                        // ローカルストレージモード
+                        this.loadFromLocalStorage();
+                        this.updateUI();
+                    }
+
+                    // URL パラメータチェック
+                    this.checkUrlParams();
+
+                    // ローディング画面を非表示
+                    document.getElementById('loadingText').textContent = '完了';
+                    updateDebugInfo('初期化完了');
+                    
+                    setTimeout(() => {
+                        document.getElementById('loadingScreen').classList.add('hidden');
+                        showDebug(); // デバッグ情報を表示
+                    }, 1000);
+
+                } catch (error) {
+                    updateDebugInfo('初期化エラー: ' + error.message);
+                    this.handleError(error, 'アプリの初期化に失敗しました');
+                    
+                    // エラーでもローディングは消す
+                    setTimeout(() => {
+                        document.getElementById('loadingScreen').classList.add('hidden');
+                        showDebug();
+                    }, 2000);
+                }
+            }
+
+            // ===== Firebase初期化 =====
+            async initFirebase() {
+                updateDebugInfo('Firebase初期化開始');
+                
+                if (!window.firebaseModules) {
+                    updateDebugInfo('Firebase modules not found');
+                    return;
+                }
+
+                const { 
+                    initializeApp, 
+                    getAuth, 
+                    getFirestore, 
+                    getStorage 
+                } = window.firebaseModules;
+
+                try {
+                    updateDebugInfo('Firebase app初期化');
+                    this.firebaseApp = initializeApp(this.firebaseConfig);
+                    updateDebugInfo('Firebase app初期化完了');
+                    
+                    this.auth = getAuth(this.firebaseApp);
+                    updateDebugInfo('Firebase Auth初期化完了');
+                    
+                    this.db = getFirestore(this.firebaseApp);
+                    updateDebugInfo('Firestore初期化完了');
+                    
+                    this.storage = getStorage(this.firebaseApp);
+                    updateDebugInfo('Firebase Storage初期化完了');
+                    
+                    updateDebugInfo('Firebase初期化成功');
+                } catch (error) {
+                    updateDebugInfo('Firebase初期化失敗: ' + error.message);
+                    console.warn("Firebase initialization failed, falling back to localStorage", error);
+                }
+            }
+
+            // ===== PWA初期化 =====
+            initPWA() {
+                // Service Worker登録
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.register('/sw.js').catch(() => {});
+                }
+
+                // オフライン検出
+                window.addEventListener('online', () => {
+                    this.isOffline = false;
+                    document.getElementById('offlineBanner').classList.remove('show');
+                    updateDebugInfo('オンラインに戻りました');
+                });
+
+                window.addEventListener('offline', () => {
+                    this.isOffline = true;
+                    document.getElementById('offlineBanner').classList.add('show');
+                    updateDebugInfo('オフラインになりました');
+                });
+            }
+
+            // ===== イベントリスナー =====
+            setupEventListeners() {
+                // 検索機能
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) {
+                    searchInput.addEventListener('input', this.debounce(this.handleSearch.bind(this), 300));
+                }
+
+                // キーボードショートカット
+                document.addEventListener('keydown', (e) => {
+                    if (this.currentBook) {
+                        if (e.key === 'ArrowLeft') this.previousPage();
+                        if (e.key === 'ArrowRight') this.nextPage();
+                        if (e.key === 'Escape') this.toggleSidebar();
+                    }
+                });
+            }
+
+            // ===== 認証 =====
+            async handleLogin() {
+                updateDebugInfo('ログイン処理開始');
+                
+                if (!this.auth) {
+                    updateDebugInfo('Firebase認証が利用できません。ローカルモードでログイン');
+                    // ローカルモード
+                    this.currentUser = {
+                        uid: 'local_' + Date.now(),
+                        displayName: 'ローカルユーザー',
+                        email: 'local@example.com',
+                        photoURL: null
+                    };
+                    this.saveToLocalStorage();
+                    this.showToast('ローカルモードでログインしました', 'info');
+                    this.updateUI();
+                    return;
+                }
+
+                // レート制限チェック
+                if (!this.checkRateLimit('login', 5, 60000)) {
+                    this.showToast('ログイン試行が多すぎます。しばらくお待ちください。', 'error');
+                    return;
+                }
+
+                try {
+                    updateDebugInfo('Google認証開始');
+                    const { GoogleAuthProvider, signInWithPopup } = window.firebaseModules;
+                    const provider = new GoogleAuthProvider();
+                    const result = await signInWithPopup(this.auth, provider);
+                    updateDebugInfo('Google認証成功');
+                    this.handleAuthSuccess(result.user);
+                } catch (error) {
+                    updateDebugInfo('Google認証エラー: ' + error.message);
+                    this.handleError(error, 'ログインに失敗しました: ' + error.message);
+                }
+            }
+
+            async handleLogout() {
+                if (this.auth) {
+                    const { signOut } = window.firebaseModules;
+                    await signOut(this.auth);
+                }
+                this.handleAuthLogout();
+            }
+
+            handleAuthSuccess(user) {
+                this.currentUser = {
+                    uid: user.uid,
+                    displayName: user.displayName || 'ユーザー',
+                    email: user.email,
+                    photoURL: user.photoURL
+                };
+                updateDebugInfo('認証成功: ' + this.currentUser.displayName);
+                this.loadBooksFromFirestore();
+                this.showToast('ログインしました', 'success');
+                this.updateUI();
+            }
+
+            handleAuthLogout() {
+                this.currentUser = null;
+                this.booksMap.clear();
+                localStorage.removeItem('studybook_user');
+                updateDebugInfo('ログアウト完了');
+                this.showToast('ログアウトしました', 'info');
+                this.updateUI();
+            }
+
+            // ===== データ管理 =====
+            async loadBooksFromFirestore() {
+                if (!this.db || !this.currentUser) {
+                    updateDebugInfo('Firestore または ユーザーが無効');
+                    return;
+                }
+
+                try {
+                    updateDebugInfo('Firestoreからデータ読み込み開始');
+                    const { collection, query, where, getDocs, orderBy, limit } = window.firebaseModules;
+                    
+                    // 自分のノート
+                    const myBooksQuery = query(
+                        collection(this.db, 'books'),
+                        where('authorId', '==', this.currentUser.uid),
+                        orderBy('updatedAt', 'desc'),
+                        limit(50)
+                    );
+
+                    // 公開ノート
+                    const publicBooksQuery = query(
+                        collection(this.db, 'books'),
+                        where('isPublic', '==', true),
+                        orderBy('updatedAt', 'desc'),
+                        limit(100)
+                    );
+
+                    const [myBooksSnapshot, publicBooksSnapshot] = await Promise.all([
+                        getDocs(myBooksQuery),
+                        getDocs(publicBooksQuery)
+                    ]);
+
+                    this.booksMap.clear();
+
+                    myBooksSnapshot.forEach(doc => {
+                        this.booksMap.set(doc.id, { id: doc.id, ...doc.data() });
+                    });
+
+                    publicBooksSnapshot.forEach(doc => {
+                        if (!this.booksMap.has(doc.id)) {
+                            this.booksMap.set(doc.id, { id: doc.id, ...doc.data() });
+                        }
+                    });
+
+                    updateDebugInfo(`データ読み込み完了: ${this.booksMap.size}件`);
+
+                    // 検索インデックス更新
+                    this.updateSearchIndex();
+
+                    // 続きから読む機能
+                    this.loadReadingProgress();
+
+                    this.updateUI();
+                } catch (error) {
+                    updateDebugInfo('Firestoreデータ読み込みエラー: ' + error.message);
+                    this.handleError(error, 'データの読み込みに失敗しました');
+                }
+            }
+
+            // ===== ノート作成 =====
+            async createNewBook() {
+                updateDebugInfo('新規ノート作成開始');
+                
+                if (!this.currentUser) {
+                    this.showToast('ログインが必要です', 'warning');
+                    return;
+                }
+
+                const newBook = {
+                    title: '新しいノート',
+                    author: this.currentUser.displayName,
+                    authorId: this.currentUser.uid,
+                    isPublic: false,
+                    tags: [],
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    pages: [
+                        {
+                            title: 'タイトルページ',
+                            content: '# 新しいノート\n\n内容を入力してください',
+                            image: null,
+                            tags: []
+                        }
+                    ],
+                    views: 0,
+                    likes: 0
+                };
+
+                if (this.db) {
+                    try {
+                        updateDebugInfo('Firestoreに新規ノート保存');
+                        const { collection, addDoc, serverTimestamp } = window.firebaseModules;
+                        newBook.createdAt = serverTimestamp();
+                        newBook.updatedAt = serverTimestamp();
+                        
+                        const docRef = await addDoc(collection(this.db, 'books'), newBook);
+                        newBook.id = docRef.id;
+                        updateDebugInfo('Firestore保存成功: ' + docRef.id);
+                        
+                        this.showToast('ノートを作成しました', 'success');
+                    } catch (error) {
+                        updateDebugInfo('Firestore保存エラー: ' + error.message);
+                        this.handleError(error, 'ノートの作成に失敗しました');
+                        return;
+                    }
+                } else {
+                    newBook.id = 'book_' + Date.now();
+                    updateDebugInfo('ローカルに新規ノート作成: ' + newBook.id);
+                }
+
+                this.booksMap.set(newBook.id, newBook);
+                this.openBook(newBook.id, true);
+            }
+
+            // ===== UI更新 =====
+            updateUI() {
+                this.updateAuthSection();
+                this.updateMyBooks();
+                this.updatePublicBooks();
+                this.updateSearchIndex();
+            }
+
+            updateAuthSection() {
+                const authSection = document.getElementById('authSection');
+                if (this.currentUser) {
+                    authSection.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            ${this.currentUser.photoURL ? 
+                                `<img src="${this.escapeHtml(this.currentUser.photoURL)}" alt="${this.escapeHtml(this.currentUser.displayName)}" style="width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border-color);">` : 
+                                `<div style="width: 36px; height: 36px; border-radius: 50%; background: var(--primary-color); display: flex; align-items: center; justify-content: center; color: white; font-weight: 500; font-size: 0.9rem;">${this.currentUser.displayName.charAt(0).toUpperCase()}</div>`
+                            }
+                            <span style="color: var(--text-primary); font-weight: 500;">${this.escapeHtml(this.currentUser.displayName)}</span>
+                            <button class="btn btn-secondary" onclick="app.handleLogout()" style="padding: 0.5rem 1rem;">ログアウト</button>
+                        </div>
+                    `;
+                    document.getElementById('myBooksSection').style.display = 'block';
+                } else {
+                    authSection.innerHTML = `
+                        <button class="btn btn-primary" onclick="app.handleLogin()">
+                            ログイン
+                        </button>
+                    `;
+                    document.getElementById('myBooksSection').style.display = 'none';
+                }
+            }
+
+            updateMyBooks() {
+                if (!this.currentUser) return;
+
+                const myBooks = Array.from(this.booksMap.values()).filter(b => b.authorId === this.currentUser.uid);
+                const container = document.getElementById('myBooksList');
+
+                if (myBooks.length === 0) {
+                    container.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">まだノートがありません</p>';
+                    return;
+                }
+
+                container.innerHTML = myBooks.map(book => this.createBookCard(book, true)).join('');
+            }
+
+            updatePublicBooks() {
+                const publicBooks = Array.from(this.booksMap.values())
+                    .filter(b => b.isPublic)
+                    .sort((a, b) => (b.views || 0) - (a.views || 0))
+                    .slice(0, 20);
+
+                const container = document.getElementById('publicBooksList');
+                
+                if (publicBooks.length === 0) {
+                    container.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">公開されているノートはありません</p>';
+                    return;
+                }
+
+                container.innerHTML = publicBooks.map(book => this.createBookCard(book, false)).join('');
+            }
+
+            createBookCard(book, isOwner) {
+                const tags = (book.tags || []).slice(0, 3).map(tag => 
+                    `<span class="tag">${this.escapeHtml(tag)}</span>`
+                ).join('');
+
+                return `
+                    <div class="book-card">
+                        <h3 style="font-size: 1.2rem; font-weight: bold; margin-bottom: 0.5rem;">${this.escapeHtml(book.title)}</h3>
+                        <div style="color: var(--text-secondary); margin-bottom: 0.25rem;">
+                            👤 ${this.escapeHtml(book.author)}
+                        </div>
+                        <div style="color: var(--text-secondary); margin-bottom: 0.25rem;">
+                            📝 ${book.pages.length}ページ • 👁️ ${book.views || 0}回
+                        </div>
+                        <div class="tags-container">${tags}</div>
+                        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                            <button class="btn btn-primary" onclick="app.openBook('${book.id}', false)" style="flex: 1;">
+                                読む
+                            </button>
+                            ${isOwner ? `
+                                <button class="btn btn-secondary" onclick="app.openBook('${book.id}', true)" style="flex: 1;">
+                                    編集
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // ===== ローカルストレージ =====
+            loadFromLocalStorage() {
+                const savedUser = localStorage.getItem('studybook_user');
+                const savedBooks = localStorage.getItem('studybook_books');
+
+                if (savedUser) {
+                    this.currentUser = JSON.parse(savedUser);
+                }
+
+                if (savedBooks) {
+                    const books = JSON.parse(savedBooks);
+                    books.forEach(book => {
+                        this.booksMap.set(book.id, book);
+                    });
+                }
+
+                // サンプルデータ
+                if (this.booksMap.size === 0) {
+                    const sampleBook = {
+                        id: 'sample1',
+                        title: '📚 StudyBookへようこそ',
+                        author: 'StudyBook Team',
+                        authorId: 'system',
+                        isPublic: true,
+                        tags: ['チュートリアル', '使い方'],
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString(),
+                        pages: [
+                            {
+                                title: 'StudyBookの特徴',
+                                content: `# StudyBookへようこそ！🎉
+
+## 主な機能
+
+### 📝 美しいノート作成
+- **Markdown**完全対応
+- リアルタイムプレビュー
+- 画像アップロード
+
+### 🌍 共有機能
+- 公開/非公開の切り替え
+- SNSシェア（Twitter, LINE, Facebook）
+- URLコピー
+
+### 🔍 検索機能
+- タイトル、著者、タグ、本文から検索
+- 人気のタグから探す
+
+### 📱 モバイル対応
+- **スワイプ**でページめくり
+- PWA対応（オフライン利用可能）
+- レスポンシブデザイン
+
+### 🔒 セキュリティ
+- Googleアカウント認証
+- XSS対策（DOMPurify）
+- レート制限
+
+デバッグ情報を確認して問題を特定してください。`,
+                                tags: ['チュートリアル']
+                            }
+                        ],
+                        views: 0
+                    };
+                    
+                    this.booksMap.set(sampleBook.id, sampleBook);
+                }
+            }
+
+            saveToLocalStorage() {
+                if (this.currentUser) {
+                    localStorage.setItem('studybook_user', JSON.stringify(this.currentUser));
+                }
+                
+                const books = Array.from(this.booksMap.values());
+                localStorage.setItem('studybook_books', JSON.stringify(books));
+            }
+
+            // ===== URLパラメータ =====
+            checkUrlParams() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const bookId = urlParams.get('book');
+
+                if (bookId) {
+                    setTimeout(() => {
+                        const book = this.booksMap.get(bookId);
+                        if (book && book.isPublic) {
+                            this.openBook(bookId, false);
+                        }
+                    }, 1500);
+                }
+            }
+
+            // ===== ユーティリティ =====
+            escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+
+            checkRateLimit(action, maxAttempts, timeWindow) {
+                const now = Date.now();
+                const key = `${action}_${this.currentUser?.uid || 'anonymous'}`;
+                
+                if (!this.rateLimiter.has(key)) {
+                    this.rateLimiter.set(key, []);
+                }
+                
+                const attempts = this.rateLimiter.get(key);
+                const recentAttempts = attempts.filter(timestamp => now - timestamp < timeWindow);
+                
+                if (recentAttempts.length >= maxAttempts) {
+                    return false;
+                }
+                
+                recentAttempts.push(now);
+                this.rateLimiter.set(key, recentAttempts);
+                return true;
+            }
+
+            showToast(message, type = 'info') {
+                const toast = document.getElementById('toast');
+                toast.textContent = message;
+                toast.className = `toast ${type} show`;
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+
+            updateSearchIndex() {
+                // 簡略化
+                if (typeof Fuse !== 'undefined') {
+                    const books = Array.from(this.booksMap.values());
+                    this.fuseInstance = new Fuse(books, {
+                        keys: ['title', 'author', 'tags'],
+                        threshold: 0.3
+                    });
+                }
+            }
+
+            handleSearch(event) {
+                // 簡略化
+                const query = event.target.value.trim();
+                if (!query || !this.fuseInstance) {
+                    document.getElementById('searchResults').classList.remove('active');
+                    return;
+                }
+
+                const results = this.fuseInstance.search(query).slice(0, 5);
+                // 結果表示は省略
+            }
+
+            showPublicBooks() {
+                document.getElementById('publicBooksSection').style.display = 'block';
+                document.getElementById('publicBooksSection').scrollIntoView({ behavior: 'smooth' });
+            }
+
+            showPopularTags() {
+                document.getElementById('popularTagsSection').style.display = 'block';
+                document.getElementById('popularTagsSection').scrollIntoView({ behavior: 'smooth' });
+            }
+
+            // ===== エラーハンドリング =====
+            handleError(error, userMessage) {
+                updateDebugInfo('ERROR: ' + error.message);
+                console.error(error);
+                this.showToast(userMessage || 'エラーが発生しました', 'error');
+            }
+
+            handleGlobalError(event) {
+                updateDebugInfo('Global error: ' + (event.reason || event.message || 'Unknown error'));
+                console.error('Global error:', event);
+                
+                if (window.location.hostname === 'localhost') {
+                    this.showToast('エラー: ' + (event.reason || event.message || 'Unknown error'), 'error');
+                }
+            }
+
+            // 簡単な実装のための空のメソッド
+            openBook(bookId, editMode) {
+                this.showToast('ノートを開く機能（実装中）', 'info');
+            }
+
+            loadReadingProgress() {}
+        }
+
+        // アプリケーション起動
+        let app;
+        
+        // DOMContentLoaded後に初期化
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                updateDebugInfo('DOM読み込み完了');
+                app = new StudyBookApp();
+                window.app = app;
+            });
+        } else {
+            updateDebugInfo('DOM既に読み込み済み');
+            app = new StudyBookApp();
+            window.app = app;
+        }
+    </script>
+</body>
+</html>
