@@ -2180,7 +2180,7 @@
             }
 
             goHome() {
-                if (this.isEditing) {
+                if (this.isEditing && this.currentNote) {  // currentNoteが存在する場合のみ
                     if (confirm('変更を保存しますか？')) {
                         this.saveBook();
                     }
