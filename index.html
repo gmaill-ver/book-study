@@ -68,23 +68,20 @@
     
     <style>
         :root {
-            /* Kindle風カラーパレット */
-            --primary-color: #FF9900;  /* Amazonオレンジ */
-            --primary-dark: #e88500;
-            --secondary-color: #007AFF;  /* サブカラー：青 */
+            /* スッキリとしたカラーパレット */
+            --primary-color: #667eea;
+            --primary-dark: #5a6fd8;
+            --secondary-color: #764ba2;
             --success-color: #48bb78;
             --error-color: #f56565;
             --warning-color: #ed8936;
-            --bg-color: #FFFFFF;  /* 背景：純白 */
-            --bg-secondary: #FAFAF5;  /* サブ背景：アイボリー */
-            --dark-bg: #1a1a1a;  /* ビューアー背景 */
-            --text-primary: #333333;  /* 主要テキスト：ダークグレー */
-            --text-secondary: #666666;  /* サブテキスト */
-            --border-color: #E0E0E0;  /* 境界線：薄いグレー */
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
-            --shadow-md: 0 2px 8px rgba(0,0,0,0.12);
-            --shadow-lg: 0 4px 16px rgba(0,0,0,0.15);
-            --shadow-xl: 0 8px 32px rgba(0,0,0,0.18);
+            --bg-color: #f8f9fc;
+            --bg-secondary: #ffffff;
+            --text-primary: #2d3748;
+            --text-secondary: #718096;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
             --transition-base: all 0.2s ease;
         }
 
@@ -96,7 +93,7 @@
         }
 
         body {
-            font-family: 'Georgia', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
             background: var(--bg-color);
             color: var(--text-primary);
             min-height: 100vh;
@@ -128,8 +125,8 @@
         }
 
         .loader {
-            width: 50px;
-            height: 50px;
+            width: 40px;
+            height: 40px;
             border: 3px solid var(--border-color);
             border-top-color: var(--primary-color);
             border-radius: 50%;
@@ -139,7 +136,7 @@
         .loading-text {
             color: var(--text-primary);
             margin-top: 1rem;
-            font-size: 1rem;
+            font-size: 0.9rem;
             font-weight: 400;
         }
 
@@ -147,27 +144,10 @@
             to { transform: rotate(360deg); }
         }
 
-        /* デバッグ情報 */
-        .debug-info {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            background: rgba(0,0,0,0.8);
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 12px;
-            max-width: 300px;
-            z-index: 10000;
-            display: none;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        /* ヘッダー */
+        /* ミニマルヘッダー */
         .header {
-            background: var(--bg-color);
-            padding: 1.2rem 2rem;
+            background: var(--bg-secondary);
+            padding: 0.75rem 1rem;
             box-shadow: var(--shadow-sm);
             display: flex;
             justify-content: space-between;
@@ -176,13 +156,14 @@
             top: 0;
             z-index: 100;
             border-bottom: 1px solid var(--border-color);
+            min-height: 56px;
         }
 
         .logo {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            font-size: 1.4rem;
+            gap: 0.5rem;
+            font-size: 1.2rem;
             font-weight: 600;
             color: var(--text-primary);
             cursor: pointer;
@@ -192,17 +173,17 @@
         /* 検索バー */
         .search-container {
             position: relative;
-            max-width: 400px;
+            max-width: 300px;
             flex: 1;
-            margin: 0 2rem;
+            margin: 0 1rem;
         }
 
         .search-input {
             width: 100%;
-            padding: 0.5rem 2.5rem 0.5rem 1rem;
+            padding: 0.5rem 2rem 0.5rem 1rem;
             border: 1px solid var(--border-color);
-            border-radius: 0.25rem;
-            font-size: 0.95rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
             transition: var(--transition-base);
             background: var(--bg-color);
             color: var(--text-primary);
@@ -211,15 +192,16 @@
         .search-input:focus {
             outline: none;
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 2px rgba(255, 153, 0, 0.1);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
         .search-icon {
             position: absolute;
-            right: 1rem;
+            right: 0.75rem;
             top: 50%;
             transform: translateY(-50%);
             color: var(--text-secondary);
+            font-size: 0.9rem;
         }
 
         .search-results {
@@ -227,13 +209,14 @@
             top: calc(100% + 0.5rem);
             left: 0;
             right: 0;
-            background: white;
-            border-radius: 0.75rem;
-            box-shadow: var(--shadow-xl);
-            max-height: 400px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            box-shadow: var(--shadow-md);
+            max-height: 300px;
             overflow-y: auto;
             z-index: 200;
             display: none;
+            border: 1px solid var(--border-color);
         }
 
         .search-results.active {
@@ -241,29 +224,29 @@
         }
 
         .search-result-item {
-            padding: 1rem;
+            padding: 0.75rem;
             cursor: pointer;
             transition: var(--transition-base);
             border-bottom: 1px solid var(--border-color);
         }
 
         .search-result-item:hover {
-            background: #f7fafc;
+            background: var(--bg-color);
         }
 
-        /* ボタン */
+        /* シンプルなボタン */
         .btn {
-            padding: 0.7rem 1.8rem;
-            border-radius: 0.25rem;
+            padding: 0.5rem;
+            border-radius: 6px;
             border: none;
             cursor: pointer;
-            font-size: 0.95rem;
-            font-weight: 500;
+            font-size: 1.1rem;
             transition: var(--transition-base);
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
-            position: relative;
+            justify-content: center;
+            min-width: 36px;
+            min-height: 36px;
         }
 
         .btn:disabled {
@@ -274,22 +257,21 @@
         .btn-primary {
             background: var(--primary-color);
             color: white;
-            box-shadow: var(--shadow-sm);
         }
 
         .btn-primary:hover:not(:disabled) {
             background: var(--primary-dark);
-            box-shadow: var(--shadow-md);
         }
 
         .btn-secondary {
             background: var(--bg-color);
-            color: var(--primary-color);
-            border: 1px solid var(--primary-color);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
         }
 
         .btn-secondary:hover:not(:disabled) {
             background: var(--bg-secondary);
+            color: var(--text-primary);
         }
 
         .btn-success {
@@ -306,17 +288,17 @@
         .tags-container {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.5rem;
+            gap: 0.375rem;
             margin-top: 0.5rem;
         }
 
         .tag {
-            padding: 0.25rem 0.75rem;
-            background: var(--bg-secondary);
-            color: var(--text-primary);
+            padding: 0.25rem 0.5rem;
+            background: var(--bg-color);
+            color: var(--text-secondary);
             border: 1px solid var(--border-color);
-            border-radius: 0.25rem;
-            font-size: 0.85rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
             cursor: pointer;
             transition: var(--transition-base);
         }
@@ -330,21 +312,21 @@
         /* カードグリッド */
         .books-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 2rem;
-            animation: fadeIn 0.6s ease-out;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            animation: fadeIn 0.4s ease-out;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .book-card {
-            background: var(--bg-color);
-            padding: 2rem;
+            background: var(--bg-secondary);
+            padding: 1.5rem;
             border: 1px solid var(--border-color);
-            border-radius: 0.25rem;
+            border-radius: 8px;
             transition: var(--transition-base);
             cursor: pointer;
             position: relative;
@@ -352,64 +334,138 @@
 
         .book-card:hover {
             box-shadow: var(--shadow-md);
-            border-color: var(--primary-color);
+            transform: translateY(-2px);
         }
 
-        /* ビューアー */
+        /* ミニマルビューアー */
         .viewer-container {
             display: none;
-            background: var(--dark-bg);
+            background: var(--bg-color);
             min-height: 100vh;
+        }
+
+        /* シンプルなビューアーヘッダー */
+        .viewer-header {
+            background: var(--bg-secondary);
+            padding: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .header-group {
+            display: flex;
+            gap: 0.25rem;
+            align-items: center;
+        }
+
+        .page-info {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin: 0 0.5rem;
+        }
+
+        /* サイドバー */
+        .sidebar {
+            position: fixed;
+            left: -280px;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: var(--bg-secondary);
+            z-index: 200;
+            transition: left 0.3s ease;
+            overflow-y: auto;
+            box-shadow: var(--shadow-md);
+            border-right: 1px solid var(--border-color);
+        }
+
+        .sidebar.open {
+            left: 0;
+        }
+
+        .sidebar-header {
+            padding: 1rem;
+            background: var(--bg-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .toc-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            transition: var(--transition-base);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .toc-item:hover {
+            background: var(--bg-color);
+        }
+
+        .toc-item.active {
+            background: var(--primary-color);
             color: white;
         }
 
         /* ページコンテンツ */
         .page-content {
-            background: linear-gradient(135deg, #ffffff, #f8f9fa);
+            background: var(--bg-secondary);
             color: var(--text-primary);
-            padding: 3rem;
-            border-radius: 1rem;
-            min-height: 600px;
-            box-shadow: var(--shadow-xl);
-            position: relative;
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            touch-action: pan-y;
+            padding: 2rem;
+            margin: 1rem;
+            border-radius: 8px;
+            min-height: 500px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
         }
 
-        /* Markdown強化スタイル */
+        /* Markdownスタイル */
         .markdown-body {
-            line-height: 1.8;
-            font-size: 1.1rem;
+            line-height: 1.7;
+            font-size: 1rem;
         }
 
         .markdown-body h1 {
-            font-size: 2rem;
-            margin: 2rem 0 1rem;
+            font-size: 1.75rem;
+            margin: 1.5rem 0 1rem;
             padding-bottom: 0.5rem;
             border-bottom: 2px solid var(--border-color);
+            color: var(--text-primary);
         }
 
         .markdown-body h2 {
-            font-size: 1.6rem;
-            margin: 1.5rem 0 0.75rem;
+            font-size: 1.4rem;
+            margin: 1.25rem 0 0.75rem;
             color: var(--primary-color);
         }
 
         .markdown-body pre {
-            background: #1f2937;
-            color: #f3f4f6;
+            background: #f7fafc;
+            color: var(--text-primary);
             padding: 1rem;
-            border-radius: 0.5rem;
+            border-radius: 6px;
             overflow-x: auto;
             margin: 1rem 0;
+            border: 1px solid var(--border-color);
         }
 
         .markdown-body code {
-            background: #f3f4f6;
+            background: #f7fafc;
             padding: 0.2rem 0.4rem;
-            border-radius: 0.25rem;
+            border-radius: 4px;
             font-size: 0.9em;
-            font-family: 'Monaco', 'Courier New', monospace;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            border: 1px solid var(--border-color);
         }
 
         .markdown-body table {
@@ -426,8 +482,8 @@
         }
 
         .markdown-body th {
-            background: #f7fafc;
-            font-weight: bold;
+            background: var(--bg-color);
+            font-weight: 600;
         }
 
         /* トースト通知 */
@@ -436,17 +492,15 @@
             bottom: 2rem;
             left: 50%;
             transform: translateX(-50%) translateY(100px);
-            padding: 1rem 2rem;
-            border-radius: 2rem;
-            box-shadow: var(--shadow-xl);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow-md);
             z-index: 1000;
             opacity: 0;
             transition: var(--transition-base);
             pointer-events: none;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-weight: 600;
+            font-size: 0.9rem;
+            font-weight: 500;
         }
 
         .toast.show {
@@ -471,63 +525,49 @@
         }
 
         .toast.info {
-            background: white;
-            color: var(--text-primary);
-            border: 2px solid var(--primary-color);
-        }
-
-        /* SNSシェアボタン */
-        .share-buttons {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 1rem;
-        }
-
-        .share-btn {
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            border: none;
-            cursor: pointer;
-            font-size: 0.9rem;
+            background: var(--primary-color);
             color: white;
-            transition: var(--transition-base);
+        }
+
+        /* ページナビゲーション */
+        .page-nav {
             display: flex;
+            justify-content: space-between;
             align-items: center;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .page-dots {
+            display: flex;
             gap: 0.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 200px;
         }
 
-        .share-btn.twitter {
-            background: #1DA1F2;
+        .page-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border-color);
+            cursor: pointer;
+            transition: var(--transition-base);
         }
 
-        .share-btn.twitter:hover {
-            background: #1a91da;
-        }
-
-        .share-btn.line {
-            background: #00B900;
-        }
-
-        .share-btn.line:hover {
-            background: #00a000;
-        }
-
-        .share-btn.facebook {
-            background: #1877F2;
-        }
-
-        .share-btn.facebook:hover {
-            background: #166FE5;
+        .page-dot.active {
+            background: var(--primary-color);
         }
 
         /* 続きから読むボタン */
         .continue-reading {
             background: var(--bg-secondary);
             color: var(--text-primary);
-            padding: 1rem 1.5rem;
+            padding: 1rem;
             border: 1px solid var(--primary-color);
-            border-radius: 0.25rem;
-            margin-bottom: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -540,55 +580,117 @@
             color: white;
         }
 
-        /* レスポンシブ */
-        @media (max-width: 768px) {
-            .search-container {
-                display: none;
-            }
-
-            .books-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .page-content {
-                padding: 1.5rem;
-                border-radius: 0.5rem;
-            }
-
-            .header {
-                padding: 0.75rem 1rem;
-            }
-        }
-
-        /* PWA用オフライン表示 */
-        .offline-banner {
-            background: var(--warning-color);
-            color: white;
-            padding: 0.5rem;
-            text-align: center;
+        /* シェアモーダル */
+        .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            z-index: 1001;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 500;
             display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
         }
 
-        .offline-banner.show {
-            display: block;
+        .modal-content {
+            background: var(--bg-secondary);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .share-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .share-btn {
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: white;
+            transition: var(--transition-base);
+            flex: 1;
+            text-align: center;
+        }
+
+        .share-btn.twitter {
+            background: #1DA1F2;
+        }
+
+        .share-btn.line {
+            background: #00B900;
+        }
+
+        .share-btn.facebook {
+            background: #1877F2;
+        }
+
+        /* レスポンシブ */
+        @media (max-width: 768px) {
+            .search-container {
+                max-width: 200px;
+                margin: 0 0.5rem;
+            }
+
+            .books-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .page-content {
+                margin: 0.5rem;
+                padding: 1rem;
+            }
+
+            .header {
+                padding: 0.5rem;
+            }
+        }
+
+        /* デバッグ情報（小さく） */
+        .debug-info {
+            position: fixed;
+            top: 60px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            max-width: 200px;
+            z-index: 10000;
+            display: none;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        /* ユーティリティ */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0,0,0,0);
+            white-space: nowrap;
+            border-width: 0;
         }
     </style>
 </head>
 <body>
-    <!-- デバッグ情報 -->
+    <!-- デバッグ情報（小さく） -->
     <div id="debugInfo" class="debug-info">
         <div id="debugContent">初期化中...</div>
-        <button onclick="toggleDebug()" style="margin-top: 10px; padding: 5px 10px; background: #007AFF; color: white; border: none; border-radius: 3px;">閉じる</button>
-    </div>
-
-    <!-- オフラインバナー -->
-    <div id="offlineBanner" class="offline-banner">
-        📵 オフラインモードです。一部機能が制限されています。
     </div>
 
     <!-- ローディング画面 -->
@@ -596,9 +698,6 @@
         <div class="loader"></div>
         <div class="loading-text" id="loadingText">読み込み中...</div>
     </div>
-
-    <!-- 進捗バー -->
-    <div id="progressBar" style="position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, var(--primary-color), var(--secondary-color)); transition: width 0.3s; z-index: 300; width: 0%;"></div>
 
     <!-- ホーム画面 -->
     <div id="homeView">
@@ -622,90 +721,91 @@
             </div>
 
             <div id="authSection">
-                <button class="btn btn-primary" onclick="app.handleLogin()" aria-label="Googleでログイン">
-                    <span>👤</span>
-                    <span>ログイン</span>
+                <button class="btn btn-primary" onclick="app.handleLogin()" aria-label="ログイン" title="ログイン">
+                    👤
                 </button>
             </div>
         </header>
 
-        <main class="home-container" style="max-width: 1200px; margin: 3rem auto; padding: 0 2rem;">
+        <main style="max-width: 1000px; margin: 2rem auto; padding: 0 1rem;">
             <!-- 続きから読む -->
-            <div id="continueReading" style="display: none; margin-bottom: 2rem;"></div>
+            <div id="continueReading" style="display: none;"></div>
 
             <!-- アクションカード -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-bottom: 4rem;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
                 <div class="book-card" onclick="app.createNewBook()" role="button" tabindex="0">
-                    <div style="font-size: 2.5rem; text-align: center; margin-bottom: 1.5rem;">📝</div>
-                    <h3 style="font-size: 1.25rem; text-align: center; margin-bottom: 0.75rem; color: var(--text-primary);">新規作成</h3>
-                    <p style="color: var(--text-secondary); text-align: center;">学習ノートを作成</p>
+                    <div style="font-size: 2rem; text-align: center; margin-bottom: 1rem;">📝</div>
+                    <h3 style="font-size: 1rem; text-align: center; margin-bottom: 0.5rem;">新規作成</h3>
+                    <p style="color: var(--text-secondary); text-align: center; font-size: 0.9rem;">学習ノートを作成</p>
                 </div>
                 
                 <div class="book-card" onclick="app.showPublicBooks()" role="button" tabindex="0">
-                    <div style="font-size: 2.5rem; text-align: center; margin-bottom: 1.5rem;">📚</div>
-                    <h3 style="font-size: 1.25rem; text-align: center; margin-bottom: 0.75rem; color: var(--text-primary);">みんなのノート</h3>
-                    <p style="color: var(--text-secondary); text-align: center;">公開ノートを探す</p>
+                    <div style="font-size: 2rem; text-align: center; margin-bottom: 1rem;">📚</div>
+                    <h3 style="font-size: 1rem; text-align: center; margin-bottom: 0.5rem;">みんなのノート</h3>
+                    <p style="color: var(--text-secondary); text-align: center; font-size: 0.9rem;">公開ノートを探す</p>
                 </div>
                 
                 <div class="book-card" onclick="app.showPopularTags()" role="button" tabindex="0">
-                    <div style="font-size: 2.5rem; text-align: center; margin-bottom: 1.5rem;">🏷️</div>
-                    <h3 style="font-size: 1.25rem; text-align: center; margin-bottom: 0.75rem; color: var(--text-primary);">人気のタグ</h3>
-                    <p style="color: var(--text-secondary); text-align: center;">タグから探す</p>
+                    <div style="font-size: 2rem; text-align: center; margin-bottom: 1rem;">🏷️</div>
+                    <h3 style="font-size: 1rem; text-align: center; margin-bottom: 0.5rem;">人気のタグ</h3>
+                    <p style="color: var(--text-secondary); text-align: center; font-size: 0.9rem;">タグから探す</p>
                 </div>
             </div>
 
             <!-- マイノート -->
             <section id="myBooksSection" style="display: none;">
-                <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 2rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-color);">マイノート</h2>
+                <h2 style="color: var(--text-primary); font-size: 1.25rem; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">マイノート</h2>
                 <div id="myBooksList" class="books-grid"></div>
             </section>
 
             <!-- みんなのノート -->
-            <section id="publicBooksSection" style="display: none; margin-top: 4rem;">
-                <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 2rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-color);">みんなのノート</h2>
+            <section id="publicBooksSection" style="display: none; margin-top: 3rem;">
+                <h2 style="color: var(--text-primary); font-size: 1.25rem; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">みんなのノート</h2>
                 <div id="publicBooksList" class="books-grid"></div>
             </section>
 
             <!-- 人気タグ -->
-            <section id="popularTagsSection" style="display: none; margin-top: 4rem;">
-                <h2 style="color: var(--text-primary); font-size: 1.5rem; margin-bottom: 2rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-color);">人気のタグ</h2>
-                <div id="popularTagsList" class="tags-container" style="background: var(--bg-color); padding: 2rem; border: 1px solid var(--border-color); border-radius: 0.25rem;"></div>
+            <section id="popularTagsSection" style="display: none; margin-top: 3rem;">
+                <h2 style="color: var(--text-primary); font-size: 1.25rem; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">人気のタグ</h2>
+                <div id="popularTagsList" class="tags-container" style="background: var(--bg-secondary); padding: 2rem; border: 1px solid var(--border-color); border-radius: 8px;"></div>
             </section>
         </main>
     </div>
 
     <!-- ビューアー/エディター画面 -->
     <div id="viewerContainer" class="viewer-container">
-        <header style="background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 1rem; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-md);">
-            <div style="display: flex; gap: 0.5rem;">
-                <button class="btn btn-secondary" onclick="app.toggleSidebar()" aria-label="メニュー">☰</button>
-                <button class="btn btn-secondary" onclick="app.goHome()" aria-label="ホーム">🏠</button>
-                <button id="saveBtn" class="btn btn-success" onclick="app.saveBook()" style="display: none;" aria-label="保存">💾 保存</button>
-                <button id="addPageBtn" class="btn btn-primary" onclick="app.addPage()" style="display: none;" aria-label="ページ追加">➕ ページ追加</button>
+        <!-- シンプルヘッダー -->
+        <header class="viewer-header">
+            <div class="header-group">
+                <button class="btn btn-secondary" onclick="app.toggleSidebar()" aria-label="メニュー" title="目次">☰</button>
+                <button class="btn btn-secondary" onclick="app.goHome()" aria-label="ホーム" title="ホーム">🏠</button>
+                <button id="saveBtn" class="btn btn-success" onclick="app.saveBook()" style="display: none;" aria-label="保存" title="保存">💾</button>
+                <button id="addPageBtn" class="btn btn-primary" onclick="app.addPage()" style="display: none;" aria-label="ページ追加" title="ページ追加">➕</button>
             </div>
             
-            <div style="display: flex; gap: 0.5rem; align-items: center;">
-                <button id="visibilityBtn" class="btn btn-secondary" onclick="app.toggleVisibility()" aria-label="公開設定">👁️</button>
-                <button class="btn btn-primary" onclick="app.showShareModal()" aria-label="シェア">🔗 シェア</button>
-                <span id="pageInfo" style="color: #a0aec0; margin-left: 1rem; font-size: 0.9rem;">ページ 1 / 1</span>
+            <span id="pageInfo" class="page-info">1 / 1</span>
+            
+            <div class="header-group">
+                <button id="visibilityBtn" class="btn btn-secondary" onclick="app.toggleVisibility()" aria-label="公開設定" title="公開設定">👁️</button>
+                <button class="btn btn-primary" onclick="app.showShareModal()" aria-label="シェア" title="シェア">🔗</button>
             </div>
         </header>
 
         <!-- サイドバー -->
-        <aside id="sidebar" style="position: fixed; left: -320px; top: 0; width: 320px; height: 100vh; background: linear-gradient(135deg, #1a1a2e, #0f0f23); z-index: 200; transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1); overflow-y: auto; box-shadow: 5px 0 30px rgba(0,0,0,0.5);">
-            <div style="padding: 1.5rem; background: rgba(0,0,0,0.3); display: flex; justify-content: space-between; align-items: center;">
-                <h2 style="font-size: 1.25rem; font-weight: bold; color: white;">📑 目次</h2>
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h2 style="font-size: 1rem; font-weight: 600;">📑 目次</h2>
                 <button class="btn btn-secondary" onclick="app.toggleSidebar()" aria-label="閉じる">✕</button>
             </div>
             <nav id="tocList" aria-label="目次"></nav>
         </aside>
 
         <!-- メインコンテンツ -->
-        <main style="max-width: 900px; margin: 2rem auto; padding: 0 1rem;">
+        <main>
             <div id="pageContent" class="page-content">
                 <div id="viewMode">
-                    <h1 id="pageTitle" style="font-size: 2rem; font-weight: bold; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--border-color);"></h1>
-                    <img id="pageImage" style="display: none; width: 100%; max-height: 400px; object-fit: contain; border-radius: 0.5rem; margin: 1.5rem 0; box-shadow: var(--shadow-md);" alt="ページ画像">
+                    <h1 id="pageTitle" style="font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 2px solid var(--border-color);"></h1>
+                    <img id="pageImage" style="display: none; width: 100%; max-height: 300px; object-fit: contain; border-radius: 6px; margin: 1rem 0;" alt="ページ画像">
                     <div id="pageBody" class="markdown-body"></div>
                 </div>
                 
@@ -713,31 +813,29 @@
                     <input 
                         type="text" 
                         id="pageTitleInput" 
-                        class="search-input" 
-                        style="width: 100%; margin-bottom: 1rem; font-size: 1.5rem; font-weight: bold;"
+                        style="width: 100%; margin-bottom: 1rem; font-size: 1.25rem; font-weight: 600; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color);"
                         placeholder="ページタイトル"
                         maxlength="100"
                     >
                     
-                    <div style="border: 2px dashed var(--border-color); border-radius: 0.5rem; padding: 2rem; text-align: center; margin: 1rem 0; cursor: pointer; transition: var(--transition-base);" 
+                    <div style="border: 2px dashed var(--border-color); border-radius: 6px; padding: 2rem; text-align: center; margin: 1rem 0; cursor: pointer; transition: var(--transition-base); background: var(--bg-color);" 
                          onclick="document.getElementById('imageInput').click()"
                          ondragover="event.preventDefault(); this.style.borderColor='var(--primary-color)'"
                          ondragleave="this.style.borderColor='var(--border-color)'"
                          ondrop="app.handleDrop(event)">
-                        <div>📷 画像をアップロード</div>
-                        <div style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.5rem;">クリックまたはドラッグ＆ドロップ（最大5MB）</div>
+                        <div style="font-size: 1rem;">📷 画像をアップロード</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem;">クリック or ドラッグ&ドロップ（最大5MB）</div>
                         <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="app.handleImageUpload(event)">
                     </div>
                     
                     <div id="imagePreview" style="margin: 1rem 0;"></div>
                     
                     <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">タグ（カンマ区切り）</label>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem;">タグ（カンマ区切り）</label>
                         <input 
                             type="text" 
                             id="pageTagsInput" 
-                            class="search-input" 
-                            style="width: 100%;"
+                            style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color);"
                             placeholder="例: 数学, 微分積分, 大学"
                             maxlength="200"
                         >
@@ -745,68 +843,51 @@
                     
                     <textarea 
                         id="pageContentInput" 
-                        style="width: 100%; min-height: 400px; padding: 1rem; font-size: 1rem; border: 2px solid var(--border-color); border-radius: 0.5rem; resize: vertical; font-family: 'Monaco', 'Courier New', monospace; transition: var(--transition-base);"
+                        style="width: 100%; min-height: 300px; padding: 1rem; font-size: 0.9rem; border: 1px solid var(--border-color); border-radius: 6px; resize: vertical; font-family: 'SF Mono', Monaco, monospace; background: var(--bg-color); transition: var(--transition-base);"
                         placeholder="Markdownで内容を入力
 
 # 見出し1
 ## 見出し2
-### 見出し3
 
-**太字** *斜体* ~~取り消し線~~
+**太字** *斜体*
 
 - リスト項目
 1. 番号付きリスト
 
 > 引用文
 
-`インラインコード`
+`コード`
 
-```
-コードブロック
-```
-
-[リンク](https://example.com)
-![画像](image.jpg)
-
-| 列1 | 列2 |
-|-----|-----|
-| データ | データ |"
+[リンク](https://example.com)"
                         maxlength="50000"></textarea>
                 </div>
             </div>
 
             <!-- ページナビゲーション -->
-            <nav style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem;">
-                <button class="btn btn-primary" onclick="app.previousPage()" id="prevBtn" aria-label="前のページ">
-                    ← 前のページ
+            <nav class="page-nav">
+                <button class="btn btn-secondary" onclick="app.previousPage()" id="prevBtn" aria-label="前のページ" title="前のページ">
+                    ←
                 </button>
-                <div id="pageDots" style="display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: center; max-width: 300px;">
-                </div>
-                <button class="btn btn-primary" onclick="app.nextPage()" id="nextBtn" aria-label="次のページ">
-                    次のページ →
+                <div id="pageDots" class="page-dots"></div>
+                <button class="btn btn-secondary" onclick="app.nextPage()" id="nextBtn" aria-label="次のページ" title="次のページ">
+                    →
                 </button>
             </nav>
         </main>
     </div>
 
     <!-- シェアモーダル -->
-    <div id="shareModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 500; backdrop-filter: blur(5px);" onclick="if(event.target.id === 'shareModal') app.closeShareModal()">
-        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 1rem; box-shadow: var(--shadow-xl); max-width: 500px; width: 90%;">
-            <h3 style="margin-bottom: 1rem;">このノートを共有</h3>
-            <input type="text" id="shareUrl" readonly style="width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 0.25rem; margin-bottom: 1rem;">
+    <div id="shareModal" class="modal-overlay" onclick="if(event.target.id === 'shareModal') app.closeShareModal()">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">このノートを共有</h3>
+            <input type="text" id="shareUrl" readonly style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 1rem; background: var(--bg-color);">
             <div class="share-buttons">
-                <button class="share-btn twitter" onclick="app.shareToTwitter()">
-                    🐦 Twitter
-                </button>
-                <button class="share-btn line" onclick="app.shareToLine()">
-                    💬 LINE
-                </button>
-                <button class="share-btn facebook" onclick="app.shareToFacebook()">
-                    👍 Facebook
-                </button>
+                <button class="share-btn twitter" onclick="app.shareToTwitter()">Twitter</button>
+                <button class="share-btn line" onclick="app.shareToLine()">LINE</button>
+                <button class="share-btn facebook" onclick="app.shareToFacebook()">Facebook</button>
             </div>
-            <button class="btn btn-secondary" onclick="app.copyShareUrl()" style="width: 100%; margin-top: 1rem;">
-                📋 URLをコピー
+            <button class="btn btn-primary" onclick="app.copyShareUrl()" style="width: 100%; margin-top: 1rem; padding: 0.75rem;">
+                URLをコピー
             </button>
         </div>
     </div>
@@ -815,30 +896,20 @@
     <div id="toast" class="toast" role="alert" aria-live="polite"></div>
 
     <script>
-        // デバッグ機能
+        // デバッグ機能（最小限）
         function updateDebugInfo(message) {
             const debugContent = document.getElementById('debugContent');
-            const now = new Date().toLocaleTimeString();
-            if (debugContent.innerHTML.length > 2000) {
+            if (debugContent.innerHTML.length > 1000) {
                 debugContent.innerHTML = '初期化中...<br>';
             }
-            debugContent.innerHTML += '<br>' + now + ': ' + message;
+            debugContent.innerHTML += '<br>' + message;
             console.log('DEBUG:', message);
-        }
-
-        function showDebug() {
-            document.getElementById('debugInfo').style.display = 'block';
-        }
-
-        function toggleDebug() {
-            const debug = document.getElementById('debugInfo');
-            debug.style.display = debug.style.display === 'none' ? 'block' : 'none';
         }
 
         // ===== StudyBook Application =====
         class StudyBookApp {
             constructor() {
-                updateDebugInfo('StudyBookApp constructor called');
+                updateDebugInfo('App starting...');
                 
                 // Firebase設定
                 this.firebaseConfig = {
@@ -850,7 +921,7 @@
                     appId: "1:716923175090:web:2cc8c093c6cdf4ddbe09ab"
                 };
 
-                // 状態管理（Map構造で高速化）
+                // 状態管理
                 this.currentUser = null;
                 this.booksMap = new Map();
                 this.currentBook = null;
@@ -887,21 +958,21 @@
             // ===== 初期化 =====
             async init() {
                 try {
-                    updateDebugInfo('初期化開始');
+                    updateDebugInfo('Initializing...');
                     document.getElementById('loadingText').textContent = 'Firebase初期化中...';
 
                     // Firebase SDKの読み込みを待つ
                     if (!window.firebaseReady) {
-                        updateDebugInfo('Firebase SDK待機中...');
+                        updateDebugInfo('Waiting for Firebase...');
                         await new Promise((resolve) => {
                             const timeout = setTimeout(() => {
-                                updateDebugInfo('Firebase SDK読み込みタイムアウト');
+                                updateDebugInfo('Firebase timeout');
                                 resolve();
                             }, 10000);
                             
                             window.addEventListener('firebaseReady', () => {
                                 clearTimeout(timeout);
-                                updateDebugInfo('Firebase SDK読み込み完了');
+                                updateDebugInfo('Firebase ready');
                                 resolve();
                             }, { once: true });
                         });
@@ -910,31 +981,23 @@
                     // Firebase初期化
                     await this.initFirebase();
 
-                    // PWA初期化
-                    document.getElementById('loadingText').textContent = 'PWA初期化中...';
-                    this.initPWA();
-
                     // イベントリスナー設定
-                    document.getElementById('loadingText').textContent = 'イベント設定中...';
                     this.setupEventListeners();
 
-                    // 初期データロード
-                    document.getElementById('loadingText').textContent = 'データ読み込み中...';
+                    // データロード
                     if (this.auth) {
-                        updateDebugInfo('Firebase認証監視開始');
-                        // Firebase認証状態の監視
+                        updateDebugInfo('Setting up auth...');
                         this.auth.onAuthStateChanged((user) => {
                             if (user) {
-                                updateDebugInfo('ユーザー認証済み: ' + user.displayName);
+                                updateDebugInfo('User signed in: ' + user.displayName);
                                 this.handleAuthSuccess(user);
                             } else {
-                                updateDebugInfo('ユーザー未認証');
+                                updateDebugInfo('User signed out');
                                 this.handleAuthLogout();
                             }
                         });
                     } else {
-                        updateDebugInfo('ローカルストレージモードで開始');
-                        // ローカルストレージモード
+                        updateDebugInfo('Using local mode');
                         this.loadFromLocalStorage();
                         this.updateUI();
                     }
@@ -942,86 +1005,49 @@
                     // URL パラメータチェック
                     this.checkUrlParams();
 
-                    // ローディング画面を非表示
+                    // ローディング完了
                     document.getElementById('loadingText').textContent = '完了';
-                    updateDebugInfo('初期化完了');
+                    updateDebugInfo('Initialization complete');
                     
                     setTimeout(() => {
                         document.getElementById('loadingScreen').classList.add('hidden');
-                        // デバッグ表示は成功後5秒で自動で非表示に
+                        // デバッグ情報は3秒後に非表示
                         setTimeout(() => {
                             document.getElementById('debugInfo').style.display = 'none';
-                        }, 5000);
-                    }, 1000);
+                        }, 3000);
+                    }, 800);
 
                 } catch (error) {
-                    updateDebugInfo('初期化エラー: ' + error.message);
+                    updateDebugInfo('Init error: ' + error.message);
                     this.handleError(error, 'アプリの初期化に失敗しました');
                     
-                    // エラーでもローディングは消す
                     setTimeout(() => {
                         document.getElementById('loadingScreen').classList.add('hidden');
-                        showDebug();
                     }, 2000);
                 }
             }
 
-            // ===== Firebase初期化（v9 Modular） =====
+            // ===== Firebase初期化 =====
             async initFirebase() {
-                updateDebugInfo('Firebase初期化開始');
+                updateDebugInfo('Firebase init start');
                 
                 if (!window.firebaseModules) {
-                    updateDebugInfo('Firebase modules not found');
+                    updateDebugInfo('No Firebase modules');
                     return;
                 }
 
-                const { 
-                    initializeApp, 
-                    getAuth, 
-                    getFirestore, 
-                    getStorage 
-                } = window.firebaseModules;
+                const { initializeApp, getAuth, getFirestore, getStorage } = window.firebaseModules;
 
                 try {
-                    updateDebugInfo('Firebase app初期化');
                     this.firebaseApp = initializeApp(this.firebaseConfig);
-                    updateDebugInfo('Firebase app初期化完了');
-                    
                     this.auth = getAuth(this.firebaseApp);
-                    updateDebugInfo('Firebase Auth初期化完了');
-                    
                     this.db = getFirestore(this.firebaseApp);
-                    updateDebugInfo('Firestore初期化完了');
-                    
                     this.storage = getStorage(this.firebaseApp);
-                    updateDebugInfo('Firebase Storage初期化完了');
-                    
-                    updateDebugInfo('Firebase初期化成功');
+                    updateDebugInfo('Firebase init success');
                 } catch (error) {
-                    updateDebugInfo('Firebase初期化失敗: ' + error.message);
-                    console.warn("Firebase initialization failed, falling back to localStorage", error);
+                    updateDebugInfo('Firebase init failed: ' + error.message);
+                    console.warn("Firebase initialization failed", error);
                 }
-            }
-
-            // ===== PWA初期化 =====
-            initPWA() {
-                // Service Worker登録
-                if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.register('/sw.js').catch(() => {});
-                }
-
-                // オフライン検出
-                window.addEventListener('online', () => {
-                    this.isOffline = false;
-                    document.getElementById('offlineBanner').classList.remove('show');
-                    updateDebugInfo('オンラインに戻りました');
-                });
-
-                window.addEventListener('offline', () => {
-                    this.isOffline = true;
-                    document.getElementById('offlineBanner').classList.add('show');
-                    updateDebugInfo('オフラインになりました');
-                });
             }
 
             // ===== イベントリスナー =====
@@ -1052,10 +1078,9 @@
 
             // ===== 認証 =====
             async handleLogin() {
-                updateDebugInfo('ログイン処理開始');
+                updateDebugInfo('Login attempt');
                 
                 if (!this.auth) {
-                    updateDebugInfo('Firebase認証が利用できません。ローカルモードでログイン');
                     // ローカルモード
                     this.currentUser = {
                         uid: 'local_' + Date.now(),
@@ -1071,19 +1096,19 @@
 
                 // レート制限チェック
                 if (!this.checkRateLimit('login', 5, 60000)) {
-                    this.showToast('ログイン試行が多すぎます。しばらくお待ちください。', 'error');
+                    this.showToast('ログイン試行が多すぎます', 'error');
                     return;
                 }
 
                 try {
-                    updateDebugInfo('Google認証開始');
+                    updateDebugInfo('Google sign-in...');
                     const { GoogleAuthProvider, signInWithPopup } = window.firebaseModules;
                     const provider = new GoogleAuthProvider();
                     const result = await signInWithPopup(this.auth, provider);
-                    updateDebugInfo('Google認証成功');
+                    updateDebugInfo('Sign-in success');
                     this.handleAuthSuccess(result.user);
                 } catch (error) {
-                    updateDebugInfo('Google認証エラー: ' + error.message);
+                    updateDebugInfo('Sign-in error: ' + error.message);
                     this.handleError(error, 'ログインに失敗しました');
                 }
             }
@@ -1103,7 +1128,7 @@
                     email: user.email,
                     photoURL: user.photoURL
                 };
-                updateDebugInfo('認証成功: ' + this.currentUser.displayName);
+                updateDebugInfo('Auth success: ' + this.currentUser.displayName);
                 this.loadBooksFromFirestore();
                 this.showToast('ログインしました', 'success');
                 this.updateUI();
@@ -1113,20 +1138,17 @@
                 this.currentUser = null;
                 this.booksMap.clear();
                 localStorage.removeItem('studybook_user');
-                updateDebugInfo('ログアウト完了');
+                updateDebugInfo('Logged out');
                 this.showToast('ログアウトしました', 'info');
                 this.updateUI();
             }
 
-            // ===== データ管理（Map構造） =====
+            // ===== データ管理 =====
             async loadBooksFromFirestore() {
-                if (!this.db || !this.currentUser) {
-                    updateDebugInfo('Firestore または ユーザーが無効');
-                    return;
-                }
+                if (!this.db || !this.currentUser) return;
 
                 try {
-                    updateDebugInfo('Firestoreからデータ読み込み開始');
+                    updateDebugInfo('Loading from Firestore...');
                     const { collection, query, where, getDocs, orderBy, limit } = window.firebaseModules;
                     
                     // 自分のノート
@@ -1162,26 +1184,21 @@
                         }
                     });
 
-                    updateDebugInfo(`データ読み込み完了: ${this.booksMap.size}件`);
-
-                    // 検索インデックス更新
+                    updateDebugInfo(`Loaded ${this.booksMap.size} books`);
                     this.updateSearchIndex();
-
-                    // 続きから読む機能
                     this.loadReadingProgress();
-
                     this.updateUI();
                 } catch (error) {
-                    updateDebugInfo('Firestoreデータ読み込みエラー: ' + error.message);
+                    updateDebugInfo('Load error: ' + error.message);
                     this.handleError(error, 'データの読み込みに失敗しました');
                 }
             }
 
-            // ===== 検索機能（Fuse.js） =====
+            // ===== 検索機能 =====
             updateSearchIndex() {
                 const books = Array.from(this.booksMap.values());
                 
-                if (typeof Fuse !== 'undefined') {
+                if (typeof Fuse !== 'undefined' && books.length > 0) {
                     this.fuseInstance = new Fuse(books, {
                         keys: [
                             { name: 'title', weight: 0.3 },
@@ -1208,8 +1225,10 @@
                     this.updateSearchIndex();
                 }
 
-                const results = this.fuseInstance.search(query).slice(0, 10);
-                this.displaySearchResults(results);
+                if (this.fuseInstance) {
+                    const results = this.fuseInstance.search(query).slice(0, 8);
+                    this.displaySearchResults(results);
+                }
             }
 
             displaySearchResults(results) {
@@ -1222,8 +1241,8 @@
                         const book = result.item;
                         return `
                             <div class="search-result-item" onclick="app.openBook('${book.id}', false)">
-                                <div style="font-weight: 600;">${this.escapeHtml(book.title)}</div>
-                                <div style="font-size: 0.9rem; color: var(--text-secondary);">
+                                <div style="font-weight: 500; margin-bottom: 0.25rem;">${this.escapeHtml(book.title)}</div>
+                                <div style="font-size: 0.8rem; color: var(--text-secondary);">
                                     ${this.escapeHtml(book.author)} • ${book.pages.length}ページ
                                 </div>
                             </div>
@@ -1236,7 +1255,7 @@
 
             // ===== ノート作成 =====
             async createNewBook() {
-                updateDebugInfo('新規ノート作成開始');
+                updateDebugInfo('Creating new book...');
                 
                 if (!this.currentUser) {
                     this.showToast('ログインが必要です', 'warning');
@@ -1265,24 +1284,24 @@
 
                 if (this.db) {
                     try {
-                        updateDebugInfo('Firestoreに新規ノート保存');
+                        updateDebugInfo('Saving to Firestore...');
                         const { collection, addDoc, serverTimestamp } = window.firebaseModules;
                         newBook.createdAt = serverTimestamp();
                         newBook.updatedAt = serverTimestamp();
                         
                         const docRef = await addDoc(collection(this.db, 'books'), newBook);
                         newBook.id = docRef.id;
-                        updateDebugInfo('Firestore保存成功: ' + docRef.id);
+                        updateDebugInfo('Saved: ' + docRef.id);
                         
                         this.showToast('ノートを作成しました', 'success');
                     } catch (error) {
-                        updateDebugInfo('Firestore保存エラー: ' + error.message);
+                        updateDebugInfo('Save error: ' + error.message);
                         this.handleError(error, 'ノートの作成に失敗しました');
                         return;
                     }
                 } else {
                     newBook.id = 'book_' + Date.now();
-                    updateDebugInfo('ローカルに新規ノート作成: ' + newBook.id);
+                    updateDebugInfo('Local save: ' + newBook.id);
                 }
 
                 this.booksMap.set(newBook.id, newBook);
@@ -1316,6 +1335,8 @@
                 }
 
                 this.updateViewer();
+                // ビューアーで最上部にスクロール
+                window.scrollTo(0, 0);
             }
 
             // ===== ビューアー更新 =====
@@ -1324,13 +1345,12 @@
 
                 document.getElementById('saveBtn').style.display = this.isEditing ? 'inline-flex' : 'none';
                 document.getElementById('addPageBtn').style.display = this.isEditing ? 'inline-flex' : 'none';
-                document.getElementById('pageInfo').textContent = `ページ ${this.currentPage + 1} / ${this.currentBook.pages.length}`;
+                document.getElementById('pageInfo').textContent = `${this.currentPage + 1} / ${this.currentBook.pages.length}`;
                 document.getElementById('visibilityBtn').textContent = this.currentBook.isPublic ? '🌍' : '🔒';
 
                 this.updateTOC();
                 this.updatePageContent();
                 this.updatePageNavigation();
-                this.updateProgressBar();
             }
 
             updatePageContent() {
@@ -1346,8 +1366,8 @@
 
                     if (page.image) {
                         document.getElementById('imagePreview').innerHTML = `
-                            <img src="${this.escapeHtml(page.image)}" style="max-width: 100%; max-height: 300px; border-radius: 0.5rem;">
-                            <button class="btn btn-danger" onclick="app.removeImage()" style="margin-top: 0.5rem;">画像を削除</button>
+                            <img src="${this.escapeHtml(page.image)}" style="max-width: 100%; max-height: 200px; border-radius: 6px;">
+                            <button class="btn btn-danger" onclick="app.removeImage()" style="margin-top: 0.5rem;">削除</button>
                         `;
                     } else {
                         document.getElementById('imagePreview').innerHTML = '';
@@ -1450,13 +1470,13 @@
                 this.updateUI();
             }
 
-            // ===== シェア機能（SNS対応） =====
+            // ===== シェア機能 =====
             showShareModal() {
                 if (!this.currentBook) return;
 
                 const shareUrl = `${window.location.origin}${window.location.pathname}?book=${this.currentBook.id}`;
                 document.getElementById('shareUrl').value = shareUrl;
-                document.getElementById('shareModal').style.display = 'block';
+                document.getElementById('shareModal').style.display = 'flex';
             }
 
             closeShareModal() {
@@ -1469,12 +1489,14 @@
                 try {
                     await navigator.clipboard.writeText(shareUrl);
                     this.showToast('URLをコピーしました', 'success');
+                    this.closeShareModal();
                 } catch {
                     // フォールバック
                     const input = document.getElementById('shareUrl');
                     input.select();
                     document.execCommand('copy');
                     this.showToast('URLをコピーしました', 'success');
+                    this.closeShareModal();
                 }
             }
 
@@ -1482,17 +1504,20 @@
                 const url = document.getElementById('shareUrl').value;
                 const text = `「${this.currentBook.title}」を読んでいます`;
                 window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+                this.closeShareModal();
             }
 
             shareToLine() {
                 const url = document.getElementById('shareUrl').value;
                 const text = `「${this.currentBook.title}」\n${url}`;
                 window.open(`https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank');
+                this.closeShareModal();
             }
 
             shareToFacebook() {
                 const url = document.getElementById('shareUrl').value;
                 window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+                this.closeShareModal();
             }
 
             // ===== 進捗管理 =====
@@ -1506,14 +1531,12 @@
                 };
 
                 if (this.db) {
-                    // Firestoreに保存
                     const { doc, setDoc } = window.firebaseModules;
                     setDoc(
                         doc(this.db, 'reading_progress', `${this.currentUser.uid}_${bookId}`),
                         progress
                     ).catch(() => {});
                 } else {
-                    // ローカルストレージ
                     localStorage.setItem('studybook_progress_' + bookId, JSON.stringify(progress));
                 }
             }
@@ -1541,7 +1564,6 @@
                         console.error('Progress load error:', error);
                     }
                 } else {
-                    // ローカルストレージから最新を取得
                     const keys = Object.keys(localStorage).filter(k => k.startsWith('studybook_progress_'));
                     if (keys.length > 0) {
                         const progresses = keys.map(k => JSON.parse(localStorage.getItem(k)));
@@ -1567,7 +1589,7 @@
                 container.style.display = 'block';
             }
 
-            // ===== 統計・分析 =====
+            // ===== 統計 =====
             async incrementViews(bookId) {
                 if (!this.db) return;
 
@@ -1588,7 +1610,6 @@
             }
 
             handleTouchMove(e) {
-                // スクロール中はスワイプ判定しない
                 const deltaY = Math.abs(e.touches[0].clientY - this.touchStartY);
                 if (deltaY > 50) {
                     this.touchStartX = 0;
@@ -1624,21 +1645,19 @@
                 const authSection = document.getElementById('authSection');
                 if (this.currentUser) {
                     authSection.innerHTML = `
-                        <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
                             ${this.currentUser.photoURL ? 
-                                `<img src="${this.escapeHtml(this.currentUser.photoURL)}" alt="${this.escapeHtml(this.currentUser.displayName)}" style="width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border-color);">` : 
-                                `<div style="width: 36px; height: 36px; border-radius: 50%; background: var(--primary-color); display: flex; align-items: center; justify-content: center; color: white; font-weight: 500; font-size: 0.9rem;">${this.currentUser.displayName.charAt(0).toUpperCase()}</div>`
+                                `<img src="${this.escapeHtml(this.currentUser.photoURL)}" style="width: 28px; height: 28px; border-radius: 50%;" alt="プロフィール">` : 
+                                `<div style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary-color); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8rem; font-weight: 500;">${this.currentUser.displayName.charAt(0).toUpperCase()}</div>`
                             }
-                            <span style="color: var(--text-primary); font-weight: 500;">${this.escapeHtml(this.currentUser.displayName)}</span>
-                            <button class="btn btn-secondary" onclick="app.handleLogout()" style="padding: 0.5rem 1rem;">ログアウト</button>
+                            <span style="color: var(--text-primary); font-size: 0.9rem; font-weight: 500;">${this.escapeHtml(this.currentUser.displayName)}</span>
+                            <button class="btn btn-secondary" onclick="app.handleLogout()" title="ログアウト">⏻</button>
                         </div>
                     `;
                     document.getElementById('myBooksSection').style.display = 'block';
                 } else {
                     authSection.innerHTML = `
-                        <button class="btn btn-primary" onclick="app.handleLogin()">
-                            ログイン
-                        </button>
+                        <button class="btn btn-primary" onclick="app.handleLogin()" title="ログイン">👤</button>
                     `;
                     document.getElementById('myBooksSection').style.display = 'none';
                 }
@@ -1651,7 +1670,7 @@
                 const container = document.getElementById('myBooksList');
 
                 if (myBooks.length === 0) {
-                    container.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">まだノートがありません</p>';
+                    container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 2rem;">まだノートがありません</p>';
                     return;
                 }
 
@@ -1662,12 +1681,12 @@
                 const publicBooks = Array.from(this.booksMap.values())
                     .filter(b => b.isPublic)
                     .sort((a, b) => (b.views || 0) - (a.views || 0))
-                    .slice(0, 20);
+                    .slice(0, 12);
 
                 const container = document.getElementById('publicBooksList');
                 
                 if (publicBooks.length === 0) {
-                    container.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">公開されているノートはありません</p>';
+                    container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 2rem;">公開されているノートはありません</p>';
                     return;
                 }
 
@@ -1676,25 +1695,25 @@
 
             createBookCard(book, isOwner) {
                 const tags = (book.tags || []).slice(0, 3).map(tag => 
-                    `<span class="tag" onclick="app.searchByTag('${this.escapeHtml(tag)}')">${this.escapeHtml(tag)}</span>`
+                    `<span class="tag" onclick="event.stopPropagation(); app.searchByTag('${this.escapeHtml(tag)}')">${this.escapeHtml(tag)}</span>`
                 ).join('');
 
                 return `
                     <div class="book-card">
-                        <h3 style="font-size: 1.2rem; font-weight: bold; margin-bottom: 0.5rem;">${this.escapeHtml(book.title)}</h3>
-                        <div style="color: var(--text-secondary); margin-bottom: 0.25rem;">
+                        <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; line-height: 1.3;">${this.escapeHtml(book.title)}</h3>
+                        <div style="color: var(--text-secondary); margin-bottom: 0.25rem; font-size: 0.85rem;">
                             👤 ${this.escapeHtml(book.author)}
                         </div>
-                        <div style="color: var(--text-secondary); margin-bottom: 0.25rem;">
+                        <div style="color: var(--text-secondary); margin-bottom: 0.25rem; font-size: 0.85rem;">
                             📝 ${book.pages.length}ページ • 👁️ ${book.views || 0}回
                         </div>
                         <div class="tags-container">${tags}</div>
                         <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                            <button class="btn btn-primary" onclick="app.openBook('${book.id}', false)" style="flex: 1;">
+                            <button class="btn btn-primary" onclick="app.openBook('${book.id}', false)" style="flex: 1; font-size: 0.9rem;">
                                 読む
                             </button>
                             ${isOwner ? `
-                                <button class="btn btn-secondary" onclick="app.openBook('${book.id}', true)" style="flex: 1;">
+                                <button class="btn btn-secondary" onclick="app.openBook('${book.id}', true)" style="flex: 1; font-size: 0.9rem;">
                                     編集
                                 </button>
                             ` : ''}
@@ -1706,12 +1725,11 @@
             updateTOC() {
                 const tocList = document.getElementById('tocList');
                 tocList.innerHTML = this.currentBook.pages.map((page, index) => `
-                    <div style="padding: 1rem 1.5rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: ${index === this.currentPage ? 'rgba(102,126,234,0.2)' : 'transparent'}; border-left: ${index === this.currentPage ? '3px solid var(--primary-color)' : 'none'};" 
-                         onclick="app.goToPage(${index})">
-                        <span style="color: white;">${this.escapeHtml(page.title || 'ページ' + (index + 1))}</span>
+                    <div class="toc-item ${index === this.currentPage ? 'active' : ''}" onclick="app.goToPage(${index})">
+                        <span>${this.escapeHtml(page.title || 'ページ' + (index + 1))}</span>
                         ${this.isEditing && this.currentBook.pages.length > 1 ? `
-                            <button class="btn btn-danger" onclick="app.deletePage(${index}, event)" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
-                                削除
+                            <button class="btn btn-danger" onclick="app.deletePage(${index}, event)" style="padding: 0.25rem; font-size: 0.7rem;" title="削除">
+                                ×
                             </button>
                         ` : ''}
                     </div>
@@ -1724,9 +1742,9 @@
 
                 const dotsContainer = document.getElementById('pageDots');
                 dotsContainer.innerHTML = this.currentBook.pages.map((_, index) => `
-                    <button style="width: 12px; height: 12px; border-radius: 50%; background: ${index === this.currentPage ? 'var(--primary-color)' : 'rgba(255,255,255,0.3)'}; border: none; cursor: pointer; transition: var(--transition-base);"
-                            onclick="app.goToPage(${index})"
-                            aria-label="ページ${index + 1}"></button>
+                    <div class="page-dot ${index === this.currentPage ? 'active' : ''}"
+                         onclick="app.goToPage(${index})"
+                         title="ページ${index + 1}"></div>
                 `).join('');
             }
 
@@ -1735,13 +1753,11 @@
                 const file = event.target.files[0];
                 if (!file) return;
 
-                // ファイルサイズチェック（5MB）
                 if (file.size > 5 * 1024 * 1024) {
                     this.showToast('画像は5MB以下にしてください', 'error');
                     return;
                 }
 
-                // MIME タイプチェック
                 if (!file.type.startsWith('image/')) {
                     this.showToast('画像ファイルを選択してください', 'error');
                     return;
@@ -1751,13 +1767,11 @@
                     let imageUrl;
 
                     if (this.storage) {
-                        // Firebase Storage
                         const { ref, uploadBytes, getDownloadURL } = window.firebaseModules;
                         const storageRef = ref(this.storage, `images/${this.currentUser.uid}/${Date.now()}_${file.name}`);
                         const snapshot = await uploadBytes(storageRef, file);
                         imageUrl = await getDownloadURL(snapshot.ref);
                     } else {
-                        // Base64 エンコード
                         imageUrl = await new Promise((resolve) => {
                             const reader = new FileReader();
                             reader.onload = (e) => resolve(e.target.result);
@@ -1767,8 +1781,8 @@
 
                     this.currentBook.pages[this.currentPage].image = imageUrl;
                     document.getElementById('imagePreview').innerHTML = `
-                        <img src="${this.escapeHtml(imageUrl)}" style="max-width: 100%; max-height: 300px; border-radius: 0.5rem;">
-                        <button class="btn btn-danger" onclick="app.removeImage()" style="margin-top: 0.5rem;">画像を削除</button>
+                        <img src="${this.escapeHtml(imageUrl)}" style="max-width: 100%; max-height: 200px; border-radius: 6px;">
+                        <button class="btn btn-danger" onclick="app.removeImage()" style="margin-top: 0.5rem;">削除</button>
                     `;
 
                     this.showToast('画像をアップロードしました', 'success');
@@ -1797,11 +1811,7 @@
             // ===== その他の機能 =====
             toggleSidebar() {
                 const sidebar = document.getElementById('sidebar');
-                if (sidebar.style.left === '0px') {
-                    sidebar.style.left = '-320px';
-                } else {
-                    sidebar.style.left = '0px';
-                }
+                sidebar.classList.toggle('open');
             }
 
             goHome() {
@@ -1813,6 +1823,7 @@
 
                 document.getElementById('homeView').style.display = 'block';
                 document.getElementById('viewerContainer').style.display = 'none';
+                document.getElementById('sidebar').classList.remove('open');
                 this.currentBook = null;
                 this.currentPage = 0;
                 this.isEditing = false;
@@ -1862,7 +1873,7 @@
 
             async toggleVisibility() {
                 if (!this.currentUser || this.currentBook.authorId !== this.currentUser.uid) {
-                    this.showToast('自分のノートのみ公開設定を変更できます', 'warning');
+                    this.showToast('自分のノートのみ変更できます', 'warning');
                     return;
                 }
 
@@ -1881,7 +1892,7 @@
 
                 this.booksMap.set(this.currentBook.id, this.currentBook);
                 this.updateViewer();
-                this.showToast(this.currentBook.isPublic ? 'ノートを公開しました' : 'ノートを非公開にしました', 'success');
+                this.showToast(this.currentBook.isPublic ? '公開しました' : '非公開にしました', 'success');
             }
 
             showPublicBooks() {
@@ -1890,7 +1901,6 @@
             }
 
             showPopularTags() {
-                // タグ集計
                 const tagCount = new Map();
                 
                 Array.from(this.booksMap.values()).forEach(book => {
@@ -1901,11 +1911,11 @@
 
                 const popularTags = Array.from(tagCount.entries())
                     .sort((a, b) => b[1] - a[1])
-                    .slice(0, 20);
+                    .slice(0, 15);
 
                 const container = document.getElementById('popularTagsList');
                 container.innerHTML = popularTags.map(([tag, count]) => 
-                    `<span class="tag" onclick="app.searchByTag('${this.escapeHtml(tag)}')" style="font-size: ${Math.min(1.5, 0.8 + count * 0.1)}rem;">
+                    `<span class="tag" onclick="app.searchByTag('${this.escapeHtml(tag)}')" style="font-size: ${Math.min(1.2, 0.75 + count * 0.05)}rem;">
                         ${this.escapeHtml(tag)} (${count})
                     </span>`
                 ).join('');
@@ -1917,6 +1927,7 @@
             searchByTag(tag) {
                 document.getElementById('searchInput').value = tag;
                 this.handleSearch({ target: { value: tag } });
+                document.getElementById('searchInput').scrollIntoView({ behavior: 'smooth' });
             }
 
             // ===== ローカルストレージ =====
@@ -1939,88 +1950,39 @@
                 if (this.booksMap.size === 0) {
                     const sampleBook = {
                         id: 'sample1',
-                        title: '📚 StudyBookへようこそ',
+                        title: 'StudyBookチュートリアル',
                         author: 'StudyBook Team',
                         authorId: 'system',
                         isPublic: true,
-                        tags: ['チュートリアル', '使い方', 'StudyBook'],
+                        tags: ['チュートリアル', '使い方', 'ガイド'],
                         createdAt: new Date().toISOString(),
                         updatedAt: new Date().toISOString(),
                         pages: [
                             {
-                                title: 'StudyBookの特徴',
-                                content: `# StudyBookへようこそ！🎉
+                                title: 'StudyBookチュートリアル',
+                                content: `# StudyBookへようこそ
 
-## 主な機能
+## 新しいデザインの特徴
+- ミニマルで見やすいデザイン
+- アイコンベースのシンプルなUI
+- スッキリとしたレイアウト
 
-### 📝 美しいノート作成
-- **Markdown**完全対応
-- リアルタイムプレビュー
-- 画像アップロード機能
+## 基本的な使い方
+1. **新規作成**でノートを作成
+2. **編集モード**でMarkdown記法で執筆
+3. **タグ**で分類・整理
+4. **シェア**で公開・共有
 
-### 🌍 共有機能
-- 公開/非公開の切り替え
-- SNSシェア（Twitter, LINE, Facebook）
-- URLコピー
+## 操作方法
+- スワイプでページめくり
+- キーボード矢印キーでナビゲーション
+- 目次からページジャンプ
 
-### 🔍 検索機能
-- タイトル、著者、タグ、本文から検索
-- 人気のタグから探す
-- Fuse.jsによる高精度検索
-
-### 📱 モバイル対応
-- **スワイプ**でページめくり
-- PWA対応（オフライン利用可能）
-- レスポンシブデザイン
-
-### 🔒 セキュリティ
-- Googleアカウント認証
-- XSS対策（DOMPurify）
-- レート制限機能
-
-### 🏷️ タグ機能
-- ページごとのタグ設定
-- 人気タグ表示
-- タグクリックで検索
-
-右上のデバッグ情報で初期化状況を確認できます。
-横にスワイプして次のページへ進んでください！`,
-                                tags: ['チュートリアル', 'StudyBook']
-                            },
-                            {
-                                title: '使い方ガイド',
-                                content: `# 📖 使い方ガイド
-
-## ✨ 新規ノート作成
-1. **新規作成**カードをクリック
-2. タイトルと内容を入力
-3. タグを設定（カンマ区切り）
-4. 💾**保存**ボタンをクリック
-
-## 🏷️ タグの使い方
-- ページごとにタグを設定可能
-- 例：**数学, 微分積分, 大学**
-- タグクリックで関連ノートを検索
-- 人気タグから他のノートを探せる
-
-## 📷 画像アップロード
-- ドラッグ＆ドロップ対応
-- 最大5MBまで
-- Firebase Storage保存
-
-## 🌍 共有機能
-- 👁️ボタンで公開/非公開切り替え
-- 🔗**シェア**から各SNSで共有
-- URLコピーで直接共有
-
-## 📱 操作方法
-- **スワイプ**：ページめくり
-- **キーボード**：← → ESC
-- **目次**：☰メニューから`,
-                                tags: ['使い方', 'ガイド']
+スッキリしたデザインで快適に読書できます！`,
+                                tags: ['チュートリアル']
                             }
                         ],
-                        views: 50
+                        views: 25
                     };
                     
                     this.booksMap.set(sampleBook.id, sampleBook);
@@ -2036,7 +1998,6 @@
                 localStorage.setItem('studybook_books', JSON.stringify(books));
             }
 
-            // ===== URLパラメータ =====
             checkUrlParams() {
                 const urlParams = new URLSearchParams(window.location.search);
                 const bookId = urlParams.get('book');
@@ -2048,15 +2009,6 @@
                             this.openBook(bookId, false);
                         }
                     }, 1500);
-                }
-            }
-
-            updateProgressBar() {
-                if (this.currentBook && this.currentBook.pages.length > 0) {
-                    const progress = ((this.currentPage + 1) / this.currentBook.pages.length) * 100;
-                    document.getElementById('progressBar').style.width = progress + '%';
-                } else {
-                    document.getElementById('progressBar').style.width = '0%';
                 }
             }
 
@@ -2107,7 +2059,7 @@
                 
                 setTimeout(() => {
                     toast.classList.remove('show');
-                }, 3000);
+                }, 2500);
             }
 
             // ===== エラーハンドリング =====
@@ -2120,25 +2072,20 @@
             handleGlobalError(event) {
                 updateDebugInfo('Global error: ' + (event.reason || event.message || 'Unknown error'));
                 console.error('Global error:', event);
-                
-                if (window.location.hostname === 'localhost') {
-                    this.showToast('エラー: ' + (event.reason || event.message || 'Unknown error'), 'error');
-                }
             }
         }
 
         // アプリケーション起動
         let app;
         
-        // DOMContentLoaded後に初期化
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
-                updateDebugInfo('DOM読み込み完了');
+                updateDebugInfo('DOM ready');
                 app = new StudyBookApp();
                 window.app = app;
             });
         } else {
-            updateDebugInfo('DOM既に読み込み済み');
+            updateDebugInfo('DOM already ready');
             app = new StudyBookApp();
             window.app = app;
         }
