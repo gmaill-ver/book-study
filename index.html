@@ -1413,91 +1413,103 @@
 
             // ===== ノート作成 =====
             async createNewBook() {
-                updateDebugInfo('Creating new note...');
-                
-                if (!this.currentUser) {
-                    this.showToast('ログインが必要です', 'warning');
-                    return;
-                }
+    updateDebugInfo('Creating new note...');
+    
+    if (!this.currentUser) {
+        this.showToast('ログインが必要です', 'warning');
+        return;
+    }
 
-                const newNote = {
-                    title: '新しいノート',
-                    author: this.currentUser.displayName,
-                    authorId: this.currentUser.uid,
-                    isPublic: false,
-                    tags: [],
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString(),
-                    pages: [
-                        {
-                            title: 'タイトルページ',
-                            content: '# 新しいノート\n\n内容を入力してください',
-                            image: null,
-                            tags: []
-                        }
-                    ],
-                    views: 0,
-                    likes: 0
-                };
-
-                if (this.db) {
-                    try {
-                        updateDebugInfo('Saving to Firestore...');
-                        const { collection, addDoc, serverTimestamp } = window.firebaseModules;
-                        newNote.createdAt = serverTimestamp();
-                        newNote.updatedAt = serverTimestamp();
-                        
-                        // サブコレクションに保存
-                        const notesRef = collection(this.db, 'users', this.currentUser.uid, 'notes');
-                        const docRef = await addDoc(notesRef, newNote);
-                        newNote.id = docRef.id;
-                        updateDebugInfo('Saved: ' + docRef.id);
-                        
-                        this.showToast('ノートを作成しました', 'success');
-                    } catch (error) {
-                        updateDebugInfo('Save error: ' + error.message);
-                        this.handleError(error, 'ノートの作成に失敗しました');
-                        return;
-                    }
-                } else {
-                    newNote.id = 'note_' + Date.now();
-                    updateDebugInfo('Local save: ' + newNote.id);
-                }
-
-                this.notesMap.set(newNote.id, newNote);
-                this.openBook(newNote.id, true);
+    const newNote = {
+        title: '新しいノート',
+        author: this.currentUser.displayName,
+        authorId: this.currentUser.uid,
+        isPublic: false,
+        tags: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        pages: [
+            {
+                title: 'タイトルページ',
+                content: '# 新しいノート\n\n内容を入力してください',
+                image: null,
+                tags: []
             }
+        ],
+        views: 0,
+        likes: 0
+    };
+
+    if (this.db) {
+        try {
+            updateDebugInfo('Saving to Firestore...');
+            const { collection, addDoc, serverTimestamp } = window.firebaseModules;
+            
+            // serverTimestampは保存時に設定
+            const noteToSave = {
+                ...newNote,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            };
+            
+            // サブコレクションに保存
+            const notesRef = collection(this.db, 'users', this.currentUser.uid, 'notes');
+            const docRef = await addDoc(notesRef, noteToSave);
+            newNote.id = docRef.id;
+            updateDebugInfo('Saved: ' + docRef.id);
+            
+            // notesMapに追加
+            this.notesMap.set(newNote.id, newNote);
+            
+            // ノートを開く前にcurrentNoteを設定
+            this.currentNote = newNote;
+            this.showToast('ノートを作成しました', 'success');
+            
+            // ノートを開く
+            this.openBook(newNote.id, true);
+        } catch (error) {
+            updateDebugInfo('Save error: ' + error.message);
+            this.handleError(error, 'ノートの作成に失敗しました');
+            return;
+        }
+    } else {
+        newNote.id = 'note_' + Date.now();
+        this.notesMap.set(newNote.id, newNote);
+        this.currentNote = newNote;
+        updateDebugInfo('Local save: ' + newNote.id);
+        this.openBook(newNote.id, true);
+    }
+}
 
             // ===== ノートを開く =====
             openBook(noteId, editMode = false) {
-                const note = this.notesMap.get(noteId);
-                
-                if (!note) {
-                    this.showToast('ノートが見つかりません', 'error');
-                    return;
-                }
+    const note = this.notesMap.get(noteId);
+    
+    if (!note) {
+        this.showToast('ノートが見つかりません', 'error');
+        return;
+    }
 
-                this.currentNote = note;
-                this.currentPage = 0;
-                this.isEditing = editMode && this.currentUser && note.authorId === this.currentUser.uid;
+    this.currentNote = note;
+    this.currentPage = 0;
+    this.isEditing = editMode && this.currentUser && note.authorId === this.currentUser.uid;
 
-                document.getElementById('homeView').style.display = 'none';
-                document.getElementById('viewerContainer').style.display = 'block';
+    document.getElementById('homeView').style.display = 'none';
+    document.getElementById('viewerContainer').style.display = 'block';
 
-                // 閲覧数カウント
-                if (!editMode && this.db) {
-                    this.incrementViews(noteId);
-                }
+    // 閲覧数カウント（編集モードでない場合のみ）
+    if (!editMode && this.db && this.currentNote.id) {
+        this.incrementViews(noteId);
+    }
 
-                // 進捗保存
-                if (!editMode) {
-                    this.saveReadingProgress(noteId, 0);
-                }
+    // 進捗保存（編集モードでない場合のみ）
+    if (!editMode) {
+        this.saveReadingProgress(noteId, 0);
+    }
 
-                this.updateViewer();
-                // ビューアーで最上部にスクロール
-                window.scrollTo(0, 0);
-            }
+    this.updateViewer();
+    window.scrollTo(0, 0);
+}
 
             // ===== ビューアー更新 =====
             updateViewer() {
@@ -1640,7 +1652,11 @@
 
             // ===== 公開ノート同期 =====
             async syncToPublicNotes() {
-    if (!this.db || !this.currentNote) return;
+    // currentNoteのnullチェックを最初に
+    if (!this.db || !this.currentNote || !this.currentNote.id) {
+        console.log('syncToPublicNotes skipped: no current note');
+        return;
+    }
     
     try {
         const { doc, setDoc, deleteDoc } = window.firebaseModules;
@@ -1652,10 +1668,12 @@
                 authorId: this.currentUser.uid,
                 author: this.currentUser.displayName
             });
+            console.log('Note synced to public');
         } else {
             // 非公開にした場合は公開ノートコレクションから削除
             try {
                 await deleteDoc(doc(this.db, 'publicNotes', this.currentNote.id));
+                console.log('Note removed from public');
             } catch (error) {
                 // 存在しない場合のエラーは無視
                 console.log('Public note not found, skipping deletion');
@@ -1663,6 +1681,7 @@
         }
     } catch (error) {
         console.error('Public notes sync error:', error);
+        // エラーが発生してもアプリは継続
     }
 }
             // ===== ノート削除 =====
@@ -1845,58 +1864,68 @@
 
             // ===== 進捗管理 =====
             saveReadingProgress(noteId, pageIndex) {
-                if (!this.currentUser) return;
+    if (!this.currentUser) return;
 
-                const progress = {
-                    noteId,
-                    pageIndex,
-                    timestamp: Date.now()
-                };
+    const progress = {
+        noteId,
+        pageIndex,
+        userId: this.currentUser.uid,  // userIdフィールドを追加
+        timestamp: Date.now()
+    };
 
-                if (this.db) {
-                    const { doc, setDoc } = window.firebaseModules;
-                    setDoc(
-                        doc(this.db, 'reading_progress', `${this.currentUser.uid}_${noteId}`),
-                        progress
-                    ).catch(() => {});
-                } else {
-                    localStorage.setItem('studybook_progress_' + noteId, JSON.stringify(progress));
-                }
-            }
+    if (this.db) {
+        const { doc, setDoc } = window.firebaseModules;
+        // エラーが発生してもアプリは継続するように
+        setDoc(
+            doc(this.db, 'reading_progress', `${this.currentUser.uid}_${noteId}`),
+            progress
+        ).catch((error) => {
+            console.warn('Progress save error (non-critical):', error);
+        });
+    } else {
+        localStorage.setItem('studybook_progress_' + noteId, JSON.stringify(progress));
+    }
+}
 
             async loadReadingProgress() {
-                if (!this.currentUser) return;
+    if (!this.currentUser) return;
 
-                let latestProgress = null;
+    let latestProgress = null;
 
-                if (this.db) {
-                    try {
-                        const { collection, query, where, getDocs, orderBy, limit } = window.firebaseModules;
-                        const progressQuery = query(
-                            collection(this.db, 'reading_progress'),
-                            orderBy('timestamp', 'desc'),
-                            limit(1)
-                        );
-                        
-                        const snapshot = await getDocs(progressQuery);
-                        if (!snapshot.empty) {
-                            latestProgress = snapshot.docs[0].data();
-                        }
-                    } catch (error) {
-                        console.error('Progress load error:', error);
-                    }
-                } else {
-                    const keys = Object.keys(localStorage).filter(k => k.startsWith('studybook_progress_'));
-                    if (keys.length > 0) {
-                        const progresses = keys.map(k => JSON.parse(localStorage.getItem(k)));
-                        latestProgress = progresses.sort((a, b) => b.timestamp - a.timestamp)[0];
-                    }
-                }
-
-                if (latestProgress) {
-                    this.displayContinueReading(latestProgress);
-                }
+    if (this.db) {
+        try {
+            const { collection, query, where, getDocs, orderBy, limit } = window.firebaseModules;
+            
+            // ユーザーIDでフィルタリング
+            const progressQuery = query(
+                collection(this.db, 'reading_progress'),
+                where('userId', '==', this.currentUser.uid),  // userIdフィールドでフィルタ
+                orderBy('timestamp', 'desc'),
+                limit(1)
+            );
+            
+            const snapshot = await getDocs(progressQuery);
+            if (!snapshot.empty) {
+                latestProgress = snapshot.docs[0].data();
             }
+        } catch (error) {
+            // 権限エラーは警告レベルに留める
+            console.warn('Progress load error (non-critical):', error);
+            // エラーが発生してもアプリは継続
+        }
+    } else {
+        // ローカルストレージから読み込み
+        const keys = Object.keys(localStorage).filter(k => k.startsWith('studybook_progress_'));
+        if (keys.length > 0) {
+            const progresses = keys.map(k => JSON.parse(localStorage.getItem(k)));
+            latestProgress = progresses.sort((a, b) => b.timestamp - a.timestamp)[0];
+        }
+    }
+
+    if (latestProgress) {
+        this.displayContinueReading(latestProgress);
+    }
+}
 
             displayContinueReading(progress) {
                 const note = this.notesMap.get(progress.noteId);
