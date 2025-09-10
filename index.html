@@ -1640,79 +1640,93 @@
 
             // ===== 公開ノート同期 =====
             async syncToPublicNotes() {
-                if (!this.db || !this.currentNote) return;
-                
-                try {
-                    const { doc, setDoc, deleteDoc } = window.firebaseModules;
-                    
-                    if (this.currentNote.isPublic) {
-                        // 公開ノートコレクションに追加/更新
-                        await setDoc(doc(this.db, 'publicNotes', this.currentNote.id), {
-                            ...this.currentNote,
-                            authorId: this.currentUser.uid,
-                            author: this.currentUser.displayName
-                        });
-                    } else {
-                        // 非公開にした場合は公開ノートコレクションから削除
-                        await deleteDoc(doc(this.db, 'publicNotes', this.currentNote.id));
-                    }
-                } catch (error) {
-                    console.error('Public notes sync error:', error);
-                }
+    if (!this.db || !this.currentNote) return;
+    
+    try {
+        const { doc, setDoc, deleteDoc } = window.firebaseModules;
+        
+        if (this.currentNote.isPublic) {
+            // 公開ノートコレクションに追加/更新
+            await setDoc(doc(this.db, 'publicNotes', this.currentNote.id), {
+                ...this.currentNote,
+                authorId: this.currentUser.uid,
+                author: this.currentUser.displayName
+            });
+        } else {
+            // 非公開にした場合は公開ノートコレクションから削除
+            try {
+                await deleteDoc(doc(this.db, 'publicNotes', this.currentNote.id));
+            } catch (error) {
+                // 存在しない場合のエラーは無視
+                console.log('Public note not found, skipping deletion');
             }
-
+        }
+    } catch (error) {
+        console.error('Public notes sync error:', error);
+    }
+}
             // ===== ノート削除 =====
             async deleteBook() {
-                if (!this.currentUser || !this.currentNote || this.currentNote.authorId !== this.currentUser.uid) {
-                    this.showToast('自分のノートのみ削除できます', 'warning');
-                    return;
-                }
+    if (!this.currentUser || !this.currentNote || this.currentNote.authorId !== this.currentUser.uid) {
+        this.showToast('自分のノートのみ削除できます', 'warning');
+        return;
+    }
 
-                if (!confirm(`「${this.currentNote.title}」を完全に削除しますか？この操作は取り消せません。`)) {
-                    return;
-                }
+    if (!confirm(`「${this.currentNote.title}」を完全に削除しますか？この操作は取り消せません。`)) {
+        return;
+    }
 
-                const noteId = this.currentNote.id;
+    const noteId = this.currentNote.id;
+    const isPublic = this.currentNote.isPublic; // 削除前に保存
 
+    try {
+        // 先にホームに戻る（currentNoteをnullにする前に）
+        this.currentNote = null;
+        this.currentPage = 0;
+        this.isEditing = false;
+        this.goHome();
+
+        // Firestoreから削除
+        if (this.db) {
+            const { doc, deleteDoc } = window.firebaseModules;
+            
+            // サブコレクションから削除
+            await deleteDoc(doc(this.db, 'users', this.currentUser.uid, 'notes', noteId));
+            
+            // 公開ノートコレクションからも削除
+            if (isPublic) {
                 try {
-                    // Firestoreから削除
-                    if (this.db) {
-                        const { doc, deleteDoc } = window.firebaseModules;
-                        
-                        // サブコレクションから削除
-                        await deleteDoc(doc(this.db, 'users', this.currentUser.uid, 'notes', noteId));
-                        
-                        // 公開ノートコレクションからも削除
-                        if (this.currentNote.isPublic) {
-                            await deleteDoc(doc(this.db, 'publicNotes', noteId));
-                        }
-                        
-                        updateDebugInfo('Deleted from Firestore: ' + noteId);
-                    }
-
-                    // メモリから削除
-                    this.notesMap.delete(noteId);
-                    this.notesMap.delete('public_' + noteId);  // 公開版も削除
-                    
-                    // ローカルストレージから完全に削除
-                    const keysToRemove = [];
-                    for (let i = 0; i < localStorage.length; i++) {
-                        const key = localStorage.key(i);
-                        if (key && (key.includes(noteId) || key.startsWith('studybook_'))) {
-                            keysToRemove.push(key);
-                        }
-                    }
-                    keysToRemove.forEach(key => localStorage.removeItem(key));
-                    
-                    this.showToast('ノートを削除しました', 'success');
-                    this.goHome();
-                    
-                    // UIを強制的に更新
-                    this.updateUI();
+                    await deleteDoc(doc(this.db, 'publicNotes', noteId));
                 } catch (error) {
-                    this.handleError(error, 'ノートの削除に失敗しました');
+                    console.log('Public note deletion skipped:', error);
                 }
             }
+            
+            updateDebugInfo('Deleted from Firestore: ' + noteId);
+        }
+
+        // メモリから削除
+        this.notesMap.delete(noteId);
+        this.notesMap.delete('public_' + noteId);
+        
+        // ローカルストレージから削除
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.includes(noteId)) {
+                keysToRemove.push(key);
+            }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+        
+        this.showToast('ノートを削除しました', 'success');
+        
+        // UIを更新
+        this.updateUI();
+    } catch (error) {
+        this.handleError(error, 'ノートの削除に失敗しました');
+    }
+}
 
             // ===== エディター機能強化 =====
             insertMarkdown(before, after) {
@@ -2184,20 +2198,20 @@
             }
 
             goHome() {
-                if (this.isEditing && this.currentNote) {  // currentNoteが存在する場合のみ
-                    if (confirm('変更を保存しますか？')) {
-                        this.saveBook();
-                    }
-                }
+    if (this.isEditing && this.currentNote) {  // currentNoteの存在チェック
+        if (confirm('変更を保存しますか？')) {
+            this.saveBook();
+        }
+    }
 
-                document.getElementById('homeView').style.display = 'block';
-                document.getElementById('viewerContainer').style.display = 'none';
-                document.getElementById('sidebar').classList.remove('open');
-                this.currentNote = null;
-                this.currentPage = 0;
-                this.isEditing = false;
-                this.updateUI();
-            }
+    document.getElementById('homeView').style.display = 'block';
+    document.getElementById('viewerContainer').style.display = 'none';
+    document.getElementById('sidebar').classList.remove('open');
+    this.currentNote = null;
+    this.currentPage = 0;
+    this.isEditing = false;
+    this.updateUI();
+}
 
             goToPage(pageIndex) {
                 if (this.isEditing) {
@@ -2241,31 +2255,32 @@
             }
 
             async toggleVisibility() {
-                if (!this.currentUser || this.currentNote.authorId !== this.currentUser.uid) {
-                    this.showToast('自分のノートのみ変更できます', 'warning');
-                    return;
-                }
+    if (!this.currentUser || !this.currentNote || this.currentNote.authorId !== this.currentUser.uid) {
+        this.showToast('自分のノートのみ変更できます', 'warning');
+        return;
+    }
 
-                this.currentNote.isPublic = !this.currentNote.isPublic;
+    this.currentNote.isPublic = !this.currentNote.isPublic;
 
-                if (this.db) {
-                    try {
-                        const { doc, updateDoc } = window.firebaseModules;
-                        await updateDoc(doc(this.db, 'users', this.currentUser.uid, 'notes', this.currentNote.id), {
-                            isPublic: this.currentNote.isPublic
-                        });
-                        
-                        // 公開ノートの同期
-                        await this.syncToPublicNotes();
-                    } catch (error) {
-                        console.error('Visibility update error:', error);
-                    }
-                }
+    if (this.db) {
+        try {
+            const { doc, updateDoc } = window.firebaseModules;
+            await updateDoc(doc(this.db, 'users', this.currentUser.uid, 'notes', this.currentNote.id), {
+                isPublic: this.currentNote.isPublic
+            });
+            
+            // 公開ノートの同期
+            await this.syncToPublicNotes();
+        } catch (error) {
+            console.error('Visibility update error:', error);
+            // エラーが発生しても処理を続行
+        }
+    }
 
-                this.notesMap.set(this.currentNote.id, this.currentNote);
-                this.updateViewer();
-                this.showToast(this.currentNote.isPublic ? '公開しました' : '非公開にしました', 'success');
-            }
+    this.notesMap.set(this.currentNote.id, this.currentNote);
+    this.updateViewer();
+    this.showToast(this.currentNote.isPublic ? '公開しました' : '非公開にしました', 'success');
+}
 
             showPublicBooks() {
                 document.getElementById('publicBooksSection').style.display = 'block';
