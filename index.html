@@ -1091,7 +1091,7 @@
             console.log('DEBUG:', message);
         }
 
-        // ===== StudyBook Application - 最適化版 =====
+        // ===== StudyBook Application - 完全修正版 =====
         class StudyBookApp {
             constructor() {
                 updateDebugInfo('App starting...');
@@ -1139,6 +1139,10 @@
                 // タッチイベント
                 this.touchStartX = 0;
                 this.touchStartY = 0;
+
+                // 共有ノート処理のフラグ
+                this.pendingSharedNoteId = null;
+                this.dataLoadingComplete = false;
 
                 // PWA & オフライン対応
                 this.setupOfflineHandling();
@@ -1197,7 +1201,7 @@
                             const timeout = setTimeout(() => {
                                 updateDebugInfo('Firebase timeout - continuing without Firebase');
                                 resolve();
-                            }, 8000); // タイムアウトを短縮
+                            }, 8000);
                             
                             window.addEventListener('firebaseReady', () => {
                                 clearTimeout(timeout);
@@ -1213,6 +1217,9 @@
                     // イベントリスナー設定
                     this.setupEventListeners();
 
+                    // URL パラメータをチェック（データロード前に）
+                    this.checkUrlParams();
+
                     // データロード（最適化）
                     if (this.auth) {
                         updateDebugInfo('Setting up auth...');
@@ -1220,11 +1227,11 @@
                     } else {
                         updateDebugInfo('Using local mode');
                         this.loadLocalData();
+                        this.dataLoadingComplete = true;
                         this.updateUI();
+                        // URLからのノート表示処理
+                        this.handlePendingSharedNote();
                     }
-
-                    // URL パラメータチェック
-                    this.checkUrlParams();
 
                     // ローディング完了
                     document.getElementById('loadingText').textContent = '完了';
@@ -1268,21 +1275,6 @@
                     this.db = getFirestore(this.firebaseApp);
                     this.storage = getStorage(this.firebaseApp);
                     
-                    // Firestoreの設定を最適化
-                    if (this.db) {
-                        // オフライン永続化を有効化（エラー時は無視）
-                        try {
-                            await import('https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js')
-                                .then(module => {
-                                    if (module.enableMultiTabIndexedDbPersistence) {
-                                        return module.enableMultiTabIndexedDbPersistence(this.db);
-                                    }
-                                });
-                        } catch (persistenceError) {
-                            console.warn('Persistence not available:', persistenceError);
-                        }
-                    }
-                    
                     updateDebugInfo('Firebase init success');
                 } catch (error) {
                     updateDebugInfo('Firebase init failed: ' + error.message);
@@ -1305,9 +1297,149 @@
                         updateDebugInfo('User signed out');
                         this.handleAuthLogout();
                     }
+                    
+                    // データロード完了を設定
+                    this.dataLoadingComplete = true;
+                    
+                    // URLからのノート表示処理
+                    this.handlePendingSharedNote();
+                    
                 } catch (error) {
                     updateDebugInfo('Auth state change error: ' + error.message);
                     this.handleError(error, '認証処理でエラーが発生しました');
+                }
+            }
+
+            // ===== URL パラメータチェック - 修正版 =====
+            checkUrlParams() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const noteId = urlParams.get('book');
+
+                if (noteId) {
+                    updateDebugInfo(`Shared note requested: ${noteId}`);
+                    this.pendingSharedNoteId = noteId;
+                    
+                    // データがすでに読み込まれている場合は即座に処理
+                    if (this.dataLoadingComplete) {
+                        this.handlePendingSharedNote();
+                    }
+                }
+            }
+
+            // ===== 共有ノート処理 - 新規メソッド =====
+            async handlePendingSharedNote() {
+                if (!this.pendingSharedNoteId || !this.dataLoadingComplete) {
+                    return;
+                }
+
+                const noteId = this.pendingSharedNoteId;
+                this.pendingSharedNoteId = null; // フラグをクリア
+
+                updateDebugInfo(`Processing pending shared note: ${noteId}`);
+
+                // まずメモリ内を検索
+                let note = this.findNoteById(noteId);
+
+                if (note && note.isPublic) {
+                    updateDebugInfo(`Found shared note in memory: ${note.title}`);
+                    this.openBook(noteId, false);
+                    return;
+                }
+
+                // メモリにない場合はFirestoreから直接取得
+                if (this.db) {
+                    await this.loadPublicNoteDirectly(noteId);
+                } else {
+                    updateDebugInfo('No Firebase connection for shared note');
+                    this.showToast('オフラインでは共有ノートを開けません', 'error');
+                }
+            }
+
+            // ===== ノート検索の統一メソッド =====
+            findNoteById(noteId) {
+                // 複数のパターンで検索
+                return this.notesMap.get(noteId) || 
+                       this.notesMap.get('public_' + noteId) ||
+                       null;
+            }
+
+            // ===== 公開ノートを直接取得 - 修正版 =====
+            async loadPublicNoteDirectly(noteId) {
+                if (!this.db) {
+                    this.showToast('オフラインでは共有ノートを開けません', 'error');
+                    return;
+                }
+                
+                try {
+                    updateDebugInfo(`Loading public note directly: ${noteId}`);
+                    const { doc, getDoc } = window.firebaseModules;
+                    
+                    // publicNotesコレクションから取得を試行
+                    const publicNoteRef = doc(this.db, 'publicNotes', noteId);
+                    const publicNoteDoc = await getDoc(publicNoteRef);
+                    
+                    if (publicNoteDoc.exists()) {
+                        const noteData = { id: publicNoteDoc.id, ...publicNoteDoc.data() };
+                        
+                        if (noteData.isPublic) {
+                            // notesMapに追加（統一されたキーで）
+                            this.notesMap.set(noteId, noteData);
+                            updateDebugInfo(`Loaded public note: ${noteData.title}`);
+                            this.openBook(noteId, false);
+                            return;
+                        }
+                    }
+                    
+                    // publicNotesになければユーザーコレクションから探す
+                    await this.findNoteInUserCollections(noteId);
+                    
+                } catch (error) {
+                    updateDebugInfo(`Public note load error: ${error.message}`);
+                    this.handleError(error, '共有ノートの読み込みに失敗しました');
+                }
+            }
+
+            // ===== ユーザーコレクションから公開ノートを検索 =====
+            async findNoteInUserCollections(noteId) {
+                try {
+                    updateDebugInfo(`Searching for note in user collections: ${noteId}`);
+                    const { collection, query, where, getDocs } = window.firebaseModules;
+                    
+                    // すべてのユーザーから公開ノートを検索（効率性のため制限あり）
+                    const usersRef = collection(this.db, 'users');
+                    const usersSnapshot = await getDocs(query(usersRef, limit(50))); // 最大50ユーザーを検索
+                    
+                    for (const userDoc of usersSnapshot.docs) {
+                        try {
+                            const { doc, getDoc } = window.firebaseModules;
+                            const noteRef = doc(this.db, 'users', userDoc.id, 'notes', noteId);
+                            const noteSnapshot = await getDoc(noteRef);
+                            
+                            if (noteSnapshot.exists()) {
+                                const noteData = { id: noteSnapshot.id, ...noteSnapshot.data(), authorId: userDoc.id };
+                                
+                                if (noteData.isPublic) {
+                                    // 見つかった公開ノートをnotesMapに追加
+                                    this.notesMap.set(noteId, noteData);
+                                    updateDebugInfo(`Found public note in user collection: ${noteData.title}`);
+                                    this.openBook(noteId, false);
+                                    return;
+                                }
+                            }
+                        } catch (userError) {
+                            // 個別のエラーは無視して続行
+                            continue;
+                        }
+                    }
+                    
+                    // どこにも見つからない場合
+                    updateDebugInfo(`Shared note not found: ${noteId}`);
+                    this.showToast('共有ノートが見つからないか、非公開に設定されています', 'error');
+                    
+                } catch (error) {
+                    updateDebugInfo(`User collections search error: ${error.message}`);
+                    console.error('Error searching user collections:', error);
+                    this.showToast('共有ノートの検索中にエラーが発生しました', 'error');
                 }
             }
 
@@ -1372,14 +1504,15 @@
                     const publicNotesQuery = query(
                         collection(this.db, 'publicNotes'),
                         orderBy('updatedAt', 'desc'),
-                        limit(30)
+                        limit(50)
                     );
                     const publicSnapshot = await getDocs(publicNotesQuery);
                     
                     publicSnapshot.forEach(doc => {
                         const noteData = { id: doc.id, ...doc.data() };
+                        // 自分のノートでない場合のみ追加（キーは元のIDを使用）
                         if (noteData.authorId !== this.currentUser.uid) {
-                            this.notesMap.set('public_' + doc.id, noteData);
+                            this.notesMap.set(doc.id, noteData);
                         }
                     });
 
@@ -1421,7 +1554,7 @@
                     const publicNotesQuery = query(
                         collection(this.db, 'publicNotes'),
                         orderBy('updatedAt', 'desc'),
-                        limit(30)
+                        limit(50)
                     );
                     
                     const unsubscribePublicNotes = onSnapshot(publicNotesQuery, 
@@ -1499,7 +1632,7 @@
                 }
             }
 
-            // ===== スナップショット処理 =====
+            // ===== スナップショット処理 - 修正版 =====
             handleNotesSnapshot(snapshot, authorId) {
                 let hasChanges = false;
                 
@@ -1523,7 +1656,7 @@
                 if (hasChanges) {
                     this.updateSearchIndex();
                     this.updateUI();
-                    this.saveLocalData(); // ローカルキャッシュも更新
+                    this.saveLocalData();
                 }
             }
 
@@ -1533,12 +1666,13 @@
                 snapshot.docChanges().forEach((change) => {
                     const noteData = { id: change.doc.id, ...change.doc.data() };
                     
+                    // 自分のノートでない場合のみ処理（キーは元のIDを使用）
                     if (noteData.authorId !== this.currentUser?.uid) {
                         if (change.type === 'added' || change.type === 'modified') {
-                            this.notesMap.set('public_' + change.doc.id, noteData);
+                            this.notesMap.set(change.doc.id, noteData);
                             hasChanges = true;
                         } else if (change.type === 'removed') {
-                            this.notesMap.delete('public_' + change.doc.id);
+                            this.notesMap.delete(change.doc.id);
                             hasChanges = true;
                         }
                     }
@@ -1698,6 +1832,12 @@
                 const searchInput = document.getElementById('searchInput');
                 if (searchInput) {
                     searchInput.addEventListener('input', this.debounce(this.handleSearch.bind(this), 300));
+                    // 検索結果をクリアするため
+                    document.addEventListener('click', (e) => {
+                        if (!searchInput.contains(e.target)) {
+                            document.getElementById('searchResults').classList.remove('active');
+                        }
+                    });
                 }
 
                 // タッチイベント
@@ -1839,32 +1979,49 @@
                 this.openBook(newNote.id, true);
             }
 
-            // ===== ノートを開く =====
+            // ===== ノートを開く - 完全修正版 =====
             openBook(noteId, editMode = false) {
-                const note = this.notesMap.get(noteId);
+                updateDebugInfo(`Opening book: ${noteId}, edit: ${editMode}`);
+                
+                // 統一されたノート検索
+                const note = this.findNoteById(noteId);
                 
                 if (!note) {
+                    updateDebugInfo(`Note not found: ${noteId}`);
+                    // notesMapの内容をデバッグ出力
+                    updateDebugInfo(`NotesMap keys: ${Array.from(this.notesMap.keys()).join(', ')}`);
                     this.showToast('ノートが見つかりません', 'error');
                     return;
                 }
 
+                // 編集モードの場合は所有者チェック
+                if (editMode && (!this.currentUser || note.authorId !== this.currentUser.uid)) {
+                    updateDebugInfo(`Edit permission denied for note: ${noteId}`);
+                    this.showToast('編集権限がありません', 'warning');
+                    editMode = false; // 読み取り専用モードに変更
+                }
+
                 this.currentNote = note;
                 this.currentPage = 0;
-                this.isEditing = editMode && this.currentUser && note.authorId === this.currentUser.uid;
+                this.isEditing = editMode;
 
                 document.getElementById('homeView').style.display = 'none';
                 document.getElementById('viewerContainer').style.display = 'block';
 
+                // 閲覧数カウント（編集モードでない場合のみ）
                 if (!editMode && this.db && this.currentNote.id) {
                     this.incrementViews(noteId);
                 }
 
-                if (!editMode) {
+                // 進捗保存（ログインユーザーで編集モードでない場合のみ）
+                if (!editMode && this.currentUser) {
                     this.saveReadingProgress(noteId, 0);
                 }
 
                 this.updateViewer();
                 window.scrollTo(0, 0);
+                
+                updateDebugInfo(`Opened note: ${note.title} (edit: ${editMode})`);
             }
 
             // ===== ビューアー更新 =====
@@ -2021,7 +2178,7 @@
                 this.updateUI();
             }
 
-            // ===== 公開ノート同期 =====
+            // ===== 公開ノート同期 - 修正版 =====
             async syncToPublicNotes() {
                 if (!this.db || !this.currentNote || !this.currentNote.id || !this.currentUser) {
                     return;
@@ -2030,21 +2187,36 @@
                 try {
                     const { doc, setDoc, deleteDoc } = window.firebaseModules;
                     
+                    // 実際のnoteIDを取得（public_プレフィックスを除去）
+                    const actualNoteId = this.currentNote.id.startsWith('public_') 
+                        ? this.currentNote.id.replace('public_', '') 
+                        : this.currentNote.id;
+                    
                     if (this.currentNote.isPublic === true) {
-                        await setDoc(doc(this.db, 'publicNotes', this.currentNote.id), {
+                        // 公開ノートコレクションに追加/更新
+                        const publicNoteData = {
                             ...this.currentNote,
+                            id: actualNoteId, // 実際のIDを設定
                             authorId: this.currentUser.uid,
                             author: this.currentUser.displayName || 'ユーザー'
-                        });
+                        };
+                        
+                        await setDoc(doc(this.db, 'publicNotes', actualNoteId), publicNoteData);
+                        updateDebugInfo(`Synced to public notes: ${actualNoteId}`);
+                        
                     } else if (this.currentNote.isPublic === false) {
+                        // 非公開にした場合は公開ノートコレクションから削除
                         try {
-                            await deleteDoc(doc(this.db, 'publicNotes', this.currentNote.id));
+                            await deleteDoc(doc(this.db, 'publicNotes', actualNoteId));
+                            updateDebugInfo(`Removed from public notes: ${actualNoteId}`);
                         } catch (error) {
                             // 存在しない場合のエラーは無視
+                            updateDebugInfo(`Public note not found for deletion: ${actualNoteId}`);
                         }
                     }
                 } catch (error) {
                     console.error('Public notes sync error:', error);
+                    updateDebugInfo(`Sync error: ${error.message}`);
                 }
             }
 
@@ -2167,13 +2339,20 @@
                 input.click();
             }
 
-            // ===== シェア機能 =====
+            // ===== シェア機能 - 修正版 =====
             showShareModal() {
                 if (!this.currentNote) return;
 
-                const shareUrl = `${window.location.origin}${window.location.pathname}?book=${this.currentNote.id}`;
+                // 元のnoteIdを使用（public_プレフィックスを除去）
+                const shareNoteId = this.currentNote.id.startsWith('public_') 
+                    ? this.currentNote.id.replace('public_', '') 
+                    : this.currentNote.id;
+                
+                const shareUrl = `${window.location.origin}${window.location.pathname}?book=${shareNoteId}`;
                 document.getElementById('shareUrl').value = shareUrl;
                 document.getElementById('shareModal').style.display = 'flex';
+                
+                updateDebugInfo(`Share URL generated: ${shareUrl}`);
             }
 
             closeShareModal() {
@@ -2284,7 +2463,7 @@
             }
 
             displayContinueReading(progress) {
-                const note = this.notesMap.get(progress.noteId);
+                const note = this.findNoteById(progress.noteId);
                 if (!note) return;
 
                 const container = document.getElementById('continueReading');
@@ -2303,12 +2482,15 @@
                 try {
                     const { doc, updateDoc, increment } = window.firebaseModules;
                     
+                    // 実際のnoteIdを取得
+                    const actualNoteId = noteId.startsWith('public_') ? noteId.replace('public_', '') : noteId;
+                    
                     if (this.currentNote.authorId === this.currentUser?.uid) {
-                        await updateDoc(doc(this.db, 'users', this.currentUser.uid, 'notes', noteId), {
+                        await updateDoc(doc(this.db, 'users', this.currentUser.uid, 'notes', actualNoteId), {
                             views: increment(1)
                         });
                     } else {
-                        await updateDoc(doc(this.db, 'publicNotes', noteId), {
+                        await updateDoc(doc(this.db, 'publicNotes', actualNoteId), {
                             views: increment(1)
                         });
                     }
@@ -2414,6 +2596,7 @@
                     `<span class="tag" onclick="event.stopPropagation(); app.searchByTag('${this.escapeHtml(tag)}')">${this.escapeHtml(tag)}</span>`
                 ).join('');
 
+                // ノートIDの正規化（public_プレフィックスを除去）
                 const noteId = note.id.startsWith('public_') ? note.id.replace('public_', '') : note.id;
 
                 return `
@@ -2735,20 +2918,6 @@
                 document.getElementById('searchInput').scrollIntoView({ behavior: 'smooth' });
             }
 
-            checkUrlParams() {
-                const urlParams = new URLSearchParams(window.location.search);
-                const noteId = urlParams.get('book');
-
-                if (noteId) {
-                    setTimeout(() => {
-                        const note = this.notesMap.get(noteId) || this.notesMap.get('public_' + noteId);
-                        if (note && note.isPublic) {
-                            this.openBook(noteId, false);
-                        }
-                    }, 1500);
-                }
-            }
-
             // ===== ユーティリティ =====
             escapeHtml(text) {
                 if (!text) return '';
@@ -2809,6 +2978,31 @@
             handleGlobalError(event) {
                 updateDebugInfo('Global error: ' + (event.reason || event.message || 'Unknown error'));
                 console.error('Global error:', event);
+            }
+
+            // ===== デバッグ用メソッド =====
+            debugSharedNote(noteId) {
+                updateDebugInfo(`=== Debug Shared Note: ${noteId} ===`);
+                updateDebugInfo(`Notes in map: ${this.notesMap.size}`);
+                
+                const directNote = this.notesMap.get(noteId);
+                const publicNote = this.notesMap.get('public_' + noteId);
+                
+                updateDebugInfo(`Direct note (${noteId}): ${directNote ? 'Found' : 'Not found'}`);
+                updateDebugInfo(`Public note (public_${noteId}): ${publicNote ? 'Found' : 'Not found'}`);
+                
+                if (directNote) {
+                    updateDebugInfo(`Direct note public: ${directNote.isPublic}`);
+                    updateDebugInfo(`Direct note author: ${directNote.authorId}`);
+                }
+                
+                if (publicNote) {
+                    updateDebugInfo(`Public note public: ${publicNote.isPublic}`);
+                    updateDebugInfo(`Public note author: ${publicNote.authorId}`);
+                }
+                
+                updateDebugInfo(`Current user: ${this.currentUser?.uid || 'Not logged in'}`);
+                updateDebugInfo(`=== End Debug ===`);
             }
         }
 
