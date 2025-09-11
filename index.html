@@ -2529,12 +2529,21 @@
                 this.touchStartX = 0;
             }
 
-            // ===== UI更新 =====
+            // ===== UI更新 - 最適化版 =====
             updateUI() {
+                // 認証セクションは即座に更新
                 this.updateAuthSection();
-                this.updateMyBooks();
-                this.updatePublicBooks();
-                this.updateSearchIndex();
+                
+                // ノート一覧は遅延更新（UIの応答性を向上）
+                setTimeout(() => {
+                    this.updateMyBooks();
+                    this.updatePublicBooks();
+                }, 50);
+                
+                // 検索インデックスは最後（重い処理）
+                setTimeout(() => {
+                    this.updateSearchIndex();
+                }, 200);
             }
 
             updateAuthSection() {
