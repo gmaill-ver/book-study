@@ -100,7 +100,7 @@
     
     <style>
         :root {
-            /* スッキリとしたカラーパレット */
+            /* カラーパレット */
             --primary-color: #667eea;
             --primary-dark: #5a6fd8;
             --secondary-color: #764ba2;
@@ -202,7 +202,7 @@
             display: block;
         }
 
-        /* ミニマルヘッダー */
+        /* ヘッダー */
         .header {
             background: var(--bg-secondary);
             padding: 0.75rem 1rem;
@@ -292,7 +292,7 @@
             background: var(--bg-color);
         }
 
-        /* シンプルなボタン - 塗りつぶしなし */
+        /* ボタン */
         .btn {
             padding: 0.5rem;
             border-radius: 6px;
@@ -330,7 +330,6 @@
             color: var(--text-primary);
         }
 
-        /* 保存・削除ボタンは塗りつぶしなし */
         .btn-success {
             color: var(--success-color);
         }
@@ -355,7 +354,6 @@
             background: rgba(237, 137, 54, 0.1);
         }
 
-        /* 塗りつぶしボタン（モーダル用） */
         .btn-filled {
             background: var(--primary-color);
             color: white;
@@ -431,7 +429,6 @@
             transform: translateY(-2px);
         }
 
-        /* パスワード保護アイコン */
         .password-icon {
             position: absolute;
             top: 0.5rem;
@@ -440,14 +437,13 @@
             font-size: 1rem;
         }
 
-        /* ミニマルビューアー */
+        /* ビューアー */
         .viewer-container {
             display: none;
             background: var(--bg-color);
             min-height: 100vh;
         }
 
-        /* シンプルなビューアーヘッダー */
         .viewer-header {
             background: var(--bg-secondary);
             padding: 0.5rem;
@@ -473,7 +469,6 @@
             margin: 0 0.5rem;
         }
 
-        /* ズーム機能 */
         .zoom-controls {
             display: flex;
             gap: 0.25rem;
@@ -535,7 +530,6 @@
             color: white;
         }
 
-        /* 階層式目次 */
         .toc-section {
             border-bottom: 1px solid var(--border-color);
         }
@@ -585,7 +579,7 @@
             color: white;
         }
 
-        /* ページコンテンツ - ズーム対応 */
+        /* ページコンテンツ */
         .page-content {
             background: var(--bg-secondary);
             color: var(--text-primary);
@@ -727,7 +721,6 @@
             justify-content: flex-end;
         }
 
-        /* パスワード設定セクション */
         .password-section {
             margin: 1rem 0;
             padding: 1rem;
@@ -736,26 +729,6 @@
             background: var(--bg-color);
         }
 
-        .password-toggle {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .password-toggle input[type="checkbox"] {
-            transform: scale(1.2);
-        }
-
-        .password-input-group {
-            display: none;
-        }
-
-        .password-input-group.active {
-            display: block;
-        }
-
-        /* シェアボタン */
         .share-buttons {
             display: flex;
             gap: 0.5rem;
@@ -860,7 +833,6 @@
             background: var(--primary-color);
         }
 
-        /* 続きから読むボタン */
         .continue-reading {
             background: var(--bg-secondary);
             color: var(--text-primary);
@@ -880,7 +852,6 @@
             color: white;
         }
 
-        /* ノートタイトル編集 */
         .book-title-section {
             margin-bottom: 1rem;
             padding: 1rem;
@@ -904,17 +875,6 @@
             outline: none;
             border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        /* Firebase接続エラー表示 */
-        .firebase-error {
-            background: var(--error-color);
-            color: white;
-            padding: 1rem;
-            margin: 1rem;
-            border-radius: 6px;
-            text-align: center;
-            font-size: 0.9rem;
         }
 
         /* レスポンシブ */
@@ -954,7 +914,7 @@
             }
         }
 
-        /* デバッグ情報（小さく） */
+        /* デバッグ情報 */
         .debug-info {
             position: fixed;
             top: 60px;
@@ -971,7 +931,6 @@
             overflow-y: auto;
         }
 
-        /* ユーティリティ */
         .sr-only {
             position: absolute;
             width: 1px;
@@ -991,7 +950,7 @@
         <span id="connectionText">オフライン</span>
     </div>
 
-    <!-- デバッグ情報（小さく） -->
+    <!-- デバッグ情報 -->
     <div id="debugInfo" class="debug-info">
         <div id="debugContent">初期化中...</div>
     </div>
@@ -1000,12 +959,6 @@
     <div id="loadingScreen" class="loading-screen">
         <div class="loader"></div>
         <div class="loading-text" id="loadingText">読み込み中...</div>
-    </div>
-
-    <!-- Firebase エラー表示 -->
-    <div id="firebaseError" class="firebase-error" style="display: none;">
-        <div>Firebase接続エラーが発生しました</div>
-        <div style="font-size: 0.8rem; margin-top: 0.5rem;">ローカルモードで動作しています</div>
     </div>
 
     <!-- ホーム画面 -->
@@ -1083,7 +1036,7 @@
 
     <!-- ビューアー/エディター画面 -->
     <div id="viewerContainer" class="viewer-container">
-        <!-- シンプルヘッダー -->
+        <!-- ヘッダー -->
         <header class="viewer-header">
             <div class="header-group">
                 <button class="btn btn-secondary" onclick="app.toggleSidebar()" aria-label="メニュー" title="目次">☰</button>
@@ -1127,7 +1080,7 @@
                 </div>
                 
                 <div id="editMode" style="display: none;">
-                    <!-- ノートタイトル編集（最初のページのみ） -->
+                    <!-- ノートタイトル編集 -->
                     <div id="bookTitleSection" class="book-title-section" style="display: none;">
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem;">ノートタイトル</label>
                         <input 
@@ -1318,7 +1271,7 @@
     <div id="toast" class="toast" role="alert" aria-live="polite"></div>
 
     <script>
-        // デバッグ機能（最小限）
+        // デバッグ機能
         function updateDebugInfo(message) {
             const debugContent = document.getElementById('debugContent');
             if (debugContent) {
@@ -1330,7 +1283,7 @@
             console.log('DEBUG:', message);
         }
 
-        // ===== StudyBook Application - 修正版（認証永続化・ズーム機能付き） =====
+        // ===== StudyBook Application - 完全実装版 =====
         class StudyBookApp {
             constructor() {
                 updateDebugInfo('App starting...');
@@ -1371,7 +1324,7 @@
                 // パフォーマンス改善
                 this.dataCache = new Map();
                 this.lastFetchTime = 0;
-                this.cacheTimeout = 30000; // 30秒
+                this.cacheTimeout = 30000;
 
                 // レート制限
                 this.rateLimiter = new Map();
@@ -1380,7 +1333,7 @@
                 this.touchStartX = 0;
                 this.touchStartY = 0;
 
-                // 共有ノート処理のフラグ
+                // 共有ノート処理
                 this.pendingSharedNoteId = null;
                 this.dataLoadingComplete = false;
 
@@ -1440,7 +1393,7 @@
                 }
             }
 
-            // ===== 初期化 - 改善版 =====
+            // ===== 初期化 =====
             async init() {
                 try {
                     updateDebugInfo('Initializing...');
@@ -1463,16 +1416,16 @@
                         });
                     }
                     
-                    // Firebase初期化（エラー時も継続）
+                    // Firebase初期化
                     await this.initFirebase();
 
                     // イベントリスナー設定
                     this.setupEventListeners();
 
-                    // URL パラメータをチェック（データロード前に）
+                    // URL パラメータをチェック
                     this.checkUrlParams();
 
-                    // データロード（最適化）
+                    // データロード
                     if (this.auth && this.firebaseInitialized) {
                         updateDebugInfo('Setting up auth...');
                         this.auth.onAuthStateChanged(this.handleAuthStateChange.bind(this));
@@ -1490,7 +1443,6 @@
                     
                     setTimeout(() => {
                         document.getElementById('loadingScreen').classList.add('hidden');
-                        // デバッグ情報は3秒後に非表示
                         setTimeout(() => {
                             const debugInfo = document.getElementById('debugInfo');
                             if (debugInfo) {
@@ -1509,13 +1461,12 @@
                 }
             }
 
-            // ===== Firebase初期化 - エラーハンドリング改善 =====
+            // ===== Firebase初期化 =====
             async initFirebase() {
                 updateDebugInfo('Firebase init start');
                 
                 if (!window.firebaseModules) {
                     updateDebugInfo('No Firebase modules - using local mode');
-                    this.showFirebaseError();
                     return;
                 }
 
@@ -1525,7 +1476,7 @@
                     this.firebaseApp = initializeApp(this.firebaseConfig);
                     this.auth = getAuth(this.firebaseApp);
                     
-                    // 認証の永続化を明示的に設定
+                    // 認証の永続化を設定
                     await setPersistence(this.auth, browserLocalPersistence);
                     updateDebugInfo('Auth persistence set to local');
                     
@@ -1535,16 +1486,10 @@
                     this.firebaseInitialized = true;
                     updateDebugInfo('Firebase init success');
                     
-                    // Firebase接続エラー表示を非表示
-                    document.getElementById('firebaseError').style.display = 'none';
-                    
                 } catch (error) {
                     updateDebugInfo('Firebase init failed: ' + error.message);
                     console.warn("Firebase initialization failed", error);
                     
-                    this.showFirebaseError();
-                    
-                    // Firebaseが使えない場合はローカルモードで継続
                     this.auth = null;
                     this.db = null;
                     this.storage = null;
@@ -1552,14 +1497,7 @@
                 }
             }
 
-            showFirebaseError() {
-                document.getElementById('firebaseError').style.display = 'block';
-                setTimeout(() => {
-                    document.getElementById('firebaseError').style.display = 'none';
-                }, 10000); // 10秒後に自動で非表示
-            }
-
-            // ===== 認証状態変更処理 - 改善版 =====
+            // ===== 認証状態変更処理 =====
             async handleAuthStateChange(user) {
                 try {
                     if (user) {
@@ -1570,10 +1508,7 @@
                         this.handleAuthLogout();
                     }
                     
-                    // データロード完了を設定
                     this.dataLoadingComplete = true;
-                    
-                    // URLからのノート表示処理
                     this.handlePendingSharedNote();
                     
                 } catch (error) {
@@ -1582,7 +1517,7 @@
                 }
             }
 
-            // ===== URL パラメータチェック - 修正版 =====
+            // ===== URL パラメータチェック =====
             checkUrlParams() {
                 const urlParams = new URLSearchParams(window.location.search);
                 const noteId = urlParams.get('book');
@@ -1591,40 +1526,35 @@
                     updateDebugInfo(`Shared note requested: ${noteId}`);
                     this.pendingSharedNoteId = noteId;
                     
-                    // データがすでに読み込まれている場合は即座に処理
                     if (this.dataLoadingComplete) {
                         this.handlePendingSharedNote();
                     }
                 }
             }
 
-            // ===== 共有ノート処理 - パスワード対応版 =====
+            // ===== 共有ノート処理 =====
             async handlePendingSharedNote() {
                 if (!this.pendingSharedNoteId || !this.dataLoadingComplete) {
                     return;
                 }
 
                 const noteId = this.pendingSharedNoteId;
-                this.pendingSharedNoteId = null; // フラグをクリア
+                this.pendingSharedNoteId = null;
 
                 updateDebugInfo(`Processing pending shared note: ${noteId}`);
 
-                // まずメモリ内を検索
                 let note = this.findNoteById(noteId);
 
                 if (note) {
-                    // パスワード保護チェック
                     if (await this.checkPasswordProtection(note)) {
                         updateDebugInfo(`Found shared note in memory: ${note.title}`);
                         this.openBook(noteId, false);
                         return;
                     } else {
-                        // パスワードが必要
                         return;
                     }
                 }
 
-                // メモリにない場合はFirestoreから直接取得
                 if (this.db && this.firebaseInitialized) {
                     await this.loadPublicNoteDirectly(noteId);
                 } else {
@@ -1635,17 +1565,14 @@
 
             // ===== パスワード保護チェック =====
             async checkPasswordProtection(note) {
-                // パスワード保護されていない場合
                 if (!note.password && note.visibility?.type !== 'password') {
                     return true;
                 }
 
-                // 自分のノートの場合はパスワード不要
                 if (this.currentUser && note.authorId === this.currentUser.uid) {
                     return true;
                 }
 
-                // パスワードがキャッシュされている場合
                 const cachedPassword = this.passwordCache.get(note.id);
                 if (cachedPassword) {
                     const correctPassword = note.password || note.visibility?.password;
@@ -1654,13 +1581,11 @@
                     }
                 }
 
-                // パスワード入力を要求
                 this.pendingPasswordNote = note;
                 this.showPasswordPrompt(note);
                 return false;
             }
 
-            // ===== パスワード入力プロンプト =====
             showPasswordPrompt(note) {
                 document.getElementById('passwordPromptInput').value = '';
                 document.getElementById('passwordPromptModal').classList.add('active');
@@ -1686,14 +1611,12 @@
                                       this.pendingPasswordNote.visibility?.password;
 
                 if (password === correctPassword) {
-                    // パスワード正解：キャッシュに保存して開く
                     this.passwordCache.set(this.pendingPasswordNote.id, password);
                     this.closePasswordPrompt();
                     this.openBook(this.pendingPasswordNote.id, false);
                     this.pendingPasswordNote = null;
                     this.showToast('パスワードが正しく入力されました', 'success');
                 } else {
-                    // パスワード間違い
                     this.showToast('パスワードが間違っています', 'error');
                     document.getElementById('passwordPromptInput').value = '';
                     document.getElementById('passwordPromptInput').focus();
@@ -1705,14 +1628,14 @@
                 this.pendingPasswordNote = null;
             }
 
-            // ===== ノート検索の統一メソッド =====
+            // ===== ノート検索 =====
             findNoteById(noteId) {
                 return this.notesMap.get(noteId) || 
                        this.notesMap.get('public_' + noteId) ||
                        null;
             }
 
-            // ===== 公開ノートを直接取得 - パスワード対応版 =====
+            // ===== 公開ノートを直接取得 =====
             async loadPublicNoteDirectly(noteId) {
                 if (!this.db || !this.firebaseInitialized) {
                     this.showToast('オフラインでは共有ノートを開けません', 'error');
@@ -1723,20 +1646,16 @@
                     updateDebugInfo(`Loading public note directly: ${noteId}`);
                     const { doc, getDoc } = window.firebaseModules;
                     
-                    // publicNotesコレクションから取得を試行
                     const publicNoteRef = doc(this.db, 'publicNotes', noteId);
                     const publicNoteDoc = await getDoc(publicNoteRef);
                     
                     if (publicNoteDoc.exists()) {
                         const noteData = { id: publicNoteDoc.id, ...publicNoteDoc.data() };
                         
-                        // 公開ノートまたはパスワード保護ノートの場合
                         if (noteData.isPublic || noteData.visibility?.type === 'password' || noteData.password) {
-                            // notesMapに追加
                             this.notesMap.set(noteId, noteData);
                             updateDebugInfo(`Loaded note: ${noteData.title}`);
                             
-                            // パスワード保護チェック
                             if (await this.checkPasswordProtection(noteData)) {
                                 this.openBook(noteId, false);
                             }
@@ -1744,7 +1663,6 @@
                         }
                     }
                     
-                    // publicNotesになければユーザーコレクションから探す
                     await this.findNoteInUserCollections(noteId);
                     
                 } catch (error) {
@@ -1753,13 +1671,12 @@
                 }
             }
 
-            // ===== ユーザーコレクションから公開ノートを検索 =====
+            // ===== ユーザーコレクションから検索 =====
             async findNoteInUserCollections(noteId) {
                 try {
                     updateDebugInfo(`Searching for note in user collections: ${noteId}`);
                     const { collection, query, getDocs, limit } = window.firebaseModules;
                     
-                    // 制限付きでユーザーコレクションを検索
                     const usersRef = collection(this.db, 'users');
                     const usersSnapshot = await getDocs(query(usersRef, limit(20)));
                     
@@ -1772,12 +1689,10 @@
                             if (noteSnapshot.exists()) {
                                 const noteData = { id: noteSnapshot.id, ...noteSnapshot.data(), authorId: userDoc.id };
                                 
-                                // 公開ノートまたはパスワード保護ノート
                                 if (noteData.isPublic || noteData.visibility?.type === 'password' || noteData.password) {
                                     this.notesMap.set(noteId, noteData);
                                     updateDebugInfo(`Found note in user collection: ${noteData.title}`);
                                     
-                                    // パスワード保護チェック
                                     if (await this.checkPasswordProtection(noteData)) {
                                         this.openBook(noteId, false);
                                     }
@@ -1794,12 +1709,11 @@
                     
                 } catch (error) {
                     updateDebugInfo(`User collections search error: ${error.message}`);
-                    console.error('Error searching user collections:', error);
                     this.showToast('共有ノートの検索中にエラーが発生しました', 'error');
                 }
             }
 
-            // ===== データ読み込み - 改善版セキュリティルール対応 =====
+            // ===== データ読み込み =====
             async loadNotesFromFirestore() {
                 if (!this.db || !this.currentUser || !this.firebaseInitialized) {
                     this.loadLocalData();
@@ -1809,7 +1723,6 @@
                 try {
                     updateDebugInfo('Loading notes from Firestore...');
                     
-                    // キャッシュチェック
                     const now = Date.now();
                     if (now - this.lastFetchTime < this.cacheTimeout && this.notesMap.size > 0) {
                         updateDebugInfo('Using cached data');
@@ -1817,14 +1730,10 @@
                         return;
                     }
 
-                    // 既存のリスナーをクリーンアップ
                     this.cleanupListeners();
                     this.notesMap.clear();
                     
-                    // 1. 最初に一度だけデータを取得（高速化）
                     await this.loadNotesOnce();
-                    
-                    // 2. その後リアルタイムリスナーを設定
                     this.setupRealtimeListeners();
                     
                     this.lastFetchTime = now;
@@ -1833,7 +1742,6 @@
                 } catch (error) {
                     updateDebugInfo('Load error: ' + error.message);
                     
-                    // permission-deniedエラーの場合は詳細なメッセージ
                     if (error.code === 'permission-denied') {
                         updateDebugInfo('Permission denied - check Firestore rules');
                         this.showToast('データアクセス権限がありません。Firestoreのセキュリティルールを確認してください。', 'error');
@@ -1841,12 +1749,11 @@
                         this.handleError(error, 'データの読み込みに失敗しました');
                     }
                     
-                    // フォールバック: ローカルデータを読み込み
                     this.loadLocalData();
                 }
             }
 
-            // ===== 一度だけのデータ取得 - セキュリティルール対応 =====
+            // ===== 一度だけのデータ取得 =====
             async loadNotesOnce() {
                 const { collection, query, getDocs, orderBy, limit } = window.firebaseModules;
                 
@@ -1873,7 +1780,6 @@
                     
                     publicSnapshot.forEach(doc => {
                         const noteData = { id: doc.id, ...doc.data() };
-                        // 自分のノートでない場合のみ追加
                         if (noteData.authorId !== this.currentUser.uid) {
                             this.notesMap.set(doc.id, noteData);
                         }
@@ -1891,7 +1797,87 @@
                 }
             }
 
-            // ===== リアルタイムリスナー設定 - 改善版 =====
+            // ===== 進捗管理 =====
+            async loadReadingProgress() {
+                if (!this.currentUser) return;
+
+                let latestProgress = null;
+
+                if (this.db && this.firebaseInitialized) {
+                    try {
+                        const { collection, query, getDocs, orderBy, limit } = window.firebaseModules;
+                        
+                        const progressQuery = query(
+                            collection(this.db, 'reading_progress'),
+                            orderBy('timestamp', 'desc'),
+                            limit(50)
+                        );
+                        
+                        const snapshot = await getDocs(progressQuery);
+                        
+                        snapshot.forEach(doc => {
+                            const data = doc.data();
+                            const docId = doc.id;
+                            if (docId.startsWith(this.currentUser.uid + '_') || 
+                                data.userId === this.currentUser.uid) {
+                                if (!latestProgress || data.timestamp > latestProgress.timestamp) {
+                                    latestProgress = data;
+                                }
+                            }
+                        });
+                    } catch (error) {
+                        console.warn('Progress load skipped:', error.message);
+                    }
+                } else {
+                    const keys = Object.keys(localStorage).filter(k => k.startsWith('studybook_progress_'));
+                    if (keys.length > 0) {
+                        const progresses = keys.map(k => JSON.parse(localStorage.getItem(k)));
+                        latestProgress = progresses.sort((a, b) => b.timestamp - a.timestamp)[0];
+                    }
+                }
+
+                if (latestProgress) {
+                    this.displayContinueReading(latestProgress);
+                }
+            }
+
+            displayContinueReading(progress) {
+                const note = this.findNoteById(progress.noteId);
+                if (!note) return;
+
+                const container = document.getElementById('continueReading');
+                container.innerHTML = `
+                    <div class="continue-reading" onclick="app.openBook('${progress.noteId}', false); app.currentPage = ${progress.pageIndex}; app.updateViewer();">
+                        📖 続きから読む: ${this.escapeHtml(note.title)} (${progress.pageIndex + 1}/${note.pages.length}ページ)
+                    </div>
+                `;
+                container.style.display = 'block';
+            }
+
+            saveReadingProgress(noteId, pageIndex) {
+                if (!this.currentUser || !noteId) return;
+
+                const progress = {
+                    noteId,
+                    pageIndex,
+                    userId: this.currentUser.uid,
+                    timestamp: Date.now()
+                };
+
+                if (this.db && this.firebaseInitialized) {
+                    const { doc, setDoc } = window.firebaseModules;
+                    setDoc(
+                        doc(this.db, 'reading_progress', `${this.currentUser.uid}_${noteId}`),
+                        progress
+                    ).catch(() => {
+                        // エラーは無視
+                    });
+                } else {
+                    localStorage.setItem('studybook_progress_' + noteId, JSON.stringify(progress));
+                }
+            }
+
+            // ===== リアルタイムリスナー設定 =====
             setupRealtimeListeners() {
                 if (!this.db || !this.currentUser || !this.firebaseInitialized) return;
 
@@ -1941,7 +1927,6 @@
                 }
             }
 
-            // ===== Firestoreエラーハンドリング =====
             handleFirestoreError(error, listenerType) {
                 console.error(`Firestore ${listenerType} error:`, error);
                 
@@ -1950,13 +1935,11 @@
                     this.showToast('データアクセス権限がありません', 'warning');
                 }
                 
-                // その他のエラーの場合はローカルデータにフォールバック
                 if (this.notesMap.size === 0) {
                     this.loadLocalData();
                 }
             }
 
-            // ===== スナップショット処理 =====
             handleNotesSnapshot(snapshot, authorId) {
                 let hasChanges = false;
                 
@@ -1990,7 +1973,6 @@
                 snapshot.docChanges().forEach((change) => {
                     const noteData = { id: change.doc.id, ...change.doc.data() };
                     
-                    // 自分のノートでない場合のみ処理
                     if (noteData.authorId !== this.currentUser?.uid) {
                         if (change.type === 'added' || change.type === 'modified') {
                             this.notesMap.set(change.doc.id, noteData);
@@ -2008,7 +1990,6 @@
                 }
             }
 
-            // ===== リスナークリーンアップ =====
             cleanupListeners() {
                 this.listeners.forEach((unsubscribe, key) => {
                     try {
@@ -2049,7 +2030,7 @@
                 }
             }
 
-            // ===== 認証処理 - 永続化対応 =====
+            // ===== 認証処理 =====
             async handleLogin() {
                 updateDebugInfo('Login attempt');
                 
@@ -2058,7 +2039,6 @@
                     return;
                 }
 
-                // レート制限チェック
                 if (!this.checkRateLimit('login', 5, 60000)) {
                     this.showToast('ログイン試行が多すぎます', 'error');
                     return;
@@ -2092,24 +2072,19 @@
                 };
                 updateDebugInfo('Auth success: ' + this.currentUser.displayName);
                 
-                // ユーザードキュメントの作成/更新
                 await this.ensureUserDocument();
-                
-                // ノートの読み込み
                 await this.loadNotesFromFirestore();
                 
                 this.showToast('ログインしました', 'success');
             }
 
             handleAuthLogout() {
-                // リアルタイムリスナーのクリーンアップ
                 this.cleanupListeners();
                 
                 this.currentUser = null;
                 this.notesMap.clear();
-                this.passwordCache.clear(); // パスワードキャッシュもクリア
+                this.passwordCache.clear();
                 
-                // ローカルストレージもクリア
                 const keys = Object.keys(localStorage);
                 keys.forEach(key => {
                     if (key.startsWith('studybook_')) {
@@ -2122,7 +2097,6 @@
                 this.updateUI();
             }
 
-            // ===== ユーザードキュメント管理 =====
             async ensureUserDocument() {
                 if (!this.db || !this.currentUser || !this.firebaseInitialized) return;
                 
@@ -2171,23 +2145,18 @@
                 const pageContent = document.getElementById('pageContent');
                 if (pageContent) {
                     pageContent.style.transform = `scale(${this.zoomLevel})`;
-                    
-                    // ズームレベルの表示を更新
                     document.getElementById('zoomLevel').textContent = Math.round(this.zoomLevel * 100) + '%';
                     
-                    // ズーム後はコンテナのサイズを調整
                     const margin = this.zoomLevel === 1.0 ? '1rem' : `${this.zoomLevel}rem`;
                     pageContent.style.marginBottom = margin;
                 }
             }
 
-            // ===== イベントリスナー =====
+            // ===== イベントリスナー設定 =====
             setupEventListeners() {
-                // 検索機能
                 const searchInput = document.getElementById('searchInput');
                 if (searchInput) {
                     searchInput.addEventListener('input', this.debounce(this.handleSearch.bind(this), 300));
-                    // 検索結果をクリアするため
                     document.addEventListener('click', (e) => {
                         if (!searchInput.contains(e.target)) {
                             document.getElementById('searchResults').classList.remove('active');
@@ -2195,14 +2164,12 @@
                     });
                 }
 
-                // 公開設定モーダルのイベントリスナー
                 document.addEventListener('change', (e) => {
                     if (e.target.name === 'visibility') {
                         this.toggleVisibilityOptions(e.target.value);
                     }
                 });
 
-                // タッチイベント
                 const pageContent = document.getElementById('pageContent');
                 if (pageContent) {
                     pageContent.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: true });
@@ -2210,14 +2177,12 @@
                     pageContent.addEventListener('touchend', this.handleTouchEnd.bind(this));
                 }
 
-                // キーボードショートカット
                 document.addEventListener('keydown', (e) => {
                     if (this.currentNote) {
                         if (e.key === 'ArrowLeft') this.previousPage();
                         if (e.key === 'ArrowRight') this.nextPage();
                         if (e.key === 'Escape') this.toggleSidebar();
                         
-                        // ズームショートカット
                         if (e.ctrlKey || e.metaKey) {
                             if (e.key === '=') {
                                 e.preventDefault();
@@ -2232,84 +2197,16 @@
                         }
                     }
 
-                    // パスワード入力モーダルでのEnterキー
                     if (e.key === 'Enter' && document.getElementById('passwordPromptModal').classList.contains('active')) {
                         this.submitPassword();
                     }
                 });
 
-                // ピンチズーム防止（独自ズーム機能を使用）
                 document.addEventListener('touchmove', (e) => {
                     if (e.touches.length > 1) {
                         e.preventDefault();
                     }
                 }, { passive: false });
-            }
-
-            // ===== その他の機能（省略：前回と同じ）=====
-            // 検索機能、ノート作成、保存、共有機能などは前回のコードと同じなので省略します
-            // 必要に応じて追加実装してください
-
-            // ===== ユーティリティ =====
-            escapeHtml(text) {
-                if (!text) return '';
-                const div = document.createElement('div');
-                div.textContent = text;
-                return div.innerHTML;
-            }
-
-            debounce(func, wait) {
-                let timeout;
-                return function executedFunction(...args) {
-                    const later = () => {
-                        clearTimeout(timeout);
-                        func(...args);
-                    };
-                    clearTimeout(timeout);
-                    timeout = setTimeout(later, wait);
-                };
-            }
-
-            checkRateLimit(action, maxAttempts, timeWindow) {
-                const now = Date.now();
-                const key = `${action}_${this.currentUser?.uid || 'anonymous'}`;
-                
-                if (!this.rateLimiter.has(key)) {
-                    this.rateLimiter.set(key, []);
-                }
-                
-                const attempts = this.rateLimiter.get(key);
-                const recentAttempts = attempts.filter(timestamp => now - timestamp < timeWindow);
-                
-                if (recentAttempts.length >= maxAttempts) {
-                    return false;
-                }
-                
-                recentAttempts.push(now);
-                this.rateLimiter.set(key, recentAttempts);
-                return true;
-            }
-
-            showToast(message, type = 'info') {
-                const toast = document.getElementById('toast');
-                toast.textContent = message;
-                toast.className = `toast ${type} show`;
-                
-                setTimeout(() => {
-                    toast.classList.remove('show');
-                }, 2500);
-            }
-
-            // ===== エラーハンドリング =====
-            handleError(error, userMessage) {
-                updateDebugInfo('ERROR: ' + error.message);
-                console.error(error);
-                this.showToast(userMessage || 'エラーが発生しました', 'error');
-            }
-
-            handleGlobalError(event) {
-                updateDebugInfo('Global error: ' + (event.reason || event.message || 'Unknown error'));
-                console.error('Global error:', event);
             }
 
             // ===== 検索機能 =====
@@ -2437,7 +2334,7 @@
                 this.openBook(newNote.id, true);
             }
 
-            // ===== ノートを開く - パスワード保護対応版 =====
+            // ===== ノートを開く =====
             async openBook(noteId, editMode = false) {
                 updateDebugInfo(`Opening book: ${noteId}, edit: ${editMode}`);
                 
@@ -2449,7 +2346,6 @@
                     return;
                 }
 
-                // 編集モードの場合は所有者チェック
                 if (editMode && (!this.currentUser || note.authorId !== this.currentUser.uid)) {
                     updateDebugInfo(`Edit permission denied for note: ${noteId}`);
                     this.showToast('編集権限がありません', 'warning');
@@ -2488,6 +2384,29 @@
                 window.scrollTo(0, 0);
                 
                 updateDebugInfo(`Opened note: ${note.title} (edit: ${editMode})`);
+            }
+
+            // ===== 統計 =====
+            async incrementViews(noteId) {
+                if (!this.db || !this.firebaseInitialized) return;
+
+                try {
+                    const { doc, updateDoc, increment } = window.firebaseModules;
+                    
+                    const actualNoteId = noteId.startsWith('public_') ? noteId.replace('public_', '') : noteId;
+                    
+                    if (this.currentNote.authorId === this.currentUser?.uid) {
+                        await updateDoc(doc(this.db, 'users', this.currentUser.uid, 'notes', actualNoteId), {
+                            views: increment(1)
+                        });
+                    } else {
+                        await updateDoc(doc(this.db, 'publicNotes', actualNoteId), {
+                            views: increment(1)
+                        });
+                    }
+                } catch (error) {
+                    console.error('View count error:', error);
+                }
             }
 
             // ===== ビューアー更新 =====
@@ -2533,17 +2452,14 @@
             getCurrentVisibilityType() {
                 if (!this.currentNote) return 'private';
                 
-                // 新形式
                 if (this.currentNote.visibility?.type) {
                     return this.currentNote.visibility.type;
                 }
                 
-                // パスワード設定がある場合
                 if (this.currentNote.password) {
                     return 'password';
                 }
                 
-                // 旧形式との互換性
                 return this.currentNote.isPublic ? 'public' : 'private';
             }
 
@@ -2593,9 +2509,7 @@
                 }
             }
 
-            // ===== その他の必要な機能を簡略化して追加 =====
-            
-            // ページナビゲーション
+            // ===== ページナビゲーション =====
             previousPage() {
                 if (this.currentNote && this.currentPage > 0) {
                     if (this.isEditing) {
@@ -2622,7 +2536,539 @@
                 }
             }
 
-            // 基本的なUI更新メソッド
+            goToPage(pageIndex) {
+                if (this.isEditing) {
+                    this.saveCurrentPage();
+                }
+                this.currentPage = pageIndex;
+                this.updateViewer();
+                this.saveReadingProgress(this.currentNote.id, pageIndex);
+                this.toggleSidebar();
+            }
+
+            // ===== 保存処理 =====
+            saveCurrentPage() {
+                if (!this.isEditing) return;
+
+                const page = this.currentNote.pages[this.currentPage];
+                page.title = document.getElementById('pageTitleInput').value || 'ページ' + (this.currentPage + 1);
+                page.content = document.getElementById('pageContentInput').value || '';
+                
+                const tagsInput = document.getElementById('pageTagsInput').value;
+                page.tags = tagsInput ? tagsInput.split(',').map(tag => tag.trim()).filter(Boolean) : [];
+
+                if (this.currentPage === 0) {
+                    const bookTitle = document.getElementById('bookTitleInput').value;
+                    if (bookTitle) {
+                        this.currentNote.title = bookTitle;
+                    }
+                }
+            }
+
+            async saveBook() {
+                if (!this.isEditing || !this.currentNote) return;
+
+                this.saveCurrentPage();
+
+                const allTags = new Set();
+                this.currentNote.pages.forEach(page => {
+                    (page.tags || []).forEach(tag => allTags.add(tag));
+                });
+                this.currentNote.tags = Array.from(allTags);
+
+                this.currentNote.updatedAt = new Date().toISOString();
+
+                if (this.db && this.firebaseInitialized) {
+                    try {
+                        const { doc, setDoc, serverTimestamp } = window.firebaseModules;
+                        
+                        const noteToSave = {
+                            ...this.currentNote,
+                            updatedAt: serverTimestamp()
+                        };
+                        
+                        await setDoc(
+                            doc(this.db, 'users', this.currentUser.uid, 'notes', this.currentNote.id),
+                            noteToSave
+                        );
+                        
+                        await this.syncToPublicNotes();
+                        
+                        this.showToast('保存しました', 'success');
+                    } catch (error) {
+                        this.handleError(error, '保存に失敗しました');
+                    }
+                } else {
+                    this.showToast('ローカルに保存しました', 'info');
+                }
+
+                if (this.currentNote) {
+                    this.notesMap.set(this.currentNote.id, this.currentNote);
+                }
+                this.saveLocalData();
+                this.updateUI();
+            }
+
+            // ===== 公開ノート同期 =====
+            async syncToPublicNotes() {
+                if (!this.db || !this.currentNote || !this.currentNote.id || !this.currentUser || !this.firebaseInitialized) {
+                    return;
+                }
+                
+                try {
+                    const { doc, setDoc, deleteDoc } = window.firebaseModules;
+                    
+                    const actualNoteId = this.currentNote.id.startsWith('public_') 
+                        ? this.currentNote.id.replace('public_', '') 
+                        : this.currentNote.id;
+                    
+                    const isPublicOrPassword = this.currentNote.isPublic || 
+                                             this.currentNote.visibility?.type === 'password' ||
+                                             this.currentNote.password;
+                    
+                    if (isPublicOrPassword) {
+                        const publicNoteData = {
+                            ...this.currentNote,
+                            id: actualNoteId,
+                            authorId: this.currentUser.uid,
+                            author: this.currentUser.displayName || 'ユーザー'
+                        };
+                        
+                        await setDoc(doc(this.db, 'publicNotes', actualNoteId), publicNoteData);
+                        updateDebugInfo(`Synced to public notes: ${actualNoteId}`);
+                        
+                    } else {
+                        try {
+                            await deleteDoc(doc(this.db, 'publicNotes', actualNoteId));
+                            updateDebugInfo(`Removed from public notes: ${actualNoteId}`);
+                        } catch (error) {
+                            updateDebugInfo(`Public note not found for deletion: ${actualNoteId}`);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Public notes sync error:', error);
+                    updateDebugInfo(`Sync error: ${error.message}`);
+                }
+            }
+
+            // ===== 公開設定 =====
+            showVisibilitySettings() {
+                if (!this.currentUser || !this.currentNote || this.currentNote.authorId !== this.currentUser.uid) {
+                    this.showToast('自分のノートのみ変更できます', 'warning');
+                    return;
+                }
+
+                const currentType = this.getCurrentVisibilityType();
+                document.querySelector(`input[name="visibility"][value="${currentType}"]`).checked = true;
+                
+                if (currentType === 'password') {
+                    const password = this.currentNote.password || this.currentNote.visibility?.password || '';
+                    document.getElementById('passwordInput').value = password;
+                }
+                
+                this.toggleVisibilityOptions(currentType);
+                document.getElementById('visibilityModal').classList.add('active');
+            }
+
+            toggleVisibilityOptions(type) {
+                const passwordSection = document.getElementById('passwordSection');
+                
+                if (type === 'password') {
+                    passwordSection.style.display = 'block';
+                } else {
+                    passwordSection.style.display = 'none';
+                }
+            }
+
+            async saveVisibilitySettings() {
+                const selectedType = document.querySelector('input[name="visibility"]:checked')?.value;
+                if (!selectedType) {
+                    this.showToast('公開設定を選択してください', 'warning');
+                    return;
+                }
+
+                if (selectedType === 'password') {
+                    const password = document.getElementById('passwordInput').value.trim();
+                    if (!password || password.length < 4) {
+                        this.showToast('パスワードは4文字以上で入力してください', 'warning');
+                        return;
+                    }
+                }
+
+                try {
+                    if (selectedType === 'password') {
+                        this.currentNote.visibility = {
+                            type: 'password',
+                            password: document.getElementById('passwordInput').value.trim()
+                        };
+                        this.currentNote.isPublic = false;
+                        this.currentNote.password = document.getElementById('passwordInput').value.trim();
+                    } else {
+                        this.currentNote.visibility = {
+                            type: selectedType
+                        };
+                        delete this.currentNote.password;
+                        this.currentNote.isPublic = (selectedType === 'public');
+                    }
+
+                    this.currentNote.updatedAt = new Date().toISOString();
+
+                    if (this.db && this.firebaseInitialized) {
+                        const { doc, updateDoc, serverTimestamp } = window.firebaseModules;
+                        await updateDoc(doc(this.db, 'users', this.currentUser.uid, 'notes', this.currentNote.id), {
+                            visibility: this.currentNote.visibility,
+                            isPublic: this.currentNote.isPublic,
+                            password: this.currentNote.password || null,
+                            updatedAt: serverTimestamp()
+                        });
+                        
+                        await this.syncToPublicNotes();
+                    }
+
+                    this.notesMap.set(this.currentNote.id, this.currentNote);
+                    this.saveLocalData();
+                    
+                    this.updateViewer();
+                    this.updateUI();
+                    
+                    this.closeVisibilityModal();
+                    
+                    const typeNames = {
+                        'private': '完全非公開',
+                        'public': '完全公開',
+                        'password': 'パスワード保護'
+                    };
+                    
+                    this.showToast(`${typeNames[selectedType]}に設定しました`, 'success');
+                    
+                } catch (error) {
+                    this.handleError(error, '公開設定の保存に失敗しました');
+                }
+            }
+
+            closeVisibilityModal() {
+                document.getElementById('visibilityModal').classList.remove('active');
+            }
+
+            // ===== シェア機能 =====
+            showShareModal() {
+                if (!this.currentNote) return;
+
+                const shareNoteId = this.currentNote.id.startsWith('public_') 
+                    ? this.currentNote.id.replace('public_', '') 
+                    : this.currentNote.id;
+                
+                const shareUrl = `${window.location.origin}${window.location.pathname}?book=${shareNoteId}`;
+                document.getElementById('shareUrl').value = shareUrl;
+                
+                const hasPassword = this.currentNote.password || this.currentNote.visibility?.type === 'password';
+                const passwordInfoDiv = document.getElementById('sharePasswordInfo');
+                
+                if (hasPassword) {
+                    const password = this.currentNote.password || this.currentNote.visibility?.password;
+                    passwordInfoDiv.style.display = 'block';
+                    document.getElementById('sharePasswordDisplay').textContent = password;
+                } else {
+                    passwordInfoDiv.style.display = 'none';
+                }
+                
+                document.getElementById('shareModal').style.display = 'flex';
+                
+                updateDebugInfo(`Share URL generated: ${shareUrl}`);
+            }
+
+            closeShareModal() {
+                document.getElementById('shareModal').style.display = 'none';
+            }
+
+            async copyShareUrl() {
+                const shareUrl = document.getElementById('shareUrl').value;
+                
+                try {
+                    await navigator.clipboard.writeText(shareUrl);
+                    this.showToast('URLをコピーしました', 'success');
+                    this.closeShareModal();
+                } catch {
+                    const input = document.getElementById('shareUrl');
+                    input.select();
+                    document.execCommand('copy');
+                    this.showToast('URLをコピーしました', 'success');
+                    this.closeShareModal();
+                }
+            }
+
+            shareToTwitter() {
+                const url = document.getElementById('shareUrl').value;
+                const hasPassword = this.currentNote.password || this.currentNote.visibility?.type === 'password';
+                const passwordNote = hasPassword ? '（パスワード保護）' : '';
+                const text = `「${this.currentNote.title}」を読んでいます${passwordNote}`;
+                window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+                this.closeShareModal();
+            }
+
+            shareToLine() {
+                const url = document.getElementById('shareUrl').value;
+                const hasPassword = this.currentNote.password || this.currentNote.visibility?.type === 'password';
+                const passwordNote = hasPassword ? '（パスワード保護）' : '';
+                const text = `「${this.currentNote.title}」${passwordNote}\n${url}`;
+                window.open(`https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank');
+                this.closeShareModal();
+            }
+
+            shareToFacebook() {
+                const url = document.getElementById('shareUrl').value;
+                window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+                this.closeShareModal();
+            }
+
+            // ===== エディター機能 =====
+            insertMarkdown(before, after) {
+                const textarea = document.getElementById('pageContentInput');
+                const start = textarea.selectionStart;
+                const end = textarea.selectionEnd;
+                const selectedText = textarea.value.substring(start, end);
+                
+                const replacement = before + selectedText + after;
+                textarea.value = textarea.value.substring(0, start) + replacement + textarea.value.substring(end);
+                
+                const newPos = start + before.length + selectedText.length;
+                textarea.focus();
+                textarea.setSelectionRange(newPos, newPos);
+            }
+
+            async insertImageInContent() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                input.style.display = 'none';
+                
+                input.onchange = async (event) => {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    if (file.size > 5 * 1024 * 1024) {
+                        this.showToast('画像は5MB以下にしてください', 'error');
+                        return;
+                    }
+
+                    try {
+                        let imageUrl;
+
+                        if (this.storage && this.firebaseInitialized) {
+                            const { ref, uploadBytes, getDownloadURL } = window.firebaseModules;
+                            const storageRef = ref(this.storage, `images/${this.currentUser.uid}/${Date.now()}_${file.name}`);
+                            const snapshot = await uploadBytes(storageRef, file);
+                            imageUrl = await getDownloadURL(snapshot.ref);
+                        } else {
+                            imageUrl = await new Promise((resolve) => {
+                                const reader = new FileReader();
+                                reader.onload = (e) => resolve(e.target.result);
+                                reader.readAsDataURL(file);
+                            });
+                        }
+
+                        const textarea = document.getElementById('pageContentInput');
+                        const pos = textarea.selectionStart;
+                        const imageMarkdown = `![画像](${imageUrl})\n`;
+                        
+                        textarea.value = textarea.value.substring(0, pos) + imageMarkdown + textarea.value.substring(pos);
+                        textarea.focus();
+                        textarea.setSelectionRange(pos + imageMarkdown.length, pos + imageMarkdown.length);
+
+                        this.showToast('画像を挿入しました', 'success');
+                    } catch (error) {
+                        this.handleError(error, '画像の挿入に失敗しました');
+                    }
+                };
+
+                input.click();
+            }
+
+            // ===== 画像処理 =====
+            async handleImageUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                if (file.size > 5 * 1024 * 1024) {
+                    this.showToast('画像は5MB以下にしてください', 'error');
+                    return;
+                }
+
+                if (!file.type.startsWith('image/')) {
+                    this.showToast('画像ファイルを選択してください', 'error');
+                    return;
+                }
+
+                try {
+                    let imageUrl;
+
+                    if (this.storage && this.firebaseInitialized) {
+                        const { ref, uploadBytes, getDownloadURL } = window.firebaseModules;
+                        const storageRef = ref(this.storage, `images/${this.currentUser.uid}/${Date.now()}_${file.name}`);
+                        const snapshot = await uploadBytes(storageRef, file);
+                        imageUrl = await getDownloadURL(snapshot.ref);
+                    } else {
+                        imageUrl = await new Promise((resolve) => {
+                            const reader = new FileReader();
+                            reader.onload = (e) => resolve(e.target.result);
+                            reader.readAsDataURL(file);
+                        });
+                    }
+
+                    this.currentNote.pages[this.currentPage].image = imageUrl;
+                    document.getElementById('imagePreview').innerHTML = `
+                        <img src="${this.escapeHtml(imageUrl)}" style="max-width: 100%; max-height: 200px; border-radius: 6px;">
+                        <button class="btn btn-danger" onclick="app.removeImage()" style="margin-top: 0.5rem;">削除</button>
+                    `;
+
+                    this.showToast('画像をアップロードしました', 'success');
+                } catch (error) {
+                    this.handleError(error, '画像のアップロードに失敗しました');
+                }
+            }
+
+            handleDrop(event) {
+                event.preventDefault();
+                event.target.style.borderColor = 'var(--border-color)';
+                
+                const files = event.dataTransfer.files;
+                if (files.length > 0) {
+                    document.getElementById('imageInput').files = files;
+                    this.handleImageUpload({ target: { files } });
+                }
+            }
+
+            removeImage() {
+                this.currentNote.pages[this.currentPage].image = null;
+                document.getElementById('imagePreview').innerHTML = '';
+                this.showToast('画像を削除しました', 'info');
+            }
+
+            // ===== ページ管理 =====
+            addPage() {
+                if (!this.isEditing) return;
+
+                this.saveCurrentPage();
+
+                this.currentNote.pages.push({
+                    title: `ページ${this.currentNote.pages.length + 1}`,
+                    content: '',
+                    image: null,
+                    tags: []
+                });
+
+                this.currentPage = this.currentNote.pages.length - 1;
+                this.updateViewer();
+                this.showToast('新しいページを追加しました', 'success');
+            }
+
+            deletePage(index, event) {
+                if (event) event.stopPropagation();
+                if (!this.isEditing || this.currentNote.pages.length <= 1) {
+                    if (this.currentNote.pages.length <= 1) {
+                        this.showToast('最後のページは削除できません', 'warning');
+                    }
+                    return;
+                }
+
+                if (confirm('このページを削除しますか？')) {
+                    this.currentNote.pages.splice(index, 1);
+                    
+                    if (this.currentPage >= this.currentNote.pages.length) {
+                        this.currentPage = this.currentNote.pages.length - 1;
+                    } else if (this.currentPage > index) {
+                        this.currentPage--;
+                    }
+                    
+                    if (this.db && this.firebaseInitialized) {
+                        try {
+                            const { doc, setDoc, serverTimestamp } = window.firebaseModules;
+                            
+                            const noteToSave = {
+                                ...this.currentNote,
+                                updatedAt: serverTimestamp()
+                            };
+                            
+                            setDoc(
+                                doc(this.db, 'users', this.currentUser.uid, 'notes', this.currentNote.id),
+                                noteToSave
+                            ).then(() => {
+                                this.syncToPublicNotes();
+                            }).catch(console.error);
+                            
+                        } catch (error) {
+                            console.error('Page deletion save error:', error);
+                        }
+                    }
+                    
+                    this.notesMap.set(this.currentNote.id, this.currentNote);
+                    this.saveLocalData();
+                    
+                    this.updateViewer();
+                    this.showToast('ページを削除しました', 'info');
+                }
+            }
+
+            // ===== ノート削除 =====
+            async deleteBook() {
+                if (!this.currentUser || !this.currentNote || this.currentNote.authorId !== this.currentUser.uid) {
+                    this.showToast('自分のノートのみ削除できます', 'warning');
+                    return;
+                }
+
+                if (!confirm(`「${this.currentNote.title}」を完全に削除しますか？この操作は取り消せません。`)) {
+                    return;
+                }
+
+                const noteId = this.currentNote.id;
+                const isPublicOrPassword = this.currentNote.isPublic || 
+                                         this.currentNote.visibility?.type === 'password' ||
+                                         this.currentNote.password;
+
+                try {
+                    this.currentNote = null;
+                    this.currentPage = 0;
+                    this.isEditing = false;
+                    this.goHome();
+
+                    if (this.db && this.firebaseInitialized) {
+                        const { doc, deleteDoc } = window.firebaseModules;
+                        
+                        await deleteDoc(doc(this.db, 'users', this.currentUser.uid, 'notes', noteId));
+                        
+                        if (isPublicOrPassword) {
+                            try {
+                                await deleteDoc(doc(this.db, 'publicNotes', noteId));
+                            } catch (error) {
+                                console.log('Public note deletion skipped:', error);
+                            }
+                        }
+                        
+                        updateDebugInfo('Deleted from Firestore: ' + noteId);
+                    }
+
+                    this.notesMap.delete(noteId);
+                    this.notesMap.delete('public_' + noteId);
+                    this.passwordCache.delete(noteId);
+                    
+                    const keysToRemove = [];
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        if (key && key.includes(noteId)) {
+                            keysToRemove.push(key);
+                        }
+                    }
+                    keysToRemove.forEach(key => localStorage.removeItem(key));
+                    
+                    this.saveLocalData();
+                    this.showToast('ノートを削除しました', 'success');
+                    this.updateUI();
+                } catch (error) {
+                    this.handleError(error, 'ノートの削除に失敗しました');
+                }
+            }
+
+            // ===== UI更新 =====
             updateUI() {
                 this.updateAuthSection();
                 this.updateMyBooks();
@@ -2718,7 +3164,85 @@
                 `;
             }
 
-            // 基本操作メソッド（簡略化）
+            updateTOC() {
+                const tocList = document.getElementById('tocList');
+                if (!this.currentNote) return;
+                
+                const pageGroups = [];
+                const groupSize = 10;
+                
+                for (let i = 0; i < this.currentNote.pages.length; i += groupSize) {
+                    const groupPages = this.currentNote.pages.slice(i, i + groupSize);
+                    pageGroups.push({
+                        title: `第${Math.floor(i / groupSize) + 1}章 (${i + 1}-${Math.min(i + groupSize, this.currentNote.pages.length)}ページ)`,
+                        startIndex: i,
+                        pages: groupPages
+                    });
+                }
+
+                tocList.innerHTML = pageGroups.map((group, groupIndex) => {
+                    const isCurrentGroup = this.currentPage >= group.startIndex && this.currentPage < group.startIndex + group.pages.length;
+                    const expandedClass = isCurrentGroup ? 'expanded' : '';
+                    const chevron = isCurrentGroup ? '▼' : '▶';
+                    
+                    const pagesHtml = group.pages.map((page, pageIndex) => {
+                        const actualPageIndex = group.startIndex + pageIndex;
+                        const activeClass = actualPageIndex === this.currentPage ? 'active' : '';
+                        
+                        return `
+                            <div class="toc-page ${activeClass}" onclick="app.goToPage(${actualPageIndex})">
+                                <span>${this.escapeHtml(page.title || 'ページ' + (actualPageIndex + 1))}</span>
+                                ${this.isEditing && this.currentNote.pages.length > 1 ? `
+                                    <button class="btn btn-danger" onclick="app.deletePage(${actualPageIndex}, event)" style="padding: 0.2rem 0.4rem; font-size: 0.7rem; margin-left: 0.5rem;" title="削除">
+                                        ×
+                                    </button>
+                                ` : ''}
+                            </div>
+                        `;
+                    }).join('');
+
+                    return `
+                        <div class="toc-section">
+                            <div class="toc-section-header" onclick="app.toggleTOCSection(${groupIndex})">
+                                <span>${group.title}</span>
+                                <span class="toc-chevron" id="chevron-${groupIndex}">${chevron}</span>
+                            </div>
+                            <div class="toc-section-content ${expandedClass}" id="section-${groupIndex}">
+                                ${pagesHtml}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            toggleTOCSection(groupIndex) {
+                const section = document.getElementById(`section-${groupIndex}`);
+                const chevron = document.getElementById(`chevron-${groupIndex}`);
+                
+                if (section.classList.contains('expanded')) {
+                    section.classList.remove('expanded');
+                    chevron.textContent = '▶';
+                } else {
+                    section.classList.add('expanded');
+                    chevron.textContent = '▼';
+                }
+            }
+
+            updatePageNavigation() {
+                if (!this.currentNote) return;
+                
+                document.getElementById('prevBtn').disabled = this.currentPage === 0;
+                document.getElementById('nextBtn').disabled = this.currentPage === this.currentNote.pages.length - 1;
+
+                const dotsContainer = document.getElementById('pageDots');
+                dotsContainer.innerHTML = this.currentNote.pages.map((_, index) => `
+                    <div class="page-dot ${index === this.currentPage ? 'active' : ''}"
+                         onclick="app.goToPage(${index})"
+                         title="ページ${index + 1}"></div>
+                `).join('');
+            }
+
+            // ===== その他の機能 =====
             toggleSidebar() {
                 const sidebar = document.getElementById('sidebar');
                 sidebar.classList.toggle('open');
@@ -2776,59 +3300,7 @@
                 document.getElementById('searchInput').scrollIntoView({ behavior: 'smooth' });
             }
 
-            // 最低限の必要なメソッド（実装を簡略化）
-            saveCurrentPage() {
-                // 実装省略（必要に応じて追加）
-            }
-
-            async saveBook() {
-                this.showToast('保存機能は簡略版です', 'info');
-            }
-
-            saveReadingProgress(noteId, pageIndex) {
-                // 実装省略（必要に応じて追加）
-            }
-
-            async incrementViews(noteId) {
-                // 実装省略（必要に応じて追加）
-            }
-
-            updateTOC() {
-                const tocList = document.getElementById('tocList');
-                if (!this.currentNote) return;
-                
-                tocList.innerHTML = this.currentNote.pages.map((page, index) => `
-                    <div class="toc-item ${index === this.currentPage ? 'active' : ''}" onclick="app.goToPage(${index})">
-                        ${this.escapeHtml(page.title || 'ページ' + (index + 1))}
-                    </div>
-                `).join('');
-            }
-
-            updatePageNavigation() {
-                if (!this.currentNote) return;
-                
-                document.getElementById('prevBtn').disabled = this.currentPage === 0;
-                document.getElementById('nextBtn').disabled = this.currentPage === this.currentNote.pages.length - 1;
-
-                const dotsContainer = document.getElementById('pageDots');
-                dotsContainer.innerHTML = this.currentNote.pages.map((_, index) => `
-                    <div class="page-dot ${index === this.currentPage ? 'active' : ''}"
-                         onclick="app.goToPage(${index})"
-                         title="ページ${index + 1}"></div>
-                `).join('');
-            }
-
-            goToPage(pageIndex) {
-                if (this.isEditing) {
-                    this.saveCurrentPage();
-                }
-                this.currentPage = pageIndex;
-                this.updateViewer();
-                this.saveReadingProgress(this.currentNote.id, pageIndex);
-                this.toggleSidebar();
-            }
-
-            // タッチイベント処理
+            // ===== タッチイベント処理 =====
             handleTouchStart(e) {
                 this.touchStartX = e.touches[0].clientX;
                 this.touchStartY = e.touches[0].clientY;
@@ -2858,16 +3330,7 @@
                 this.touchStartX = 0;
             }
 
-            // 簡略化されたメソッド（必要に応じて実装を追加してください）
-            showVisibilitySettings() {
-                this.showToast('公開設定機能は簡略版です', 'info');
-            }
-
-            showShareModal() {
-                this.showToast('シェア機能は簡略版です', 'info');
-            }
-
-            // 再接続処理
+            // ===== 再接続処理 =====
             async reconnectFirestore() {
                 if (!this.db || !this.isOnline || !this.firebaseInitialized) return;
 
@@ -2887,6 +3350,68 @@
                     updateDebugInfo('Reconnection failed: ' + error.message);
                     console.error('Reconnection error:', error);
                 }
+            }
+
+            // ===== ユーティリティ =====
+            escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+
+            checkRateLimit(action, maxAttempts, timeWindow) {
+                const now = Date.now();
+                const key = `${action}_${this.currentUser?.uid || 'anonymous'}`;
+                
+                if (!this.rateLimiter.has(key)) {
+                    this.rateLimiter.set(key, []);
+                }
+                
+                const attempts = this.rateLimiter.get(key);
+                const recentAttempts = attempts.filter(timestamp => now - timestamp < timeWindow);
+                
+                if (recentAttempts.length >= maxAttempts) {
+                    return false;
+                }
+                
+                recentAttempts.push(now);
+                this.rateLimiter.set(key, recentAttempts);
+                return true;
+            }
+
+            showToast(message, type = 'info') {
+                const toast = document.getElementById('toast');
+                toast.textContent = message;
+                toast.className = `toast ${type} show`;
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 2500);
+            }
+
+            // ===== エラーハンドリング =====
+            handleError(error, userMessage) {
+                updateDebugInfo('ERROR: ' + error.message);
+                console.error(error);
+                this.showToast(userMessage || 'エラーが発生しました', 'error');
+            }
+
+            handleGlobalError(event) {
+                updateDebugInfo('Global error: ' + (event.reason || event.message || 'Unknown error'));
+                console.error('Global error:', event);
             }
         }
 
