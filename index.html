@@ -1,0 +1,3518 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <meta name="description" content="StudyBook - 学習ノートを電子ブック化して共有できるプラットフォーム">
+    <meta name="keywords" content="学習,ノート,電子書籍,共有,StudyBook">
+    <meta property="og:title" content="StudyBook - 学習ノート共有プラットフォーム">
+    <meta property="og:description" content="学習ノートを美しい電子ブックに変換して共有しよう">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="/og-image.png">
+    <meta name="twitter:card" content="summary_large_image">
+    
+    <!-- PWA対応 -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#667eea">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    
+    <title>StudyBook - 学習ノート共有プラットフォーム</title>
+    
+    <!-- Firebase SDK v9 Modular -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+        import { 
+            getAuth, 
+            GoogleAuthProvider, 
+            signInWithPopup, 
+            signOut, 
+            onAuthStateChanged,
+            setPersistence,
+            browserLocalPersistence
+        } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
+        import { 
+            getFirestore, 
+            collection, 
+            doc, 
+            setDoc, 
+            getDoc, 
+            getDocs, 
+            query, 
+            where, 
+            orderBy, 
+            limit, 
+            updateDoc, 
+            deleteDoc, 
+            serverTimestamp, 
+            addDoc, 
+            increment, 
+            onSnapshot,
+            enableNetwork,
+            disableNetwork,
+            enableIndexedDbPersistence
+        } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
+        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-storage.js';
+
+        // Firebaseをグローバルに公開
+        window.firebaseModules = {
+            initializeApp,
+            getAuth,
+            GoogleAuthProvider,
+            signInWithPopup,
+            signOut,
+            onAuthStateChanged,
+            setPersistence,
+            browserLocalPersistence,
+            getFirestore,
+            collection,
+            doc,
+            setDoc,
+            getDoc,
+            getDocs,
+            query,
+            where,
+            orderBy,
+            limit,
+            updateDoc,
+            deleteDoc,
+            serverTimestamp,
+            addDoc,
+            increment,
+            onSnapshot,
+            enableNetwork,
+            disableNetwork,
+            enableIndexedDbPersistence,
+            getStorage,
+            ref,
+            uploadBytes,
+            getDownloadURL,
+            deleteObject
+        };
+        
+        // Firebase準備完了を通知
+        window.firebaseReady = true;
+        window.dispatchEvent(new CustomEvent('firebaseReady'));
+        console.log('Firebase modules loaded successfully');
+    </script>
+    
+    <!-- 外部ライブラリ -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
+    
+    <style>
+        :root {
+            /* カラーパレット */
+            --primary-color: #667eea;
+            --primary-dark: #5a6fd8;
+            --secondary-color: #764ba2;
+            --success-color: #48bb78;
+            --error-color: #f56565;
+            --warning-color: #ed8936;
+            --bg-color: #f8f9fc;
+            --bg-secondary: #ffffff;
+            --text-primary: #2d3748;
+            --text-secondary: #718096;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --transition-base: all 0.2s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            line-height: 1.6;
+        }
+
+        /* ローディング画面 */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s, visibility 0.5s;
+        }
+
+        .loading-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .loader {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .loading-text {
+            color: var(--text-primary);
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            font-weight: 400;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 接続状態インジケーター */
+        .connection-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            z-index: 1000;
+            transition: var(--transition-base);
+            display: none;
+        }
+
+        .connection-status.offline {
+            background: var(--error-color);
+            color: white;
+            display: block;
+        }
+
+        .connection-status.online {
+            background: var(--success-color);
+            color: white;
+            display: block;
+        }
+
+        /* ヘッダー */
+        .header {
+            background: var(--bg-secondary);
+            padding: 0.75rem 1rem;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border-color);
+            min-height: 56px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        /* 検索バー */
+        .search-container {
+            position: relative;
+            max-width: 300px;
+            flex: 1;
+            margin: 0 1rem;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.5rem 2rem 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            font-size: 0.9rem;
+            transition: var(--transition-base);
+            background: var(--bg-color);
+            color: var(--text-primary);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .search-results {
+            position: absolute;
+            top: calc(100% + 0.5rem);
+            left: 0;
+            right: 0;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            box-shadow: var(--shadow-md);
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 200;
+            display: none;
+            border: 1px solid var(--border-color);
+        }
+
+        .search-results.active {
+            display: block;
+        }
+
+        .search-result-item {
+            padding: 0.75rem;
+            cursor: pointer;
+            transition: var(--transition-base);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .search-result-item:hover {
+            background: var(--bg-color);
+        }
+
+        /* ボタン */
+        .btn {
+            padding: 0.5rem;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: var(--transition-base);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 36px;
+            min-height: 36px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            color: var(--primary-color);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .btn-secondary {
+            color: var(--text-secondary);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--bg-color);
+            color: var(--text-primary);
+        }
+
+        .btn-success {
+            color: var(--success-color);
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: rgba(72, 187, 120, 0.1);
+        }
+
+        .btn-danger {
+            color: var(--error-color);
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: rgba(245, 101, 101, 0.1);
+        }
+
+        .btn-warning {
+            color: var(--warning-color);
+        }
+
+        .btn-warning:hover:not(:disabled) {
+            background: rgba(237, 137, 54, 0.1);
+        }
+
+        .btn-filled {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition-base);
+        }
+
+        .btn-filled:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-filled.btn-success {
+            background: var(--success-color);
+        }
+
+        .btn-filled.btn-danger {
+            background: var(--error-color);
+        }
+
+        /* タグ */
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.375rem;
+            margin-top: 0.5rem;
+        }
+
+        .tag {
+            padding: 0.25rem 0.5rem;
+            background: var(--bg-color);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: var(--transition-base);
+        }
+
+        .tag:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* カードグリッド */
+        .books-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .book-card {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            transition: var(--transition-base);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .book-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .password-icon {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            color: var(--warning-color);
+            font-size: 1rem;
+        }
+
+        /* ビューアー */
+        .viewer-container {
+            display: none;
+            background: var(--bg-color);
+            min-height: 100vh;
+        }
+
+        .viewer-header {
+            background: var(--bg-secondary);
+            padding: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .header-group {
+            display: flex;
+            gap: 0.25rem;
+            align-items: center;
+        }
+
+        .page-info {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin: 0 0.5rem;
+        }
+
+        .zoom-controls {
+            display: flex;
+            gap: 0.25rem;
+            align-items: center;
+        }
+
+        .zoom-level {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin: 0 0.5rem;
+            min-width: 45px;
+            text-align: center;
+        }
+
+        /* サイドバー */
+        .sidebar {
+            position: fixed;
+            left: -320px;
+            top: 0;
+            width: 320px;
+            height: 100vh;
+            background: var(--bg-secondary);
+            z-index: 200;
+            transition: left 0.3s ease;
+            overflow-y: auto;
+            box-shadow: var(--shadow-md);
+            border-right: 1px solid var(--border-color);
+        }
+
+        .sidebar.open {
+            left: 0;
+        }
+
+        .sidebar-header {
+            padding: 1rem;
+            background: var(--bg-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .toc-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            transition: var(--transition-base);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .toc-item:hover {
+            background: var(--bg-color);
+        }
+
+        .toc-item.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .toc-section {
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .toc-section-header {
+            padding: 0.75rem 1rem;
+            background: var(--bg-color);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .toc-section-header:hover {
+            background: #f1f5f9;
+        }
+
+        .toc-section-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .toc-section-content.expanded {
+            max-height: 500px;
+        }
+
+        .toc-page {
+            padding: 0.5rem 1rem 0.5rem 2rem;
+            cursor: pointer;
+            transition: var(--transition-base);
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.85rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .toc-page:hover {
+            background: var(--bg-color);
+        }
+
+        .toc-page.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* ページコンテンツ */
+        .page-content {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            padding: 2rem;
+            margin: 1rem;
+            border-radius: 8px;
+            min-height: 500px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            transform-origin: top left;
+            transition: transform 0.2s ease;
+        }
+
+        /* Markdownスタイル */
+        .markdown-body {
+            line-height: 1.7;
+            font-size: 1rem;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .markdown-body h1 {
+            font-size: 1.75rem;
+            margin: 1.5rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .markdown-body h2 {
+            font-size: 1.4rem;
+            margin: 1.25rem 0 0.75rem;
+            color: var(--primary-color);
+        }
+
+        .markdown-body pre {
+            background: #f7fafc;
+            color: var(--text-primary);
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 1rem 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .markdown-body code {
+            background: #f7fafc;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            border: 1px solid var(--border-color);
+        }
+
+        .markdown-body img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 1rem auto;
+            border-radius: 6px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .markdown-body table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            overflow-x: auto;
+            display: block;
+            white-space: nowrap;
+        }
+
+        .markdown-body th,
+        .markdown-body td {
+            border: 1px solid var(--border-color);
+            padding: 0.75rem;
+            text-align: left;
+        }
+
+        .markdown-body th {
+            background: var(--bg-color);
+            font-weight: 600;
+        }
+
+        /* モーダル */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 500;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            max-width: 400px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-content h3 {
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            color: var(--text-primary);
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+        }
+
+        .password-section {
+            margin: 1rem 0;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-color);
+        }
+
+        .share-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .share-btn {
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: white;
+            transition: var(--transition-base);
+            flex: 1;
+            text-align: center;
+        }
+
+        .share-btn.twitter {
+            background: #1DA1F2;
+        }
+
+        .share-btn.line {
+            background: #00B900;
+        }
+
+        .share-btn.facebook {
+            background: #1877F2;
+        }
+
+        /* トースト通知 */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow-md);
+            z-index: 1000;
+            opacity: 0;
+            transition: var(--transition-base);
+            pointer-events: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+            pointer-events: auto;
+        }
+
+        .toast.success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .toast.error {
+            background: var(--error-color);
+            color: white;
+        }
+
+        .toast.warning {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .toast.info {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* ページナビゲーション */
+        .page-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .page-dots {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 200px;
+        }
+
+        .page-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border-color);
+            cursor: pointer;
+            transition: var(--transition-base);
+        }
+
+        .page-dot.active {
+            background: var(--primary-color);
+        }
+
+        .continue-reading {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            padding: 1rem;
+            border: 1px solid var(--primary-color);
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: var(--transition-base);
+        }
+
+        .continue-reading:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .book-title-section {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: var(--bg-color);
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        .book-title-input {
+            width: 100%;
+            padding: 0.75rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .book-title-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* レスポンシブ */
+        @media (max-width: 768px) {
+            .search-container {
+                max-width: 150px;
+                margin: 0 0.5rem;
+            }
+
+            .books-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .page-content {
+                margin: 0.5rem;
+                padding: 1rem;
+            }
+
+            .header {
+                padding: 0.5rem;
+            }
+
+            .modal-content {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+
+            .zoom-controls {
+                gap: 0.125rem;
+            }
+
+            .zoom-level {
+                font-size: 0.7rem;
+                margin: 0 0.25rem;
+                min-width: 35px;
+            }
+        }
+
+        /* デバッグ情報 */
+        .debug-info {
+            position: fixed;
+            top: 60px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            max-width: 200px;
+            z-index: 10000;
+            display: none;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0,0,0,0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- 接続状態インジケーター -->
+    <div id="connectionStatus" class="connection-status">
+        <span id="connectionText">オフライン</span>
+    </div>
+
+    <!-- デバッグ情報 -->
+    <div id="debugInfo" class="debug-info">
+        <div id="debugContent">初期化中...</div>
+    </div>
+
+    <!-- ローディング画面 -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loader"></div>
+        <div class="loading-text" id="loadingText">読み込み中...</div>
+    </div>
+
+    <!-- ホーム画面 -->
+    <div id="homeView">
+        <header class="header">
+            <a href="/" class="logo" aria-label="StudyBook ホーム">
+                <span>📚</span>
+                <span>StudyBook</span>
+            </a>
+            
+            <div class="search-container">
+                <input 
+                    type="search" 
+                    id="searchInput" 
+                    class="search-input" 
+                    placeholder="ノートを検索..."
+                    aria-label="ノートを検索"
+                    maxlength="100"
+                >
+                <span class="search-icon">🔍</span>
+                <div id="searchResults" class="search-results"></div>
+            </div>
+
+            <div id="authSection">
+                <button class="btn btn-primary" onclick="app.handleLogin()" aria-label="ログイン" title="ログイン">
+                    👤
+                </button>
+            </div>
+        </header>
+
+        <main style="max-width: 1000px; margin: 2rem auto; padding: 0 1rem;">
+            <!-- 続きから読む -->
+            <div id="continueReading" style="display: none;"></div>
+
+            <!-- アクションカード -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
+                <div class="book-card" onclick="app.createNewBook()" role="button" tabindex="0">
+                    <div style="font-size: 2rem; text-align: center; margin-bottom: 1rem;">📝</div>
+                    <h3 style="font-size: 1rem; text-align: center; margin-bottom: 0.5rem;">新規作成</h3>
+                    <p style="color: var(--text-secondary); text-align: center; font-size: 0.9rem;">学習ノートを作成</p>
+                </div>
+                
+                <div class="book-card" onclick="app.showPublicBooks()" role="button" tabindex="0">
+                    <div style="font-size: 2rem; text-align: center; margin-bottom: 1rem;">📚</div>
+                    <h3 style="font-size: 1rem; text-align: center; margin-bottom: 0.5rem;">みんなのノート</h3>
+                    <p style="color: var(--text-secondary); text-align: center; font-size: 0.9rem;">公開ノートを探す</p>
+                </div>
+                
+                <div class="book-card" onclick="app.showPopularTags()" role="button" tabindex="0">
+                    <div style="font-size: 2rem; text-align: center; margin-bottom: 1rem;">🏷️</div>
+                    <h3 style="font-size: 1rem; text-align: center; margin-bottom: 0.5rem;">人気のタグ</h3>
+                    <p style="color: var(--text-secondary); text-align: center; font-size: 0.9rem;">タグから探す</p>
+                </div>
+            </div>
+
+            <!-- マイノート -->
+            <section id="myBooksSection" style="display: none;">
+                <h2 style="color: var(--text-primary); font-size: 1.25rem; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">マイノート</h2>
+                <div id="myBooksList" class="books-grid"></div>
+            </section>
+
+            <!-- みんなのノート -->
+            <section id="publicBooksSection" style="display: none; margin-top: 3rem;">
+                <h2 style="color: var(--text-primary); font-size: 1.25rem; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">みんなのノート</h2>
+                <div id="publicBooksList" class="books-grid"></div>
+            </section>
+
+            <!-- 人気タグ -->
+            <section id="popularTagsSection" style="display: none; margin-top: 3rem;">
+                <h2 style="color: var(--text-primary); font-size: 1.25rem; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">人気のタグ</h2>
+                <div id="popularTagsList" class="tags-container" style="background: var(--bg-secondary); padding: 2rem; border: 1px solid var(--border-color); border-radius: 8px;"></div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ビューアー/エディター画面 -->
+    <div id="viewerContainer" class="viewer-container">
+        <!-- ヘッダー -->
+        <header class="viewer-header">
+            <div class="header-group">
+                <button class="btn btn-secondary" onclick="app.toggleSidebar()" aria-label="メニュー" title="目次">☰</button>
+                <button class="btn btn-secondary" onclick="app.goHome()" aria-label="ホーム" title="ホーム">🏠</button>
+                <button id="saveBtn" class="btn btn-success" onclick="app.saveBook()" style="display: none;" aria-label="保存" title="保存">💾</button>
+                <button id="addPageBtn" class="btn btn-primary" onclick="app.addPage()" style="display: none;" aria-label="ページ追加" title="ページ追加">➕</button>
+                <button id="deleteBookBtn" class="btn btn-danger" onclick="app.deleteBook()" style="display: none;" aria-label="ノート削除" title="ノート削除">🗑️</button>
+            </div>
+            
+            <span id="pageInfo" class="page-info">1 / 1</span>
+            
+            <div class="header-group">
+                <!-- ズーム機能 -->
+                <div class="zoom-controls">
+                    <button class="btn btn-secondary" onclick="app.zoomOut()" aria-label="縮小" title="縮小">🔍－</button>
+                    <span id="zoomLevel" class="zoom-level">100%</span>
+                    <button class="btn btn-secondary" onclick="app.zoomIn()" aria-label="拡大" title="拡大">🔍＋</button>
+                    <button class="btn btn-secondary" onclick="app.resetZoom()" aria-label="リセット" title="ズームリセット">⌂</button>
+                </div>
+                <button id="visibilityBtn" class="btn btn-secondary" onclick="app.showVisibilitySettings()" aria-label="公開設定" title="公開設定">👁️</button>
+                <button class="btn btn-primary" onclick="app.showShareModal()" aria-label="シェア" title="シェア">🔗</button>
+            </div>
+        </header>
+
+        <!-- サイドバー -->
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h2 style="font-size: 1rem; font-weight: 600;">📑 目次</h2>
+                <button class="btn btn-secondary" onclick="app.toggleSidebar()" aria-label="閉じる">✕</button>
+            </div>
+            <nav id="tocList" aria-label="目次"></nav>
+        </aside>
+
+        <!-- メインコンテンツ -->
+        <main>
+            <div id="pageContent" class="page-content">
+                <div id="viewMode">
+                    <h1 id="pageTitle" style="font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 2px solid var(--border-color);"></h1>
+                    <img id="pageImage" style="display: none; max-width: 100%; height: auto; object-fit: contain; border-radius: 6px; margin: 1rem 0; box-shadow: var(--shadow-sm);" alt="ページ画像">
+                    <div id="pageBody" class="markdown-body"></div>
+                </div>
+                
+                <div id="editMode" style="display: none;">
+                    <!-- ノートタイトル編集 -->
+                    <div id="bookTitleSection" class="book-title-section" style="display: none;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem;">ノートタイトル</label>
+                        <input 
+                            type="text" 
+                            id="bookTitleInput" 
+                            class="book-title-input"
+                            placeholder="ノートのタイトル"
+                            maxlength="100"
+                        >
+                    </div>
+
+                    <input 
+                        type="text" 
+                        id="pageTitleInput" 
+                        style="width: 100%; margin-bottom: 1rem; font-size: 1.25rem; font-weight: 600; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color);"
+                        placeholder="ページタイトル"
+                        maxlength="100"
+                    >
+                    
+                    <div style="border: 2px dashed var(--border-color); border-radius: 6px; padding: 2rem; text-align: center; margin: 1rem 0; cursor: pointer; transition: var(--transition-base); background: var(--bg-color);" 
+                         onclick="document.getElementById('imageInput').click()"
+                         ondragover="event.preventDefault(); this.style.borderColor='var(--primary-color)'"
+                         ondragleave="this.style.borderColor='var(--border-color)'"
+                         ondrop="app.handleDrop(event)">
+                        <div style="font-size: 1rem;">📷 画像をアップロード</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem;">クリック or ドラッグ&ドロップ（最大5MB）</div>
+                        <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="app.handleImageUpload(event)">
+                    </div>
+                    
+                    <div id="imagePreview" style="margin: 1rem 0;"></div>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem;">タグ（カンマ区切り）</label>
+                        <input 
+                            type="text" 
+                            id="pageTagsInput" 
+                            style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color);"
+                            placeholder="例: 数学, 微分積分, 大学"
+                            maxlength="200"
+                        >
+                    </div>
+
+                    <!-- エディターツールバー -->
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem; padding: 0.5rem; background: var(--bg-color); border-radius: 6px; border: 1px solid var(--border-color);">
+                        <button class="btn btn-secondary" onclick="app.insertImageInContent()" title="画像を挿入" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                            📷 画像挿入
+                        </button>
+                        <button class="btn btn-secondary" onclick="app.insertMarkdown('**', '**')" title="太字" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                            <strong>B</strong>
+                        </button>
+                        <button class="btn btn-secondary" onclick="app.insertMarkdown('*', '*')" title="斜体" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                            <em>I</em>
+                        </button>
+                        <button class="btn btn-secondary" onclick="app.insertMarkdown('`', '`')" title="コード" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                            &lt;&gt;
+                        </button>
+                        <button class="btn btn-secondary" onclick="app.insertMarkdown('## ', '')" title="見出し" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                            H2
+                        </button>
+                    </div>
+                    
+                    <textarea 
+                        id="pageContentInput" 
+                        style="width: 100%; min-height: 300px; padding: 1rem; font-size: 0.9rem; border: 1px solid var(--border-color); border-radius: 6px; resize: vertical; font-family: 'SF Mono', Monaco, monospace; background: var(--bg-color); transition: var(--transition-base);"
+                        placeholder="Markdownで内容を入力
+
+# 見出し1
+## 見出し2
+
+**太字** *斜体*
+
+- リスト項目
+1. 番号付きリスト
+
+> 引用文
+
+`コード`
+
+[リンク](https://example.com)
+
+![画像](image-url)"
+                        maxlength="50000"></textarea>
+                </div>
+            </div>
+
+            <!-- ページナビゲーション -->
+            <nav class="page-nav">
+                <button class="btn btn-secondary" onclick="app.previousPage()" id="prevBtn" aria-label="前のページ" title="前のページ">
+                    ←
+                </button>
+                <div id="pageDots" class="page-dots"></div>
+                <button class="btn btn-secondary" onclick="app.nextPage()" id="nextBtn" aria-label="次のページ" title="次のページ">
+                    →
+                </button>
+            </nav>
+        </main>
+    </div>
+
+    <!-- 公開設定モーダル -->
+    <div id="visibilityModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>公開設定</h3>
+            
+            <div style="margin-bottom: 1rem;">
+                <label style="display: flex; align-items: center; margin-bottom: 0.75rem; cursor: pointer;">
+                    <input type="radio" name="visibility" value="private" style="margin-right: 0.5rem;">
+                    <span>🔒 完全非公開（自分のみ）</span>
+                </label>
+                
+                <label style="display: flex; align-items: center; margin-bottom: 0.75rem; cursor: pointer;">
+                    <input type="radio" name="visibility" value="public" style="margin-right: 0.5rem;">
+                    <span>🌍 完全公開（誰でも閲覧可能）</span>
+                </label>
+                
+                <label style="display: flex; align-items: center; margin-bottom: 0.75rem; cursor: pointer;">
+                    <input type="radio" name="visibility" value="password" style="margin-right: 0.5rem;">
+                    <span>🔐 パスワード保護（URLとパスワードを知っている人のみ）</span>
+                </label>
+            </div>
+
+            <!-- パスワード設定セクション -->
+            <div id="passwordSection" class="password-section" style="display: none;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">パスワード設定</label>
+                <input 
+                    type="text" 
+                    id="passwordInput" 
+                    class="modal-input"
+                    placeholder="パスワードを入力（4文字以上）"
+                    style="margin-bottom: 0.5rem;"
+                >
+                <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0;">
+                    ※ URLを共有された人がこのパスワードを入力することでノートを閲覧できます
+                </p>
+            </div>
+
+            <div class="modal-buttons">
+                <button class="btn-filled" onclick="app.saveVisibilitySettings()">保存</button>
+                <button class="btn-filled btn-secondary" onclick="app.closeVisibilityModal()" style="background: var(--text-secondary);">キャンセル</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- パスワード入力モーダル -->
+    <div id="passwordPromptModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>🔐 パスワードが必要です</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">このノートはパスワードで保護されています。</p>
+            
+            <input 
+                type="password" 
+                id="passwordPromptInput" 
+                class="modal-input"
+                placeholder="パスワードを入力してください"
+                onkeypress="if(event.key==='Enter') app.submitPassword()"
+            >
+
+            <div class="modal-buttons">
+                <button class="btn-filled" onclick="app.submitPassword()">開く</button>
+                <button class="btn-filled btn-secondary" onclick="app.closePasswordPrompt()" style="background: var(--text-secondary);">キャンセル</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- シェアモーダル -->
+    <div id="shareModal" class="modal-overlay" onclick="if(event.target.id === 'shareModal') app.closeShareModal()">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">このノートを共有</h3>
+            <input type="text" id="shareUrl" readonly style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 1rem; background: var(--bg-color);">
+            
+            <div id="sharePasswordInfo" style="display: none; background: var(--warning-color); color: white; padding: 0.75rem; border-radius: 6px; margin-bottom: 1rem; font-size: 0.9rem;">
+                <div style="font-weight: 600; margin-bottom: 0.25rem;">🔐 パスワード保護されています</div>
+                <div>URLを受け取った人は以下のパスワードを入力する必要があります：</div>
+                <div style="font-family: monospace; background: rgba(255,255,255,0.2); padding: 0.25rem 0.5rem; border-radius: 4px; margin-top: 0.5rem;" id="sharePasswordDisplay"></div>
+            </div>
+            
+            <div class="share-buttons">
+                <button class="share-btn twitter" onclick="app.shareToTwitter()">Twitter</button>
+                <button class="share-btn line" onclick="app.shareToLine()">LINE</button>
+                <button class="share-btn facebook" onclick="app.shareToFacebook()">Facebook</button>
+            </div>
+            <button class="btn-filled" onclick="app.copyShareUrl()" style="width: 100%; margin-top: 1rem;">
+                URLをコピー
+            </button>
+        </div>
+    </div>
+
+    <!-- トースト通知 -->
+    <div id="toast" class="toast" role="alert" aria-live="polite"></div>
+
+    <script>
+        // デバッグ機能（最適化版）
+        function updateDebugInfo(message) {
+            // 本番環境ではデバッグ情報を無効化
+            if (window.location.hostname === 'localhost') {
+                const debugContent = document.getElementById('debugContent');
+                if (debugContent) {
+                    if (debugContent.innerHTML.length > 1000) {
+                        debugContent.innerHTML = '初期化中...<br>';
+                    }
+                    debugContent.innerHTML += '<br>' + message;
+                }
+            }
+            console.log('DEBUG:', message);
+        }
+
+        // ===== StudyBook Application - 最適化版 =====
+        class StudyBookApp {
+            constructor() {
+                updateDebugInfo('App starting...');
+                
+                // Firebase設定
+                this.firebaseConfig = {
+                    apiKey: "AIzaSyCRRsnIRzveG6B7XzDhUR-OoBWq-SY-5Ew",
+                    authDomain: "book-study-1f25e.firebaseapp.com",
+                    projectId: "book-study-1f25e",
+                    storageBucket: "book-study-1f25e.firebasestorage.app",
+                    messagingSenderId: "716923175090",
+                    appId: "1:716923175090:web:2cc8c093c6cdf4ddbe09ab"
+                };
+
+                // 状態管理
+                this.currentUser = null;
+                this.notesMap = new Map();
+                this.currentNote = null;
+                this.currentPage = 0;
+                this.isEditing = false;
+                this.isOnline = navigator.onLine;
+
+                // 認証関連フラグ
+                this.explicitLogout = false;
+
+                // Firebase インスタンス
+                this.firebaseApp = null;
+                this.auth = null;
+                this.db = null;
+                this.storage = null;
+                this.firebaseInitialized = false;
+
+                // リアルタイムリスナー
+                this.listeners = new Map();
+                this.reconnectAttempts = 0;
+                this.maxReconnectAttempts = 3;
+                this.reconnectTimeout = null;
+
+                // 検索エンジン
+                this.fuseInstance = null;
+
+                // パフォーマンス改善
+                this.dataCache = new Map();
+                this.lastFetchTime = 0;
+                this.cacheTimeout = 30000;
+
+                // レート制限
+                this.rateLimiter = new Map();
+
+                // タッチイベント
+                this.touchStartX = 0;
+                this.touchStartY = 0;
+
+                // 共有ノート処理
+                this.pendingSharedNoteId = null;
+                this.dataLoadingComplete = false;
+
+                // パスワード保護機能
+                this.passwordCache = new Map();
+                this.pendingPasswordNote = null;
+
+                // ズーム機能
+                this.zoomLevel = 1.0;
+                this.minZoom = 0.5;
+                this.maxZoom = 3.0;
+                this.zoomStep = 0.1;
+
+                // PWA & オフライン対応
+                this.setupOfflineHandling();
+
+                // エラーハンドリング
+                window.addEventListener('error', this.handleGlobalError.bind(this));
+                window.addEventListener('unhandledrejection', this.handleGlobalError.bind(this));
+
+                // 初期化
+                this.init();
+            }
+
+            // ===== オフライン処理設定 =====
+            setupOfflineHandling() {
+                window.addEventListener('online', () => {
+                    this.isOnline = true;
+                    this.updateConnectionStatus();
+                    if (this.firebaseInitialized) {
+                        this.reconnectFirestore();
+                    }
+                });
+
+                window.addEventListener('offline', () => {
+                    this.isOnline = false;
+                    this.updateConnectionStatus();
+                });
+
+                this.updateConnectionStatus();
+            }
+
+            updateConnectionStatus() {
+                const statusEl = document.getElementById('connectionStatus');
+                const textEl = document.getElementById('connectionText');
+                
+                if (this.isOnline) {
+                    statusEl.className = 'connection-status online';
+                    textEl.textContent = 'オンライン';
+                    setTimeout(() => {
+                        statusEl.style.display = 'none';
+                    }, 2000);
+                } else {
+                    statusEl.className = 'connection-status offline';
+                    textEl.textContent = 'オフライン';
+                    statusEl.style.display = 'block';
+                }
+            }
+
+            // ===== 初期化（最適化版） =====
+            async init() {
+                try {
+                    updateDebugInfo('Initializing...');
+                    document.getElementById('loadingText').textContent = 'Firebase初期化中...';
+
+                    // Firebase SDKの読み込みを待つ（タイムアウトを2秒に短縮）
+                    if (!window.firebaseReady) {
+                        updateDebugInfo('Waiting for Firebase...');
+                        await new Promise((resolve) => {
+                            const timeout = setTimeout(() => {
+                                updateDebugInfo('Firebase timeout - continuing without Firebase');
+                                resolve();
+                            }, 2000); // タイムアウトを2秒に短縮
+                            
+                            window.addEventListener('firebaseReady', () => {
+                                clearTimeout(timeout);
+                                updateDebugInfo('Firebase ready');
+                                resolve();
+                            }, { once: true });
+                        });
+                    }
+                    
+                    // Firebase初期化
+                    await this.initFirebase();
+
+                    // イベントリスナー設定
+                    this.setupEventListeners();
+
+                    // URL パラメータをチェック
+                    this.checkUrlParams();
+
+                    // データロード
+                    if (this.auth && this.firebaseInitialized) {
+                        updateDebugInfo('Setting up auth...');
+                        
+                        // 認証状態の監視を設定（一度だけ）
+                        this.auth.onAuthStateChanged(this.handleAuthStateChange.bind(this));
+                        
+                        // 現在のユーザーを即座にチェック
+                        const currentUser = this.auth.currentUser;
+                        if (currentUser) {
+                            updateDebugInfo('Found cached user: ' + currentUser.displayName);
+                            // 直接認証成功処理を実行
+                            await this.handleAuthSuccess(currentUser);
+                            this.dataLoadingComplete = true;
+                            this.handlePendingSharedNote();
+                        }
+                        
+                    } else {
+                        updateDebugInfo('Using local mode');
+                        this.loadLocalData();
+                        this.dataLoadingComplete = true;
+                        this.updateUI();
+                        this.handlePendingSharedNote();
+                    }
+
+                    // ローディング完了（表示時間を300msに短縮）
+                    document.getElementById('loadingText').textContent = '完了';
+                    updateDebugInfo('Initialization complete');
+                    
+                    setTimeout(() => {
+                        document.getElementById('loadingScreen').classList.add('hidden');
+                        const debugInfo = document.getElementById('debugInfo');
+                        if (debugInfo) {
+                            debugInfo.style.display = 'none';
+                        }
+                    }, 300); // 300msに短縮
+
+                } catch (error) {
+                    updateDebugInfo('Init error: ' + error.message);
+                    this.handleError(error, 'アプリの初期化に失敗しました');
+                    
+                    setTimeout(() => {
+                        document.getElementById('loadingScreen').classList.add('hidden');
+                    }, 500);
+                }
+            }
+
+            // ===== Firebase初期化 =====
+            async initFirebase() {
+                updateDebugInfo('Firebase init start');
+                
+                if (!window.firebaseModules) {
+                    updateDebugInfo('No Firebase modules - using local mode');
+                    return;
+                }
+
+                const { initializeApp, getAuth, getFirestore, getStorage, setPersistence, browserLocalPersistence, enableIndexedDbPersistence } = window.firebaseModules;
+
+                try {
+                    this.firebaseApp = initializeApp(this.firebaseConfig);
+                    this.auth = getAuth(this.firebaseApp);
+                    
+                    // 認証の永続化を設定
+                    try {
+                        await setPersistence(this.auth, browserLocalPersistence);
+                        updateDebugInfo('Auth persistence set to local');
+                    } catch (persistenceError) {
+                        updateDebugInfo('Auth persistence setting failed (non-critical): ' + persistenceError.message);
+                    }
+                    
+                    this.db = getFirestore(this.firebaseApp);
+                    
+                    // オフライン永続化を有効化
+                    try {
+                        await enableIndexedDbPersistence(this.db, { 
+                            forceOwnership: false
+                        });
+                        updateDebugInfo('Firestore offline persistence enabled');
+                    } catch (err) {
+                        if (err.code === 'failed-precondition') {
+                            updateDebugInfo('Multiple tabs open, persistence can only be enabled in one tab at a time');
+                        } else if (err.code === 'unimplemented') {
+                            updateDebugInfo('Browser does not support offline persistence');
+                        } else {
+                            updateDebugInfo('Persistence error: ' + err.message);
+                        }
+                    }
+                    
+                    this.storage = getStorage(this.firebaseApp);
+                    
+                    this.firebaseInitialized = true;
+                    updateDebugInfo('Firebase init success');
+                    
+                } catch (error) {
+                    updateDebugInfo('Firebase init failed: ' + error.message);
+                    console.warn("Firebase initialization failed", error);
+                    
+                    this.auth = null;
+                    this.db = null;
+                    this.storage = null;
+                    this.firebaseInitialized = false;
+                }
+            }
+
+            // ===== 認証状態変更処理（最適化版） =====
+            async handleAuthStateChange(user) {
+                try {
+                    // 遅延を削除して高速化
+                    
+                    if (user) {
+                        updateDebugInfo('User signed in: ' + user.displayName);
+                        await this.handleAuthSuccess(user);
+                    } else {
+                        updateDebugInfo('User signed out');
+                        // 明示的なログアウトの時のみログアウト処理
+                        if (this.explicitLogout) {
+                            this.handleAuthLogout();
+                            this.explicitLogout = false;
+                        }
+                        // それ以外は何もしない（認証状態キャッシュを維持）
+                    }
+                    
+                    this.dataLoadingComplete = true;
+                    this.handlePendingSharedNote();
+                    
+                } catch (error) {
+                    updateDebugInfo('Auth state change error: ' + error.message);
+                    this.handleError(error, '認証処理でエラーが発生しました');
+                }
+            }
+
+            // ===== ログアウト処理 =====
+            async handleLogout() {
+                this.explicitLogout = true;
+                
+                if (this.auth && this.firebaseInitialized) {
+                    const { signOut } = window.firebaseModules;
+                    try {
+                        await signOut(this.auth);
+                        updateDebugInfo('Logout successful');
+                    } catch (error) {
+                        updateDebugInfo('Logout error: ' + error.message);
+                        this.handleAuthLogout();
+                    }
+                } else {
+                    this.handleAuthLogout();
+                }
+            }
+
+            // ===== 進捗管理 =====
+            async loadReadingProgress() {
+                if (!this.currentUser) return;
+
+                let latestProgress = null;
+
+                if (this.db && this.firebaseInitialized) {
+                    try {
+                        const { doc, getDoc } = window.firebaseModules;
+                        
+                        const progressRef = doc(this.db, 'reading_progress', `${this.currentUser.uid}_latest`);
+                        const progressDoc = await getDoc(progressRef);
+                        
+                        if (progressDoc.exists()) {
+                            latestProgress = progressDoc.data();
+                        }
+                    } catch (error) {
+                        console.log('Progress not available, skipping');
+                    }
+                }
+                
+                if (!latestProgress) {
+                    const keys = Object.keys(localStorage).filter(k => k.startsWith('studybook_progress_'));
+                    if (keys.length > 0) {
+                        const progresses = keys.map(k => JSON.parse(localStorage.getItem(k)));
+                        latestProgress = progresses.sort((a, b) => b.timestamp - a.timestamp)[0];
+                    }
+                }
+
+                if (latestProgress) {
+                    this.displayContinueReading(latestProgress);
+                }
+            }
+
+            // ===== 進捗保存 =====
+            saveReadingProgress(noteId, pageIndex) {
+                if (!this.currentUser || !noteId) return;
+
+                const progress = {
+                    noteId,
+                    pageIndex,
+                    userId: this.currentUser.uid,
+                    timestamp: Date.now()
+                };
+
+                localStorage.setItem('studybook_progress_' + noteId, JSON.stringify(progress));
+
+                if (this.db && this.firebaseInitialized) {
+                    const { doc, setDoc } = window.firebaseModules;
+                    
+                    setDoc(
+                        doc(this.db, 'reading_progress', `${this.currentUser.uid}_latest`),
+                        progress
+                    ).catch(() => {});
+
+                    setDoc(
+                        doc(this.db, 'reading_progress', `${this.currentUser.uid}_${noteId}`),
+                        progress
+                    ).catch(() => {});
+                }
+            }
+
+            // ===== リアルタイムリスナー設定 =====
+            setupRealtimeListeners() {
+                if (!this.db || !this.currentUser || !this.firebaseInitialized) return;
+
+                const { collection, query, orderBy, limit, onSnapshot } = window.firebaseModules;
+                
+                try {
+                    const myNotesRef = collection(this.db, 'users', this.currentUser.uid, 'notes');
+                    const myNotesQuery = query(myNotesRef, orderBy('updatedAt', 'desc'), limit(20));
+                    
+                    const unsubscribeNotes = onSnapshot(myNotesQuery, 
+                        (snapshot) => {
+                            updateDebugInfo(`Notes snapshot: ${snapshot.size} docs`);
+                            this.handleNotesSnapshot(snapshot, this.currentUser.uid);
+                            this.reconnectAttempts = 0;
+                        },
+                        (error) => {
+                            updateDebugInfo('Notes listener error: ' + error.message);
+                            this.handleFirestoreError(error, 'notes');
+                            this.scheduleReconnect();
+                        }
+                    );
+                    
+                    this.listeners.set('myNotes', unsubscribeNotes);
+                    
+                    const publicNotesQuery = query(
+                        collection(this.db, 'publicNotes'),
+                        orderBy('updatedAt', 'desc'),
+                        limit(20)
+                    );
+                    
+                    const unsubscribePublicNotes = onSnapshot(publicNotesQuery, 
+                        (snapshot) => {
+                            updateDebugInfo(`Public notes snapshot: ${snapshot.size} docs`);
+                            this.handlePublicNotesSnapshot(snapshot);
+                            this.reconnectAttempts = 0;
+                        },
+                        (error) => {
+                            updateDebugInfo('Public notes listener error: ' + error.message);
+                            this.handleFirestoreError(error, 'publicNotes');
+                            this.scheduleReconnect();
+                        }
+                    );
+                    
+                    this.listeners.set('publicNotes', unsubscribePublicNotes);
+                    
+                } catch (error) {
+                    updateDebugInfo('Listener setup error: ' + error.message);
+                    console.error('Error setting up listeners:', error);
+                }
+            }
+
+            // ===== 再接続スケジューリング =====
+            scheduleReconnect() {
+                if (this.reconnectTimeout) {
+                    clearTimeout(this.reconnectTimeout);
+                }
+
+                if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+                    updateDebugInfo('Max reconnection attempts reached');
+                    return;
+                }
+
+                const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
+                this.reconnectAttempts++;
+
+                updateDebugInfo(`Scheduling reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`);
+
+                this.reconnectTimeout = setTimeout(() => {
+                    if (this.isOnline && this.firebaseInitialized) {
+                        this.reconnectFirestore();
+                    }
+                }, delay);
+            }
+
+            // ===== Firestoreエラーハンドリング =====
+            handleFirestoreError(error, listenerType) {
+                console.log(`Firestore ${listenerType} listener warning:`, error.message);
+                
+                if (error.message && error.message.includes('WebChannel')) {
+                    return;
+                }
+                
+                if (error.code === 'permission-denied') {
+                    updateDebugInfo(`Permission check for ${listenerType}`);
+                    if (this.notesMap.size === 0) {
+                        this.loadLocalData();
+                    }
+                }
+            }
+
+            // ===== 再接続処理 =====
+            async reconnectFirestore() {
+                if (!this.db || !this.isOnline || !this.firebaseInitialized) return;
+
+                try {
+                    updateDebugInfo('Attempting Firestore reconnection...');
+                    
+                    this.cleanupListeners();
+                    
+                    const { enableNetwork } = window.firebaseModules;
+                    await enableNetwork(this.db);
+                    
+                    setTimeout(() => {
+                        if (this.currentUser) {
+                            this.setupRealtimeListeners();
+                            this.reconnectAttempts = 0;
+                            updateDebugInfo('Firestore reconnected successfully');
+                        }
+                    }, 1000);
+                    
+                } catch (error) {
+                    updateDebugInfo('Reconnection failed: ' + error.message);
+                    console.error('Reconnection error:', error);
+                    this.scheduleReconnect();
+                }
+            }
+
+            // ===== URL パラメータチェック =====
+            checkUrlParams() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const noteId = urlParams.get('book');
+
+                if (noteId) {
+                    updateDebugInfo(`Shared note requested: ${noteId}`);
+                    this.pendingSharedNoteId = noteId;
+                    
+                    if (this.dataLoadingComplete) {
+                        this.handlePendingSharedNote();
+                    }
+                }
+            }
+
+            // ===== 共有ノート処理 =====
+            async handlePendingSharedNote() {
+                if (!this.pendingSharedNoteId || !this.dataLoadingComplete) {
+                    return;
+                }
+
+                const noteId = this.pendingSharedNoteId;
+                this.pendingSharedNoteId = null;
+
+                updateDebugInfo(`Processing pending shared note: ${noteId}`);
+
+                let note = this.findNoteById(noteId);
+
+                if (note) {
+                    if (await this.checkPasswordProtection(note)) {
+                        updateDebugInfo(`Found shared note in memory: ${note.title}`);
+                        this.openBook(noteId, false);
+                        return;
+                    } else {
+                        return;
+                    }
+                }
+
+                if (this.db && this.firebaseInitialized) {
+                    await this.loadPublicNoteDirectly(noteId);
+                } else {
+                    updateDebugInfo('No Firebase connection for shared note');
+                    this.showToast('オフラインでは共有ノートを開けません', 'error');
+                }
+            }
+
+            // ===== パスワード保護チェック =====
+            async checkPasswordProtection(note) {
+                if (!note.password && note.visibility?.type !== 'password') {
+                    return true;
+                }
+
+                if (this.currentUser && note.authorId === this.currentUser.uid) {
+                    return true;
+                }
+
+                const cachedPassword = this.passwordCache.get(note.id);
+                if (cachedPassword) {
+                    const correctPassword = note.password || note.visibility?.password;
+                    if (cachedPassword === correctPassword) {
+                        return true;
+                    }
+                }
+
+                this.pendingPasswordNote = note;
+                this.showPasswordPrompt(note);
+                return false;
+            }
+
+            showPasswordPrompt(note) {
+                document.getElementById('passwordPromptInput').value = '';
+                document.getElementById('passwordPromptModal').classList.add('active');
+                setTimeout(() => {
+                    document.getElementById('passwordPromptInput').focus();
+                }, 100);
+            }
+
+            async submitPassword() {
+                const password = document.getElementById('passwordPromptInput').value.trim();
+                
+                if (!password) {
+                    this.showToast('パスワードを入力してください', 'warning');
+                    return;
+                }
+
+                if (!this.pendingPasswordNote) {
+                    this.closePasswordPrompt();
+                    return;
+                }
+
+                const correctPassword = this.pendingPasswordNote.password || 
+                                      this.pendingPasswordNote.visibility?.password;
+
+                if (password === correctPassword) {
+                    this.passwordCache.set(this.pendingPasswordNote.id, password);
+                    this.closePasswordPrompt();
+                    this.openBook(this.pendingPasswordNote.id, false);
+                    this.pendingPasswordNote = null;
+                    this.showToast('パスワードが正しく入力されました', 'success');
+                } else {
+                    this.showToast('パスワードが間違っています', 'error');
+                    document.getElementById('passwordPromptInput').value = '';
+                    document.getElementById('passwordPromptInput').focus();
+                }
+            }
+
+            closePasswordPrompt() {
+                document.getElementById('passwordPromptModal').classList.remove('active');
+                this.pendingPasswordNote = null;
+            }
+
+            // ===== ノート検索 =====
+            findNoteById(noteId) {
+                return this.notesMap.get(noteId) || 
+                       this.notesMap.get('public_' + noteId) ||
+                       null;
+            }
+
+            // ===== 公開ノートを直接取得 =====
+            async loadPublicNoteDirectly(noteId) {
+                if (!this.db || !this.firebaseInitialized) {
+                    this.showToast('オフラインでは共有ノートを開けません', 'error');
+                    return;
+                }
+                
+                try {
+                    updateDebugInfo(`Loading public note directly: ${noteId}`);
+                    const { doc, getDoc } = window.firebaseModules;
+                    
+                    const publicNoteRef = doc(this.db, 'publicNotes', noteId);
+                    const publicNoteDoc = await getDoc(publicNoteRef);
+                    
+                    if (publicNoteDoc.exists()) {
+                        const noteData = { id: publicNoteDoc.id, ...publicNoteDoc.data() };
+                        
+                        if (noteData.isPublic || noteData.visibility?.type === 'password' || noteData.password) {
+                            this.notesMap.set(noteId, noteData);
+                            updateDebugInfo(`Loaded note: ${noteData.title}`);
+                            
+                            if (await this.checkPasswordProtection(noteData)) {
+                                this.openBook(noteId, false);
+                            }
+                            return;
+                        }
+                    }
+                    
+                    await this.findNoteInUserCollections(noteId);
+                    
+                } catch (error) {
+                    updateDebugInfo(`Public note load error: ${error.message}`);
+                    this.handleError(error, '共有ノートの読み込みに失敗しました');
+                }
+            }
+
+            // ===== ユーザーコレクションから検索 =====
+            async findNoteInUserCollections(noteId) {
+                try {
+                    updateDebugInfo(`Searching for note in user collections: ${noteId}`);
+                    const { collection, query, getDocs, limit } = window.firebaseModules;
+                    
+                    const usersRef = collection(this.db, 'users');
+                    const usersSnapshot = await getDocs(query(usersRef, limit(20)));
+                    
+                    for (const userDoc of usersSnapshot.docs) {
+                        try {
+                            const { doc, getDoc } = window.firebaseModules;
+                            const noteRef = doc(this.db, 'users', userDoc.id, 'notes', noteId);
+                            const noteSnapshot = await getDoc(noteRef);
+                            
+                            if (noteSnapshot.exists()) {
+                                const noteData = { id: noteSnapshot.id, ...noteSnapshot.data(), authorId: userDoc.id };
+                                
+                                if (noteData.isPublic || noteData.visibility?.type === 'password' || noteData.password) {
+                                    this.notesMap.set(noteId, noteData);
+                                    updateDebugInfo(`Found note in user collection: ${noteData.title}`);
+                                    
+                                    if (await this.checkPasswordProtection(noteData)) {
+                                        this.openBook(noteId, false);
+                                    }
+                                    return;
+                                }
+                            }
+                        } catch (userError) {
+                            continue;
+                        }
+                    }
+                    
+                    updateDebugInfo(`Shared note not found: ${noteId}`);
+                    this.showToast('共有ノートが見つからないか、アクセス権限がありません', 'error');
+                    
+                } catch (error) {
+                    updateDebugInfo(`User collections search error: ${error.message}`);
+                    this.showToast('共有ノートの検索中にエラーが発生しました', 'error');
+                }
+            }
+
+            // ===== データ読み込み =====
+            async loadNotesFromFirestore() {
+                if (!this.db || !this.currentUser || !this.firebaseInitialized) {
+                    this.loadLocalData();
+                    return;
+                }
+
+                try {
+                    updateDebugInfo('Loading notes from Firestore...');
+                    
+                    const now = Date.now();
+                    if (now - this.lastFetchTime < this.cacheTimeout && this.notesMap.size > 0) {
+                        updateDebugInfo('Using cached data');
+                        this.updateUI();
+                        return;
+                    }
+
+                    this.cleanupListeners();
+                    this.notesMap.clear();
+                    
+                    await this.loadNotesOnce();
+                    this.setupRealtimeListeners();
+                    
+                    this.lastFetchTime = now;
+                    updateDebugInfo(`Loaded ${this.notesMap.size} notes`);
+                    
+                } catch (error) {
+                    updateDebugInfo('Load error: ' + error.message);
+                    
+                    if (error.code === 'permission-denied') {
+                        updateDebugInfo('Permission check - loading local data');
+                    } else {
+                        this.handleError(error, 'データの読み込みに失敗しました');
+                    }
+                    
+                    this.loadLocalData();
+                }
+            }
+
+            // ===== 一度だけのデータ取得 =====
+            async loadNotesOnce() {
+                const { collection, query, getDocs, orderBy, limit } = window.firebaseModules;
+                
+                try {
+                    const myNotesRef = collection(this.db, 'users', this.currentUser.uid, 'notes');
+                    const myNotesQuery = query(myNotesRef, orderBy('updatedAt', 'desc'), limit(20));
+                    const mySnapshot = await getDocs(myNotesQuery);
+                    
+                    mySnapshot.forEach(doc => {
+                        const noteData = { id: doc.id, ...doc.data(), authorId: this.currentUser.uid };
+                        this.notesMap.set(doc.id, noteData);
+                    });
+                    
+                    updateDebugInfo(`Loaded ${mySnapshot.size} personal notes`);
+
+                    const publicNotesQuery = query(
+                        collection(this.db, 'publicNotes'),
+                        orderBy('updatedAt', 'desc'),
+                        limit(20)
+                    );
+                    const publicSnapshot = await getDocs(publicNotesQuery);
+                    
+                    publicSnapshot.forEach(doc => {
+                        const noteData = { id: doc.id, ...doc.data() };
+                        if (noteData.authorId !== this.currentUser.uid) {
+                            this.notesMap.set(doc.id, noteData);
+                        }
+                    });
+                    
+                    updateDebugInfo(`Loaded ${publicSnapshot.size} public notes`);
+
+                    this.updateSearchIndex();
+                    this.updateUI();
+                    this.loadReadingProgress();
+                    
+                } catch (error) {
+                    console.error('One-time load error:', error);
+                    throw error;
+                }
+            }
+
+            displayContinueReading(progress) {
+                const note = this.findNoteById(progress.noteId);
+                if (!note) return;
+
+                const container = document.getElementById('continueReading');
+                container.innerHTML = `
+                    <div class="continue-reading" onclick="app.openBook('${progress.noteId}', false); app.currentPage = ${progress.pageIndex}; app.updateViewer();">
+                        📖 続きから読む: ${this.escapeHtml(note.title)} (${progress.pageIndex + 1}/${note.pages.length}ページ)
+                    </div>
+                `;
+                container.style.display = 'block';
+            }
+
+            handleNotesSnapshot(snapshot, authorId) {
+                let hasChanges = false;
+                
+                snapshot.docChanges().forEach((change) => {
+                    const noteData = { id: change.doc.id, ...change.doc.data(), authorId };
+                    
+                    if (change.type === 'added' || change.type === 'modified') {
+                        this.notesMap.set(change.doc.id, noteData);
+                        hasChanges = true;
+                    } else if (change.type === 'removed') {
+                        this.notesMap.delete(change.doc.id);
+                        hasChanges = true;
+                        
+                        if (this.currentNote && this.currentNote.id === change.doc.id) {
+                            this.currentNote = null;
+                            this.goHome();
+                        }
+                    }
+                });
+                
+                if (hasChanges) {
+                    this.updateSearchIndex();
+                    this.updateUI();
+                    this.saveLocalData();
+                }
+            }
+
+            handlePublicNotesSnapshot(snapshot) {
+                let hasChanges = false;
+                
+                snapshot.docChanges().forEach((change) => {
+                    const noteData = { id: change.doc.id, ...change.doc.data() };
+                    
+                    if (noteData.authorId !== this.currentUser?.uid) {
+                        if (change.type === 'added' || change.type === 'modified') {
+                            this.notesMap.set(change.doc.id, noteData);
+                            hasChanges = true;
+                        } else if (change.type === 'removed') {
+                            this.notesMap.delete(change.doc.id);
+                            hasChanges = true;
+                        }
+                    }
+                });
+                
+                if (hasChanges) {
+                    this.updateSearchIndex();
+                    this.updateUI();
+                }
+            }
+
+            cleanupListeners() {
+                if (this.reconnectTimeout) {
+                    clearTimeout(this.reconnectTimeout);
+                    this.reconnectTimeout = null;
+                }
+
+                this.listeners.forEach((unsubscribe, key) => {
+                    try {
+                        unsubscribe();
+                        updateDebugInfo(`Cleaned up listener: ${key}`);
+                    } catch (error) {
+                        console.warn(`Error cleaning up listener ${key}:`, error);
+                    }
+                });
+                this.listeners.clear();
+            }
+
+            // ===== ローカルデータ処理 =====
+            loadLocalData() {
+                try {
+                    const localNotes = localStorage.getItem('studybook_notes');
+                    if (localNotes) {
+                        const notes = JSON.parse(localNotes);
+                        notes.forEach(note => {
+                            this.notesMap.set(note.id, note);
+                        });
+                        updateDebugInfo(`Loaded ${notes.length} notes from local storage`);
+                    }
+                    this.updateSearchIndex();
+                    this.updateUI();
+                } catch (error) {
+                    updateDebugInfo('Local data load error: ' + error.message);
+                    console.error('Error loading local data:', error);
+                }
+            }
+
+            saveLocalData() {
+                try {
+                    const notes = Array.from(this.notesMap.values());
+                    localStorage.setItem('studybook_notes', JSON.stringify(notes));
+                } catch (error) {
+                    console.warn('Error saving local data:', error);
+                }
+            }
+
+            // ===== 認証処理 =====
+            async handleLogin() {
+                updateDebugInfo('Login attempt');
+                
+                if (!this.auth || !this.firebaseInitialized) {
+                    this.showToast('Firebase接続エラー', 'error');
+                    return;
+                }
+
+                if (!this.checkRateLimit('login', 5, 60000)) {
+                    this.showToast('ログイン試行が多すぎます', 'error');
+                    return;
+                }
+
+                try {
+                    updateDebugInfo('Google sign-in...');
+                    const { GoogleAuthProvider, signInWithPopup } = window.firebaseModules;
+                    const provider = new GoogleAuthProvider();
+                    const result = await signInWithPopup(this.auth, provider);
+                    updateDebugInfo('Sign-in success');
+                } catch (error) {
+                    updateDebugInfo('Sign-in error: ' + error.message);
+                    this.handleError(error, 'ログインに失敗しました');
+                }
+            }
+
+            async handleAuthSuccess(user) {
+                this.currentUser = {
+                    uid: user.uid,
+                    displayName: user.displayName || 'ユーザー',
+                    email: user.email,
+                    photoURL: user.photoURL
+                };
+                updateDebugInfo('Auth success: ' + this.currentUser.displayName);
+                
+                await this.ensureUserDocument();
+                await this.loadNotesFromFirestore();
+                
+                this.showToast('ログインしました', 'success');
+            }
+
+            handleAuthLogout() {
+                this.cleanupListeners();
+                
+                this.currentUser = null;
+                this.notesMap.clear();
+                this.passwordCache.clear();
+                
+                const keys = Object.keys(localStorage);
+                keys.forEach(key => {
+                    if (key.startsWith('studybook_')) {
+                        localStorage.removeItem(key);
+                    }
+                });
+                
+                updateDebugInfo('Logged out');
+                this.showToast('ログアウトしました', 'info');
+                this.updateUI();
+            }
+
+            async ensureUserDocument() {
+                if (!this.db || !this.currentUser || !this.firebaseInitialized) return;
+                
+                try {
+                    const { doc, getDoc, setDoc, serverTimestamp } = window.firebaseModules;
+                    const userDocRef = doc(this.db, 'users', this.currentUser.uid);
+                    const userDoc = await getDoc(userDocRef);
+                    
+                    if (!userDoc.exists()) {
+                        await setDoc(userDocRef, {
+                            displayName: this.currentUser.displayName,
+                            email: this.currentUser.email,
+                            photoURL: this.currentUser.photoURL,
+                            createdAt: serverTimestamp(),
+                            updatedAt: serverTimestamp()
+                        });
+                        updateDebugInfo('Created user document');
+                    } else {
+                        await setDoc(userDocRef, {
+                            updatedAt: serverTimestamp()
+                        }, { merge: true });
+                    }
+                } catch (error) {
+                    updateDebugInfo('User doc error: ' + error.message);
+                    console.error('Error ensuring user document:', error);
+                }
+            }
+
+            // ===== ズーム機能 =====
+            zoomIn() {
+                this.zoomLevel = Math.min(this.maxZoom, this.zoomLevel + this.zoomStep);
+                this.applyZoom();
+            }
+
+            zoomOut() {
+                this.zoomLevel = Math.max(this.minZoom, this.zoomLevel - this.zoomStep);
+                this.applyZoom();
+            }
+
+            resetZoom() {
+                this.zoomLevel = 1.0;
+                this.applyZoom();
+            }
+
+            applyZoom() {
+                const pageContent = document.getElementById('pageContent');
+                if (pageContent) {
+                    pageContent.style.transform = `scale(${this.zoomLevel})`;
+                    document.getElementById('zoomLevel').textContent = Math.round(this.zoomLevel * 100) + '%';
+                    
+                    const margin = this.zoomLevel === 1.0 ? '1rem' : `${this.zoomLevel}rem`;
+                    pageContent.style.marginBottom = margin;
+                }
+            }
+
+            // ===== イベントリスナー設定 =====
+            setupEventListeners() {
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) {
+                    searchInput.addEventListener('input', this.debounce(this.handleSearch.bind(this), 300));
+                    document.addEventListener('click', (e) => {
+                        if (!searchInput.contains(e.target)) {
+                            document.getElementById('searchResults').classList.remove('active');
+                        }
+                    });
+                }
+
+                document.addEventListener('change', (e) => {
+                    if (e.target.name === 'visibility') {
+                        this.toggleVisibilityOptions(e.target.value);
+                    }
+                });
+
+                const pageContent = document.getElementById('pageContent');
+                if (pageContent) {
+                    pageContent.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: true });
+                    pageContent.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: true });
+                    pageContent.addEventListener('touchend', this.handleTouchEnd.bind(this));
+                }
+
+                document.addEventListener('keydown', (e) => {
+                    if (this.currentNote) {
+                        if (e.key === 'ArrowLeft') this.previousPage();
+                        if (e.key === 'ArrowRight') this.nextPage();
+                        if (e.key === 'Escape') this.toggleSidebar();
+                        
+                        if (e.ctrlKey || e.metaKey) {
+                            if (e.key === '=') {
+                                e.preventDefault();
+                                this.zoomIn();
+                            } else if (e.key === '-') {
+                                e.preventDefault();
+                                this.zoomOut();
+                            } else if (e.key === '0') {
+                                e.preventDefault();
+                                this.resetZoom();
+                            }
+                        }
+                    }
+
+                    if (e.key === 'Enter' && document.getElementById('passwordPromptModal').classList.contains('active')) {
+                        this.submitPassword();
+                    }
+                });
+
+                document.addEventListener('touchmove', (e) => {
+                    if (e.touches.length > 1) {
+                        e.preventDefault();
+                    }
+                }, { passive: false });
+            }
+
+            // ===== 検索機能 =====
+            updateSearchIndex() {
+                const notes = Array.from(this.notesMap.values());
+                
+                if (typeof Fuse !== 'undefined' && notes.length > 0) {
+                    this.fuseInstance = new Fuse(notes, {
+                        keys: [
+                            { name: 'title', weight: 0.3 },
+                            { name: 'author', weight: 0.2 },
+                            { name: 'tags', weight: 0.2 },
+                            { name: 'pages.title', weight: 0.15 },
+                            { name: 'pages.content', weight: 0.15 }
+                        ],
+                        threshold: 0.3,
+                        includeScore: true
+                    });
+                }
+            }
+
+            handleSearch(event) {
+                const query = event.target.value.trim();
+                
+                if (!query) {
+                    document.getElementById('searchResults').classList.remove('active');
+                    return;
+                }
+
+                if (!this.fuseInstance) {
+                    this.updateSearchIndex();
+                }
+
+                if (this.fuseInstance) {
+                    const results = this.fuseInstance.search(query).slice(0, 8);
+                    this.displaySearchResults(results);
+                }
+            }
+
+            displaySearchResults(results) {
+                const container = document.getElementById('searchResults');
+                
+                if (results.length === 0) {
+                    container.innerHTML = '<div class="search-result-item">検索結果がありません</div>';
+                } else {
+                    container.innerHTML = results.map(result => {
+                        const note = result.item;
+                        const hasPassword = note.password || note.visibility?.type === 'password';
+                        const passwordIcon = hasPassword ? ' 🔐' : '';
+                        
+                        return `
+                            <div class="search-result-item" onclick="app.openBook('${note.id}', false)">
+                                <div style="font-weight: 500; margin-bottom: 0.25rem;">${this.escapeHtml(note.title)}${passwordIcon}</div>
+                                <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                                    ${this.escapeHtml(note.author)} • ${note.pages.length}ページ
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+                
+                container.classList.add('active');
+            }
+
+            // ===== ノート作成 =====
+            async createNewBook() {
+                updateDebugInfo('Creating new note...');
+                
+                if (!this.currentUser) {
+                    this.showToast('ログインが必要です', 'warning');
+                    return;
+                }
+
+                const newNote = {
+                    title: '新しいノート',
+                    author: this.currentUser.displayName,
+                    authorId: this.currentUser.uid,
+                    isPublic: false,
+                    visibility: { type: 'private' },
+                    tags: [],
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    pages: [
+                        {
+                            title: 'タイトルページ',
+                            content: '# 新しいノート\n\n内容を入力してください',
+                            image: null,
+                            tags: []
+                        }
+                    ],
+                    views: 0,
+                    likes: 0
+                };
+
+                if (this.db && this.firebaseInitialized) {
+                    try {
+                        updateDebugInfo('Saving to Firestore...');
+                        const { collection, addDoc, serverTimestamp } = window.firebaseModules;
+                        
+                        const noteToSave = {
+                            ...newNote,
+                            createdAt: serverTimestamp(),
+                            updatedAt: serverTimestamp()
+                        };
+                        
+                        const notesRef = collection(this.db, 'users', this.currentUser.uid, 'notes');
+                        const docRef = await addDoc(notesRef, noteToSave);
+                        newNote.id = docRef.id;
+                        updateDebugInfo('Saved: ' + docRef.id);
+                        
+                    } catch (error) {
+                        updateDebugInfo('Save error: ' + error.message);
+                        this.handleError(error, 'ノートの作成に失敗しました');
+                        return;
+                    }
+                } else {
+                    newNote.id = 'note_' + Date.now();
+                    updateDebugInfo('Local save: ' + newNote.id);
+                }
+
+                this.notesMap.set(newNote.id, newNote);
+                this.currentNote = newNote;
+                this.saveLocalData();
+                this.showToast('ノートを作成しました', 'success');
+                this.openBook(newNote.id, true);
+            }
+
+            // ===== ノートを開く =====
+            async openBook(noteId, editMode = false) {
+                updateDebugInfo(`Opening book: ${noteId}, edit: ${editMode}`);
+                
+                const note = this.findNoteById(noteId);
+                
+                if (!note) {
+                    updateDebugInfo(`Note not found: ${noteId}`);
+                    this.showToast('ノートが見つかりません', 'error');
+                    return;
+                }
+
+                if (editMode && (!this.currentUser || note.authorId !== this.currentUser.uid)) {
+                    updateDebugInfo(`Edit permission denied for note: ${noteId}`);
+                    this.showToast('編集権限がありません', 'warning');
+                    editMode = false;
+                }
+
+                if (!editMode) {
+                    const hasAccess = await this.checkPasswordProtection(note);
+                    if (!hasAccess) {
+                        return;
+                    }
+                }
+
+                this.currentNote = note;
+                this.currentPage = 0;
+                this.isEditing = editMode;
+
+                document.getElementById('homeView').style.display = 'none';
+                document.getElementById('viewerContainer').style.display = 'block';
+
+                if (!editMode && this.db && this.firebaseInitialized && this.currentNote.id) {
+                    this.incrementViews(noteId);
+                }
+
+                if (!editMode && this.currentUser) {
+                    this.saveReadingProgress(noteId, 0);
+                }
+
+                this.resetZoom();
+
+                this.updateViewer();
+                window.scrollTo(0, 0);
+                
+                updateDebugInfo(`Opened note: ${note.title} (edit: ${editMode})`);
+            }
+
+            // ===== 統計 =====
+            async incrementViews(noteId) {
+                if (!this.db || !this.firebaseInitialized) return;
+
+                try {
+                    const { doc, updateDoc, increment } = window.firebaseModules;
+                    
+                    const actualNoteId = noteId.startsWith('public_') ? noteId.replace('public_', '') : noteId;
+                    
+                    if (this.currentNote.authorId === this.currentUser?.uid) {
+                        await updateDoc(doc(this.db, 'users', this.currentUser.uid, 'notes', actualNoteId), {
+                            views: increment(1)
+                        });
+                    } else {
+                        await updateDoc(doc(this.db, 'publicNotes', actualNoteId), {
+                            views: increment(1)
+                        });
+                    }
+                } catch (error) {
+                    console.error('View count error:', error);
+                }
+            }
+
+            // ===== ビューアー更新 =====
+            updateViewer() {
+                if (!this.currentNote) return;
+
+                const isOwner = this.currentUser && this.currentNote.authorId === this.currentUser.uid;
+                document.getElementById('saveBtn').style.display = this.isEditing ? 'inline-flex' : 'none';
+                document.getElementById('addPageBtn').style.display = this.isEditing ? 'inline-flex' : 'none';
+                document.getElementById('deleteBookBtn').style.display = isOwner ? 'inline-flex' : 'none';
+                document.getElementById('pageInfo').textContent = `${this.currentPage + 1} / ${this.currentNote.pages.length}`;
+                
+                const visibilityIcon = this.getVisibilityIcon();
+                document.getElementById('visibilityBtn').textContent = visibilityIcon;
+                document.getElementById('visibilityBtn').title = this.getVisibilityTitle();
+
+                this.updateTOC();
+                this.updatePageContent();
+                this.updatePageNavigation();
+            }
+
+            getVisibilityIcon() {
+                const type = this.getCurrentVisibilityType();
+                switch (type) {
+                    case 'public': return '🌍';
+                    case 'password': return '🔐';
+                    case 'private':
+                    default: return '🔒';
+                }
+            }
+
+            getVisibilityTitle() {
+                const type = this.getCurrentVisibilityType();
+                switch (type) {
+                    case 'public': return '完全公開';
+                    case 'password': return 'パスワード保護';
+                    case 'private':
+                    default: return '非公開';
+                }
+            }
+
+            getCurrentVisibilityType() {
+                if (!this.currentNote) return 'private';
+                
+                if (this.currentNote.visibility?.type) {
+                    return this.currentNote.visibility.type;
+                }
+                
+                if (this.currentNote.password) {
+                    return 'password';
+                }
+                
+                return this.currentNote.isPublic ? 'public' : 'private';
+            }
+
+            updatePageContent() {
+                const page = this.currentNote.pages[this.currentPage];
+
+                if (this.isEditing) {
+                    document.getElementById('viewMode').style.display = 'none';
+                    document.getElementById('editMode').style.display = 'block';
+
+                    const bookTitleSection = document.getElementById('bookTitleSection');
+                    if (this.currentPage === 0) {
+                        bookTitleSection.style.display = 'block';
+                        document.getElementById('bookTitleInput').value = this.currentNote.title || '';
+                    } else {
+                        bookTitleSection.style.display = 'none';
+                    }
+
+                    document.getElementById('pageTitleInput').value = page.title || '';
+                    document.getElementById('pageContentInput').value = page.content || '';
+                    document.getElementById('pageTagsInput').value = (page.tags || []).join(', ');
+
+                    if (page.image) {
+                        document.getElementById('imagePreview').innerHTML = `
+                            <img src="${this.escapeHtml(page.image)}" style="max-width: 100%; height: auto; border-radius: 6px; box-shadow: var(--shadow-sm);">
+                            <button class="btn btn-danger" onclick="app.removeImage()" style="margin-top: 0.5rem;">削除</button>
+                        `;
+                    } else {
+                        document.getElementById('imagePreview').innerHTML = '';
+                    }
+                } else {
+                    document.getElementById('viewMode').style.display = 'block';
+                    document.getElementById('editMode').style.display = 'none';
+
+                    document.getElementById('pageTitle').textContent = page.title || 'ページ' + (this.currentPage + 1);
+
+                    if (page.image) {
+                        document.getElementById('pageImage').src = page.image;
+                        document.getElementById('pageImage').style.display = 'block';
+                    } else {
+                        document.getElementById('pageImage').style.display = 'none';
+                    }
+
+                    const cleanContent = DOMPurify.sanitize(page.content || '');
+                    const htmlContent = marked.parse(cleanContent);
+                    document.getElementById('pageBody').innerHTML = DOMPurify.sanitize(htmlContent);
+                }
+            }
+
+            // ===== ページナビゲーション =====
+            previousPage() {
+                if (this.currentNote && this.currentPage > 0) {
+                    if (this.isEditing) {
+                        this.saveCurrentPage();
+                    }
+                    this.currentPage--;
+                    this.updateViewer();
+                    if (this.currentNote) {
+                        this.saveReadingProgress(this.currentNote.id, this.currentPage);
+                    }
+                }
+            }
+
+            nextPage() {
+                if (this.currentNote && this.currentPage < this.currentNote.pages.length - 1) {
+                    if (this.isEditing) {
+                        this.saveCurrentPage();
+                    }
+                    this.currentPage++;
+                    this.updateViewer();
+                    if (this.currentNote) {
+                        this.saveReadingProgress(this.currentNote.id, this.currentPage);
+                    }
+                }
+            }
+
+            goToPage(pageIndex) {
+                if (this.isEditing) {
+                    this.saveCurrentPage();
+                }
+                this.currentPage = pageIndex;
+                this.updateViewer();
+                this.saveReadingProgress(this.currentNote.id, pageIndex);
+                this.toggleSidebar();
+            }
+
+            // ===== 保存処理 =====
+            saveCurrentPage() {
+                if (!this.isEditing) return;
+
+                const page = this.currentNote.pages[this.currentPage];
+                page.title = document.getElementById('pageTitleInput').value || 'ページ' + (this.currentPage + 1);
+                page.content = document.getElementById('pageContentInput').value || '';
+                
+                const tagsInput = document.getElementById('pageTagsInput').value;
+                page.tags = tagsInput ? tagsInput.split(',').map(tag => tag.trim()).filter(Boolean) : [];
+
+                if (this.currentPage === 0) {
+                    const bookTitle = document.getElementById('bookTitleInput').value;
+                    if (bookTitle) {
+                        this.currentNote.title = bookTitle;
+                    }
+                }
+            }
+
+            async saveBook() {
+                if (!this.isEditing || !this.currentNote) return;
+
+                this.saveCurrentPage();
+
+                const allTags = new Set();
+                this.currentNote.pages.forEach(page => {
+                    (page.tags || []).forEach(tag => allTags.add(tag));
+                });
+                this.currentNote.tags = Array.from(allTags);
+
+                this.currentNote.updatedAt = new Date().toISOString();
+
+                if (this.db && this.firebaseInitialized) {
+                    try {
+                        const { doc, setDoc, serverTimestamp } = window.firebaseModules;
+                        
+                        const noteToSave = {
+                            ...this.currentNote,
+                            updatedAt: serverTimestamp()
+                        };
+                        
+                        await setDoc(
+                            doc(this.db, 'users', this.currentUser.uid, 'notes', this.currentNote.id),
+                            noteToSave
+                        );
+                        
+                        await this.syncToPublicNotes();
+                        
+                        this.showToast('保存しました', 'success');
+                    } catch (error) {
+                        this.handleError(error, '保存に失敗しました');
+                    }
+                } else {
+                    this.showToast('ローカルに保存しました', 'info');
+                }
+
+                if (this.currentNote) {
+                    this.notesMap.set(this.currentNote.id, this.currentNote);
+                }
+                this.saveLocalData();
+                this.updateUI();
+            }
+
+            // ===== 公開ノート同期 =====
+            async syncToPublicNotes() {
+                if (!this.db || !this.currentNote || !this.currentNote.id || !this.currentUser || !this.firebaseInitialized) {
+                    return;
+                }
+                
+                try {
+                    const { doc, setDoc, deleteDoc } = window.firebaseModules;
+                    
+                    const actualNoteId = this.currentNote.id.startsWith('public_') 
+                        ? this.currentNote.id.replace('public_', '') 
+                        : this.currentNote.id;
+                    
+                    const isPublicOrPassword = this.currentNote.isPublic || 
+                                             this.currentNote.visibility?.type === 'password' ||
+                                             this.currentNote.password;
+                    
+                    if (isPublicOrPassword) {
+                        const publicNoteData = {
+                            ...this.currentNote,
+                            id: actualNoteId,
+                            authorId: this.currentUser.uid,
+                            author: this.currentUser.displayName || 'ユーザー'
+                        };
+                        
+                        await setDoc(doc(this.db, 'publicNotes', actualNoteId), publicNoteData);
+                        updateDebugInfo(`Synced to public notes: ${actualNoteId}`);
+                        
+                    } else {
+                        try {
+                            await deleteDoc(doc(this.db, 'publicNotes', actualNoteId));
+                            updateDebugInfo(`Removed from public notes: ${actualNoteId}`);
+                        } catch (error) {
+                            updateDebugInfo(`Public note not found for deletion: ${actualNoteId}`);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Public notes sync error:', error);
+                    updateDebugInfo(`Sync error: ${error.message}`);
+                }
+            }
+
+            // ===== 公開設定 =====
+            showVisibilitySettings() {
+                if (!this.currentUser || !this.currentNote || this.currentNote.authorId !== this.currentUser.uid) {
+                    this.showToast('自分のノートのみ変更できます', 'warning');
+                    return;
+                }
+
+                const currentType = this.getCurrentVisibilityType();
+                document.querySelector(`input[name="visibility"][value="${currentType}"]`).checked = true;
+                
+                if (currentType === 'password') {
+                    const password = this.currentNote.password || this.currentNote.visibility?.password || '';
+                    document.getElementById('passwordInput').value = password;
+                }
+                
+                this.toggleVisibilityOptions(currentType);
+                document.getElementById('visibilityModal').classList.add('active');
+            }
+
+            toggleVisibilityOptions(type) {
+                const passwordSection = document.getElementById('passwordSection');
+                
+                if (type === 'password') {
+                    passwordSection.style.display = 'block';
+                } else {
+                    passwordSection.style.display = 'none';
+                }
+            }
+
+            async saveVisibilitySettings() {
+                const selectedType = document.querySelector('input[name="visibility"]:checked')?.value;
+                if (!selectedType) {
+                    this.showToast('公開設定を選択してください', 'warning');
+                    return;
+                }
+
+                if (selectedType === 'password') {
+                    const password = document.getElementById('passwordInput').value.trim();
+                    if (!password || password.length < 4) {
+                        this.showToast('パスワードは4文字以上で入力してください', 'warning');
+                        return;
+                    }
+                }
+
+                try {
+                    if (selectedType === 'password') {
+                        this.currentNote.visibility = {
+                            type: 'password',
+                            password: document.getElementById('passwordInput').value.trim()
+                        };
+                        this.currentNote.isPublic = false;
+                        this.currentNote.password = document.getElementById('passwordInput').value.trim();
+                    } else {
+                        this.currentNote.visibility = {
+                            type: selectedType
+                        };
+                        delete this.currentNote.password;
+                        this.currentNote.isPublic = (selectedType === 'public');
+                    }
+
+                    this.currentNote.updatedAt = new Date().toISOString();
+
+                    if (this.db && this.firebaseInitialized) {
+                        const { doc, updateDoc, serverTimestamp } = window.firebaseModules;
+                        await updateDoc(doc(this.db, 'users', this.currentUser.uid, 'notes', this.currentNote.id), {
+                            visibility: this.currentNote.visibility,
+                            isPublic: this.currentNote.isPublic,
+                            password: this.currentNote.password || null,
+                            updatedAt: serverTimestamp()
+                        });
+                        
+                        await this.syncToPublicNotes();
+                    }
+
+                    this.notesMap.set(this.currentNote.id, this.currentNote);
+                    this.saveLocalData();
+                    
+                    this.updateViewer();
+                    this.updateUI();
+                    
+                    this.closeVisibilityModal();
+                    
+                    const typeNames = {
+                        'private': '完全非公開',
+                        'public': '完全公開',
+                        'password': 'パスワード保護'
+                    };
+                    
+                    this.showToast(`${typeNames[selectedType]}に設定しました`, 'success');
+                    
+                } catch (error) {
+                    this.handleError(error, '公開設定の保存に失敗しました');
+                }
+            }
+
+            closeVisibilityModal() {
+                document.getElementById('visibilityModal').classList.remove('active');
+            }
+
+            // ===== シェア機能 =====
+            showShareModal() {
+                if (!this.currentNote) return;
+
+                const shareNoteId = this.currentNote.id.startsWith('public_') 
+                    ? this.currentNote.id.replace('public_', '') 
+                    : this.currentNote.id;
+                
+                const shareUrl = `${window.location.origin}${window.location.pathname}?book=${shareNoteId}`;
+                document.getElementById('shareUrl').value = shareUrl;
+                
+                const hasPassword = this.currentNote.password || this.currentNote.visibility?.type === 'password';
+                const passwordInfoDiv = document.getElementById('sharePasswordInfo');
+                
+                if (hasPassword) {
+                    const password = this.currentNote.password || this.currentNote.visibility?.password;
+                    passwordInfoDiv.style.display = 'block';
+                    document.getElementById('sharePasswordDisplay').textContent = password;
+                } else {
+                    passwordInfoDiv.style.display = 'none';
+                }
+                
+                document.getElementById('shareModal').style.display = 'flex';
+                
+                updateDebugInfo(`Share URL generated: ${shareUrl}`);
+            }
+
+            closeShareModal() {
+                document.getElementById('shareModal').style.display = 'none';
+            }
+
+            async copyShareUrl() {
+                const shareUrl = document.getElementById('shareUrl').value;
+                
+                try {
+                    await navigator.clipboard.writeText(shareUrl);
+                    this.showToast('URLをコピーしました', 'success');
+                    this.closeShareModal();
+                } catch {
+                    const input = document.getElementById('shareUrl');
+                    input.select();
+                    document.execCommand('copy');
+                    this.showToast('URLをコピーしました', 'success');
+                    this.closeShareModal();
+                }
+            }
+
+            shareToTwitter() {
+                const url = document.getElementById('shareUrl').value;
+                const hasPassword = this.currentNote.password || this.currentNote.visibility?.type === 'password';
+                const passwordNote = hasPassword ? '（パスワード保護）' : '';
+                const text = `「${this.currentNote.title}」を読んでいます${passwordNote}`;
+                window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+                this.closeShareModal();
+            }
+
+            shareToLine() {
+                const url = document.getElementById('shareUrl').value;
+                const hasPassword = this.currentNote.password || this.currentNote.visibility?.type === 'password';
+                const passwordNote = hasPassword ? '（パスワード保護）' : '';
+                const text = `「${this.currentNote.title}」${passwordNote}\n${url}`;
+                window.open(`https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank');
+                this.closeShareModal();
+            }
+
+            shareToFacebook() {
+                const url = document.getElementById('shareUrl').value;
+                window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+                this.closeShareModal();
+            }
+
+            // ===== エディター機能 =====
+            insertMarkdown(before, after) {
+                const textarea = document.getElementById('pageContentInput');
+                const start = textarea.selectionStart;
+                const end = textarea.selectionEnd;
+                const selectedText = textarea.value.substring(start, end);
+                
+                const replacement = before + selectedText + after;
+                textarea.value = textarea.value.substring(0, start) + replacement + textarea.value.substring(end);
+                
+                const newPos = start + before.length + selectedText.length;
+                textarea.focus();
+                textarea.setSelectionRange(newPos, newPos);
+            }
+
+            async insertImageInContent() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                input.style.display = 'none';
+                
+                input.onchange = async (event) => {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    if (file.size > 5 * 1024 * 1024) {
+                        this.showToast('画像は5MB以下にしてください', 'error');
+                        return;
+                    }
+
+                    try {
+                        let imageUrl;
+
+                        if (this.storage && this.firebaseInitialized) {
+                            const { ref, uploadBytes, getDownloadURL } = window.firebaseModules;
+                            const storageRef = ref(this.storage, `images/${this.currentUser.uid}/${Date.now()}_${file.name}`);
+                            const snapshot = await uploadBytes(storageRef, file);
+                            imageUrl = await getDownloadURL(snapshot.ref);
+                        } else {
+                            imageUrl = await new Promise((resolve) => {
+                                const reader = new FileReader();
+                                reader.onload = (e) => resolve(e.target.result);
+                                reader.readAsDataURL(file);
+                            });
+                        }
+
+                        const textarea = document.getElementById('pageContentInput');
+                        const pos = textarea.selectionStart;
+                        const imageMarkdown = `![画像](${imageUrl})\n`;
+                        
+                        textarea.value = textarea.value.substring(0, pos) + imageMarkdown + textarea.value.substring(pos);
+                        textarea.focus();
+                        textarea.setSelectionRange(pos + imageMarkdown.length, pos + imageMarkdown.length);
+
+                        this.showToast('画像を挿入しました', 'success');
+                    } catch (error) {
+                        this.handleError(error, '画像の挿入に失敗しました');
+                    }
+                };
+
+                input.click();
+            }
+
+            // ===== 画像処理 =====
+            async handleImageUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                if (file.size > 5 * 1024 * 1024) {
+                    this.showToast('画像は5MB以下にしてください', 'error');
+                    return;
+                }
+
+                if (!file.type.startsWith('image/')) {
+                    this.showToast('画像ファイルを選択してください', 'error');
+                    return;
+                }
+
+                try {
+                    let imageUrl;
+
+                    if (this.storage && this.firebaseInitialized) {
+                        const { ref, uploadBytes, getDownloadURL } = window.firebaseModules;
+                        const storageRef = ref(this.storage, `images/${this.currentUser.uid}/${Date.now()}_${file.name}`);
+                        const snapshot = await uploadBytes(storageRef, file);
+                        imageUrl = await getDownloadURL(snapshot.ref);
+                    } else {
+                        imageUrl = await new Promise((resolve) => {
+                            const reader = new FileReader();
+                            reader.onload = (e) => resolve(e.target.result);
+                            reader.readAsDataURL(file);
+                        });
+                    }
+
+                    this.currentNote.pages[this.currentPage].image = imageUrl;
+                    document.getElementById('imagePreview').innerHTML = `
+                        <img src="${this.escapeHtml(imageUrl)}" style="max-width: 100%; max-height: 200px; border-radius: 6px;">
+                        <button class="btn btn-danger" onclick="app.removeImage()" style="margin-top: 0.5rem;">削除</button>
+                    `;
+
+                    this.showToast('画像をアップロードしました', 'success');
+                } catch (error) {
+                    this.handleError(error, '画像のアップロードに失敗しました');
+                }
+            }
+
+            handleDrop(event) {
+                event.preventDefault();
+                event.target.style.borderColor = 'var(--border-color)';
+                
+                const files = event.dataTransfer.files;
+                if (files.length > 0) {
+                    document.getElementById('imageInput').files = files;
+                    this.handleImageUpload({ target: { files } });
+                }
+            }
+
+            removeImage() {
+                this.currentNote.pages[this.currentPage].image = null;
+                document.getElementById('imagePreview').innerHTML = '';
+                this.showToast('画像を削除しました', 'info');
+            }
+
+            // ===== ページ管理 =====
+            addPage() {
+                if (!this.isEditing) return;
+
+                this.saveCurrentPage();
+
+                this.currentNote.pages.push({
+                    title: `ページ${this.currentNote.pages.length + 1}`,
+                    content: '',
+                    image: null,
+                    tags: []
+                });
+
+                this.currentPage = this.currentNote.pages.length - 1;
+                this.updateViewer();
+                this.showToast('新しいページを追加しました', 'success');
+            }
+
+            deletePage(index, event) {
+                if (event) event.stopPropagation();
+                if (!this.isEditing || this.currentNote.pages.length <= 1) {
+                    if (this.currentNote.pages.length <= 1) {
+                        this.showToast('最後のページは削除できません', 'warning');
+                    }
+                    return;
+                }
+
+                if (confirm('このページを削除しますか？')) {
+                    this.currentNote.pages.splice(index, 1);
+                    
+                    if (this.currentPage >= this.currentNote.pages.length) {
+                        this.currentPage = this.currentNote.pages.length - 1;
+                    } else if (this.currentPage > index) {
+                        this.currentPage--;
+                    }
+                    
+                    if (this.db && this.firebaseInitialized) {
+                        try {
+                            const { doc, setDoc, serverTimestamp } = window.firebaseModules;
+                            
+                            const noteToSave = {
+                                ...this.currentNote,
+                                updatedAt: serverTimestamp()
+                            };
+                            
+                            setDoc(
+                                doc(this.db, 'users', this.currentUser.uid, 'notes', this.currentNote.id),
+                                noteToSave
+                            ).then(() => {
+                                this.syncToPublicNotes();
+                            }).catch(console.error);
+                            
+                        } catch (error) {
+                            console.error('Page deletion save error:', error);
+                        }
+                    }
+                    
+                    this.notesMap.set(this.currentNote.id, this.currentNote);
+                    this.saveLocalData();
+                    
+                    this.updateViewer();
+                    this.showToast('ページを削除しました', 'info');
+                }
+            }
+
+            // ===== ノート削除 =====
+            async deleteBook() {
+                if (!this.currentUser || !this.currentNote || this.currentNote.authorId !== this.currentUser.uid) {
+                    this.showToast('自分のノートのみ削除できます', 'warning');
+                    return;
+                }
+
+                if (!confirm(`「${this.currentNote.title}」を完全に削除しますか？この操作は取り消せません。`)) {
+                    return;
+                }
+
+                const noteId = this.currentNote.id;
+                const isPublicOrPassword = this.currentNote.isPublic || 
+                                         this.currentNote.visibility?.type === 'password' ||
+                                         this.currentNote.password;
+
+                try {
+                    this.currentNote = null;
+                    this.currentPage = 0;
+                    this.isEditing = false;
+                    this.goHome();
+
+                    if (this.db && this.firebaseInitialized) {
+                        const { doc, deleteDoc } = window.firebaseModules;
+                        
+                        await deleteDoc(doc(this.db, 'users', this.currentUser.uid, 'notes', noteId));
+                        
+                        if (isPublicOrPassword) {
+                            try {
+                                await deleteDoc(doc(this.db, 'publicNotes', noteId));
+                            } catch (error) {
+                                console.log('Public note deletion skipped:', error);
+                            }
+                        }
+                        
+                        updateDebugInfo('Deleted from Firestore: ' + noteId);
+                    }
+
+                    this.notesMap.delete(noteId);
+                    this.notesMap.delete('public_' + noteId);
+                    this.passwordCache.delete(noteId);
+                    
+                    const keysToRemove = [];
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        if (key && key.includes(noteId)) {
+                            keysToRemove.push(key);
+                        }
+                    }
+                    keysToRemove.forEach(key => localStorage.removeItem(key));
+                    
+                    this.saveLocalData();
+                    this.showToast('ノートを削除しました', 'success');
+                    this.updateUI();
+                } catch (error) {
+                    this.handleError(error, 'ノートの削除に失敗しました');
+                }
+            }
+
+            // ===== UI更新 =====
+            updateUI() {
+                this.updateAuthSection();
+                this.updateMyBooks();
+                this.updatePublicBooks();
+                this.updateSearchIndex();
+            }
+
+            updateAuthSection() {
+                const authSection = document.getElementById('authSection');
+                if (this.currentUser) {
+                    authSection.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            ${this.currentUser.photoURL ? 
+                                `<img src="${this.escapeHtml(this.currentUser.photoURL)}" style="width: 28px; height: 28px; border-radius: 50%;" alt="プロフィール">` : 
+                                `<div style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary-color); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8rem; font-weight: 500;">${this.currentUser.displayName.charAt(0).toUpperCase()}</div>`
+                            }
+                            <span style="color: var(--text-primary); font-size: 0.9rem; font-weight: 500;">${this.escapeHtml(this.currentUser.displayName)}</span>
+                            <button class="btn btn-secondary" onclick="app.handleLogout()" title="ログアウト">⏻</button>
+                        </div>
+                    `;
+                    document.getElementById('myBooksSection').style.display = 'block';
+                } else {
+                    authSection.innerHTML = `
+                        <button class="btn btn-primary" onclick="app.handleLogin()" title="ログイン">👤</button>
+                    `;
+                    document.getElementById('myBooksSection').style.display = 'none';
+                }
+            }
+
+            updateMyBooks() {
+                if (!this.currentUser) return;
+
+                const myNotes = Array.from(this.notesMap.values())
+                    .filter(n => n.authorId === this.currentUser.uid && !n.id.startsWith('public_'))
+                    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+                const container = document.getElementById('myBooksList');
+
+                if (myNotes.length === 0) {
+                    container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 2rem;">まだノートがありません</p>';
+                    return;
+                }
+
+                container.innerHTML = myNotes.map(note => this.createBookCard(note, true)).join('');
+            }
+
+            updatePublicBooks() {
+                const publicNotes = Array.from(this.notesMap.values())
+                    .filter(n => n.isPublic || n.visibility?.type === 'password' || n.password)
+                    .sort((a, b) => (b.views || 0) - (a.views || 0))
+                    .slice(0, 12);
+
+                const container = document.getElementById('publicBooksList');
+                
+                if (publicNotes.length === 0) {
+                    container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 2rem;">公開されているノートはありません</p>';
+                    return;
+                }
+
+                container.innerHTML = publicNotes.map(note => this.createBookCard(note, false)).join('');
+            }
+
+            createBookCard(note, isOwner) {
+                const tags = (note.tags || []).slice(0, 3).map(tag => 
+                    `<span class="tag" onclick="event.stopPropagation(); app.searchByTag('${this.escapeHtml(tag)}')">${this.escapeHtml(tag)}</span>`
+                ).join('');
+
+                const noteId = note.id.startsWith('public_') ? note.id.replace('public_', '') : note.id;
+                const hasPassword = note.password || note.visibility?.type === 'password';
+                const passwordIcon = hasPassword ? '<div class="password-icon" title="パスワード保護">🔐</div>' : '';
+
+                return `
+                    <div class="book-card">
+                        ${passwordIcon}
+                        <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; line-height: 1.3;">${this.escapeHtml(note.title)}</h3>
+                        <div style="color: var(--text-secondary); margin-bottom: 0.25rem; font-size: 0.85rem;">
+                            👤 ${this.escapeHtml(note.author)}
+                        </div>
+                        <div style="color: var(--text-secondary); margin-bottom: 0.25rem; font-size: 0.85rem;">
+                            📝 ${note.pages.length}ページ • 👁️ ${note.views || 0}回
+                        </div>
+                        <div class="tags-container">${tags}</div>
+                        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                            <button class="btn btn-primary" onclick="app.openBook('${noteId}', false)" style="flex: 1; font-size: 0.9rem;">
+                                読む
+                            </button>
+                            ${isOwner ? `
+                                <button class="btn btn-secondary" onclick="app.openBook('${noteId}', true)" style="flex: 1; font-size: 0.9rem;">
+                                    編集
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            updateTOC() {
+                const tocList = document.getElementById('tocList');
+                if (!this.currentNote) return;
+                
+                const pageGroups = [];
+                const groupSize = 10;
+                
+                for (let i = 0; i < this.currentNote.pages.length; i += groupSize) {
+                    const groupPages = this.currentNote.pages.slice(i, i + groupSize);
+                    pageGroups.push({
+                        title: `第${Math.floor(i / groupSize) + 1}章 (${i + 1}-${Math.min(i + groupSize, this.currentNote.pages.length)}ページ)`,
+                        startIndex: i,
+                        pages: groupPages
+                    });
+                }
+
+                tocList.innerHTML = pageGroups.map((group, groupIndex) => {
+                    const isCurrentGroup = this.currentPage >= group.startIndex && this.currentPage < group.startIndex + group.pages.length;
+                    const expandedClass = isCurrentGroup ? 'expanded' : '';
+                    const chevron = isCurrentGroup ? '▼' : '▶';
+                    
+                    const pagesHtml = group.pages.map((page, pageIndex) => {
+                        const actualPageIndex = group.startIndex + pageIndex;
+                        const activeClass = actualPageIndex === this.currentPage ? 'active' : '';
+                        
+                        return `
+                            <div class="toc-page ${activeClass}" onclick="app.goToPage(${actualPageIndex})">
+                                <span>${this.escapeHtml(page.title || 'ページ' + (actualPageIndex + 1))}</span>
+                                ${this.isEditing && this.currentNote.pages.length > 1 ? `
+                                    <button class="btn btn-danger" onclick="app.deletePage(${actualPageIndex}, event)" style="padding: 0.2rem 0.4rem; font-size: 0.7rem; margin-left: 0.5rem;" title="削除">
+                                        ×
+                                    </button>
+                                ` : ''}
+                            </div>
+                        `;
+                    }).join('');
+
+                    return `
+                        <div class="toc-section">
+                            <div class="toc-section-header" onclick="app.toggleTOCSection(${groupIndex})">
+                                <span>${group.title}</span>
+                                <span class="toc-chevron" id="chevron-${groupIndex}">${chevron}</span>
+                            </div>
+                            <div class="toc-section-content ${expandedClass}" id="section-${groupIndex}">
+                                ${pagesHtml}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            toggleTOCSection(groupIndex) {
+                const section = document.getElementById(`section-${groupIndex}`);
+                const chevron = document.getElementById(`chevron-${groupIndex}`);
+                
+                if (section.classList.contains('expanded')) {
+                    section.classList.remove('expanded');
+                    chevron.textContent = '▶';
+                } else {
+                    section.classList.add('expanded');
+                    chevron.textContent = '▼';
+                }
+            }
+
+            updatePageNavigation() {
+                if (!this.currentNote) return;
+                
+                document.getElementById('prevBtn').disabled = this.currentPage === 0;
+                document.getElementById('nextBtn').disabled = this.currentPage === this.currentNote.pages.length - 1;
+
+                const dotsContainer = document.getElementById('pageDots');
+                dotsContainer.innerHTML = this.currentNote.pages.map((_, index) => `
+                    <div class="page-dot ${index === this.currentPage ? 'active' : ''}"
+                         onclick="app.goToPage(${index})"
+                         title="ページ${index + 1}"></div>
+                `).join('');
+            }
+
+            // ===== その他の機能 =====
+            toggleSidebar() {
+                const sidebar = document.getElementById('sidebar');
+                sidebar.classList.toggle('open');
+            }
+
+            goHome() {
+                if (this.isEditing && this.currentNote) {
+                    if (confirm('変更を保存しますか？')) {
+                        this.saveBook();
+                    }
+                }
+
+                document.getElementById('homeView').style.display = 'block';
+                document.getElementById('viewerContainer').style.display = 'none';
+                document.getElementById('sidebar').classList.remove('open');
+                this.currentNote = null;
+                this.currentPage = 0;
+                this.isEditing = false;
+                this.resetZoom();
+                this.updateUI();
+            }
+
+            showPublicBooks() {
+                document.getElementById('publicBooksSection').style.display = 'block';
+                document.getElementById('publicBooksSection').scrollIntoView({ behavior: 'smooth' });
+            }
+
+            showPopularTags() {
+                const tagCount = new Map();
+                
+                Array.from(this.notesMap.values()).forEach(note => {
+                    (note.tags || []).forEach(tag => {
+                        tagCount.set(tag, (tagCount.get(tag) || 0) + 1);
+                    });
+                });
+
+                const popularTags = Array.from(tagCount.entries())
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 15);
+
+                const container = document.getElementById('popularTagsList');
+                container.innerHTML = popularTags.map(([tag, count]) => 
+                    `<span class="tag" onclick="app.searchByTag('${this.escapeHtml(tag)}')" style="font-size: ${Math.min(1.2, 0.75 + count * 0.05)}rem;">
+                        ${this.escapeHtml(tag)} (${count})
+                    </span>`
+                ).join('');
+
+                document.getElementById('popularTagsSection').style.display = 'block';
+                document.getElementById('popularTagsSection').scrollIntoView({ behavior: 'smooth' });
+            }
+
+            searchByTag(tag) {
+                document.getElementById('searchInput').value = tag;
+                this.handleSearch({ target: { value: tag } });
+                document.getElementById('searchInput').scrollIntoView({ behavior: 'smooth' });
+            }
+
+            // ===== タッチイベント処理 =====
+            handleTouchStart(e) {
+                this.touchStartX = e.touches[0].clientX;
+                this.touchStartY = e.touches[0].clientY;
+            }
+
+            handleTouchMove(e) {
+                const deltaY = Math.abs(e.touches[0].clientY - this.touchStartY);
+                if (deltaY > 50) {
+                    this.touchStartX = 0;
+                }
+            }
+
+            handleTouchEnd(e) {
+                if (!this.touchStartX || !this.currentNote) return;
+
+                const touchEndX = e.changedTouches[0].clientX;
+                const deltaX = this.touchStartX - touchEndX;
+
+                if (Math.abs(deltaX) > 50) {
+                    if (deltaX > 0) {
+                        this.nextPage();
+                    } else {
+                        this.previousPage();
+                    }
+                }
+
+                this.touchStartX = 0;
+            }
+
+            // ===== ユーティリティ =====
+            escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+
+            checkRateLimit(action, maxAttempts, timeWindow) {
+                const now = Date.now();
+                const key = `${action}_${this.currentUser?.uid || 'anonymous'}`;
+                
+                if (!this.rateLimiter.has(key)) {
+                    this.rateLimiter.set(key, []);
+                }
+                
+                const attempts = this.rateLimiter.get(key);
+                const recentAttempts = attempts.filter(timestamp => now - timestamp < timeWindow);
+                
+                if (recentAttempts.length >= maxAttempts) {
+                    return false;
+                }
+                
+                recentAttempts.push(now);
+                this.rateLimiter.set(key, recentAttempts);
+                return true;
+            }
+
+            showToast(message, type = 'info') {
+                const toast = document.getElementById('toast');
+                toast.textContent = message;
+                toast.className = `toast ${type} show`;
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 2500);
+            }
+
+            // ===== エラーハンドリング =====
+            handleError(error, userMessage) {
+                updateDebugInfo('ERROR: ' + error.message);
+                console.error(error);
+                this.showToast(userMessage || 'エラーが発生しました', 'error');
+            }
+
+            handleGlobalError(event) {
+                updateDebugInfo('Global error: ' + (event.reason || event.message || 'Unknown error'));
+                console.error('Global error:', event);
+            }
+        }
+
+        // アプリケーション起動
+        let app;
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                updateDebugInfo('DOM ready');
+                app = new StudyBookApp();
+                window.app = app;
+            });
+        } else {
+            updateDebugInfo('DOM already ready');
+            app = new StudyBookApp();
+            window.app = app;
+        }
+    </script>
+</body>
+</html>
