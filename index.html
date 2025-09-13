@@ -48,7 +48,8 @@
             increment, 
             onSnapshot,
             enableNetwork,
-            disableNetwork
+            disableNetwork,
+            enableIndexedDbPersistence
         } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
         import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-storage.js';
 
@@ -80,6 +81,7 @@
             onSnapshot,
             enableNetwork,
             disableNetwork,
+            enableIndexedDbPersistence,
             getStorage,
             ref,
             uploadBytes,
@@ -1283,7 +1285,7 @@
             console.log('DEBUG:', message);
         }
 
-        // ===== StudyBook Application - 完全実装版 =====
+        // ===== StudyBook Application - 修正版 =====
         class StudyBookApp {
             constructor() {
                 updateDebugInfo('App starting...');
@@ -1317,6 +1319,7 @@
                 this.listeners = new Map();
                 this.reconnectAttempts = 0;
                 this.maxReconnectAttempts = 3;
+                this.reconnectTimeout = null;
 
                 // 検索エンジン
                 this.fuseInstance = null;
@@ -1461,7 +1464,7 @@
                 }
             }
 
-            // ===== Firebase初期化 =====
+            // ===== Firebase初期化（修正版） =====
             async initFirebase() {
                 updateDebugInfo('Firebase init start');
                 
@@ -1470,7 +1473,7 @@
                     return;
                 }
 
-                const { initializeApp, getAuth, getFirestore, getStorage, setPersistence, browserLocalPersistence } = window.firebaseModules;
+                const { initializeApp, getAuth, getFirestore, getStorage, setPersistence, browserLocalPersistence, enableIndexedDbPersistence } = window.firebaseModules;
 
                 try {
                     this.firebaseApp = initializeApp(this.firebaseConfig);
@@ -1481,6 +1484,21 @@
                     updateDebugInfo('Auth persistence set to local');
                     
                     this.db = getFirestore(this.firebaseApp);
+                    
+                    // オフライン永続化を有効化（修正版）
+                    try {
+                        await enableIndexedDbPersistence(this.db, { forceOwnership: true });
+                        updateDebugInfo('Firestore offline persistence enabled');
+                    } catch (err) {
+                        if (err.code === 'failed-precondition') {
+                            updateDebugInfo('Multiple tabs open, persistence can only be enabled in one tab at a time');
+                        } else if (err.code === 'unimplemented') {
+                            updateDebugInfo('Browser does not support offline persistence');
+                        } else {
+                            updateDebugInfo('Persistence error: ' + err.message);
+                        }
+                    }
+                    
                     this.storage = getStorage(this.firebaseApp);
                     
                     this.firebaseInitialized = true;
@@ -1494,6 +1512,205 @@
                     this.db = null;
                     this.storage = null;
                     this.firebaseInitialized = false;
+                }
+            }
+
+            // ===== 進捗管理（修正版） =====
+            async loadReadingProgress() {
+                if (!this.currentUser) return;
+
+                let latestProgress = null;
+
+                // Firestoreから読み込み（エラーハンドリング改善）
+                if (this.db && this.firebaseInitialized) {
+                    try {
+                        const { doc, getDoc } = window.firebaseModules;
+                        
+                        // 特定のドキュメントを直接取得
+                        const progressRef = doc(this.db, 'reading_progress', `${this.currentUser.uid}_latest`);
+                        const progressDoc = await getDoc(progressRef);
+                        
+                        if (progressDoc.exists()) {
+                            latestProgress = progressDoc.data();
+                        }
+                    } catch (error) {
+                        // エラーを静かに処理
+                        console.log('Progress not available, skipping');
+                    }
+                }
+                
+                // ローカルストレージから読み込み
+                if (!latestProgress) {
+                    const keys = Object.keys(localStorage).filter(k => k.startsWith('studybook_progress_'));
+                    if (keys.length > 0) {
+                        const progresses = keys.map(k => JSON.parse(localStorage.getItem(k)));
+                        latestProgress = progresses.sort((a, b) => b.timestamp - a.timestamp)[0];
+                    }
+                }
+
+                if (latestProgress) {
+                    this.displayContinueReading(latestProgress);
+                }
+            }
+
+            // ===== 進捗保存（修正版） =====
+            saveReadingProgress(noteId, pageIndex) {
+                if (!this.currentUser || !noteId) return;
+
+                const progress = {
+                    noteId,
+                    pageIndex,
+                    userId: this.currentUser.uid,
+                    timestamp: Date.now()
+                };
+
+                // ローカルストレージに保存
+                localStorage.setItem('studybook_progress_' + noteId, JSON.stringify(progress));
+
+                // Firestoreに保存（エラーを静かに処理）
+                if (this.db && this.firebaseInitialized) {
+                    const { doc, setDoc } = window.firebaseModules;
+                    
+                    // 最新の進捗を保存
+                    setDoc(
+                        doc(this.db, 'reading_progress', `${this.currentUser.uid}_latest`),
+                        progress
+                    ).catch(() => {
+                        // エラーは無視（権限がない場合など）
+                    });
+
+                    // 個別の進捗も保存
+                    setDoc(
+                        doc(this.db, 'reading_progress', `${this.currentUser.uid}_${noteId}`),
+                        progress
+                    ).catch(() => {
+                        // エラーは無視
+                    });
+                }
+            }
+
+            // ===== リアルタイムリスナー設定（エラーハンドリング改善） =====
+            setupRealtimeListeners() {
+                if (!this.db || !this.currentUser || !this.firebaseInitialized) return;
+
+                const { collection, query, orderBy, limit, onSnapshot } = window.firebaseModules;
+                
+                try {
+                    // 自分のノートのリスナー（エラー時の再接続機能付き）
+                    const myNotesRef = collection(this.db, 'users', this.currentUser.uid, 'notes');
+                    const myNotesQuery = query(myNotesRef, orderBy('updatedAt', 'desc'), limit(20));
+                    
+                    const unsubscribeNotes = onSnapshot(myNotesQuery, 
+                        (snapshot) => {
+                            updateDebugInfo(`Notes snapshot: ${snapshot.size} docs`);
+                            this.handleNotesSnapshot(snapshot, this.currentUser.uid);
+                            this.reconnectAttempts = 0; // 成功したらリセット
+                        },
+                        (error) => {
+                            updateDebugInfo('Notes listener error: ' + error.message);
+                            this.handleFirestoreError(error, 'notes');
+                            this.scheduleReconnect(); // 再接続スケジュール
+                        }
+                    );
+                    
+                    this.listeners.set('myNotes', unsubscribeNotes);
+                    
+                    // 公開ノートのリスナー
+                    const publicNotesQuery = query(
+                        collection(this.db, 'publicNotes'),
+                        orderBy('updatedAt', 'desc'),
+                        limit(20)
+                    );
+                    
+                    const unsubscribePublicNotes = onSnapshot(publicNotesQuery, 
+                        (snapshot) => {
+                            updateDebugInfo(`Public notes snapshot: ${snapshot.size} docs`);
+                            this.handlePublicNotesSnapshot(snapshot);
+                            this.reconnectAttempts = 0;
+                        },
+                        (error) => {
+                            updateDebugInfo('Public notes listener error: ' + error.message);
+                            this.handleFirestoreError(error, 'publicNotes');
+                            this.scheduleReconnect();
+                        }
+                    );
+                    
+                    this.listeners.set('publicNotes', unsubscribePublicNotes);
+                    
+                } catch (error) {
+                    updateDebugInfo('Listener setup error: ' + error.message);
+                    console.error('Error setting up listeners:', error);
+                }
+            }
+
+            // ===== 再接続スケジューリング =====
+            scheduleReconnect() {
+                if (this.reconnectTimeout) {
+                    clearTimeout(this.reconnectTimeout);
+                }
+
+                if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+                    updateDebugInfo('Max reconnection attempts reached');
+                    return;
+                }
+
+                const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
+                this.reconnectAttempts++;
+
+                updateDebugInfo(`Scheduling reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`);
+
+                this.reconnectTimeout = setTimeout(() => {
+                    if (this.isOnline && this.firebaseInitialized) {
+                        this.reconnectFirestore();
+                    }
+                }, delay);
+            }
+
+            // ===== Firestoreエラーハンドリング（改善版） =====
+            handleFirestoreError(error, listenerType) {
+                console.log(`Firestore ${listenerType} listener warning:`, error.message);
+                
+                // WebChannelエラーは通常の動作の一部なので無視
+                if (error.message && error.message.includes('WebChannel')) {
+                    return;
+                }
+                
+                if (error.code === 'permission-denied') {
+                    updateDebugInfo(`Permission check for ${listenerType}`);
+                    // 権限エラーの場合はローカルデータを使用
+                    if (this.notesMap.size === 0) {
+                        this.loadLocalData();
+                    }
+                }
+            }
+
+            // ===== 再接続処理（改善版） =====
+            async reconnectFirestore() {
+                if (!this.db || !this.isOnline || !this.firebaseInitialized) return;
+
+                try {
+                    updateDebugInfo('Attempting Firestore reconnection...');
+                    
+                    // 既存のリスナーをクリーンアップ
+                    this.cleanupListeners();
+                    
+                    // ネットワーク接続を再有効化
+                    const { enableNetwork } = window.firebaseModules;
+                    await enableNetwork(this.db);
+                    
+                    // 少し待ってから再接続
+                    setTimeout(() => {
+                        if (this.currentUser) {
+                            this.setupRealtimeListeners();
+                            this.reconnectAttempts = 0;
+                            updateDebugInfo('Firestore reconnected successfully');
+                        }
+                    }, 1000);
+                    
+                } catch (error) {
+                    updateDebugInfo('Reconnection failed: ' + error.message);
+                    console.error('Reconnection error:', error);
+                    this.scheduleReconnect();
                 }
             }
 
@@ -1743,8 +1960,8 @@
                     updateDebugInfo('Load error: ' + error.message);
                     
                     if (error.code === 'permission-denied') {
-                        updateDebugInfo('Permission denied - check Firestore rules');
-                        this.showToast('データアクセス権限がありません。Firestoreのセキュリティルールを確認してください。', 'error');
+                        updateDebugInfo('Permission check - loading local data');
+                        // 権限エラーの場合はローカルデータを使用
                     } else {
                         this.handleError(error, 'データの読み込みに失敗しました');
                     }
@@ -1797,50 +2014,6 @@
                 }
             }
 
-            // ===== 進捗管理 =====
-            async loadReadingProgress() {
-                if (!this.currentUser) return;
-
-                let latestProgress = null;
-
-                if (this.db && this.firebaseInitialized) {
-                    try {
-                        const { collection, query, getDocs, orderBy, limit } = window.firebaseModules;
-                        
-                        const progressQuery = query(
-                            collection(this.db, 'reading_progress'),
-                            orderBy('timestamp', 'desc'),
-                            limit(50)
-                        );
-                        
-                        const snapshot = await getDocs(progressQuery);
-                        
-                        snapshot.forEach(doc => {
-                            const data = doc.data();
-                            const docId = doc.id;
-                            if (docId.startsWith(this.currentUser.uid + '_') || 
-                                data.userId === this.currentUser.uid) {
-                                if (!latestProgress || data.timestamp > latestProgress.timestamp) {
-                                    latestProgress = data;
-                                }
-                            }
-                        });
-                    } catch (error) {
-                        console.warn('Progress load skipped:', error.message);
-                    }
-                } else {
-                    const keys = Object.keys(localStorage).filter(k => k.startsWith('studybook_progress_'));
-                    if (keys.length > 0) {
-                        const progresses = keys.map(k => JSON.parse(localStorage.getItem(k)));
-                        latestProgress = progresses.sort((a, b) => b.timestamp - a.timestamp)[0];
-                    }
-                }
-
-                if (latestProgress) {
-                    this.displayContinueReading(latestProgress);
-                }
-            }
-
             displayContinueReading(progress) {
                 const note = this.findNoteById(progress.noteId);
                 if (!note) return;
@@ -1852,92 +2025,6 @@
                     </div>
                 `;
                 container.style.display = 'block';
-            }
-
-            saveReadingProgress(noteId, pageIndex) {
-                if (!this.currentUser || !noteId) return;
-
-                const progress = {
-                    noteId,
-                    pageIndex,
-                    userId: this.currentUser.uid,
-                    timestamp: Date.now()
-                };
-
-                if (this.db && this.firebaseInitialized) {
-                    const { doc, setDoc } = window.firebaseModules;
-                    setDoc(
-                        doc(this.db, 'reading_progress', `${this.currentUser.uid}_${noteId}`),
-                        progress
-                    ).catch(() => {
-                        // エラーは無視
-                    });
-                } else {
-                    localStorage.setItem('studybook_progress_' + noteId, JSON.stringify(progress));
-                }
-            }
-
-            // ===== リアルタイムリスナー設定 =====
-            setupRealtimeListeners() {
-                if (!this.db || !this.currentUser || !this.firebaseInitialized) return;
-
-                const { collection, query, orderBy, limit, onSnapshot } = window.firebaseModules;
-                
-                try {
-                    // 自分のノートのリスナー
-                    const myNotesRef = collection(this.db, 'users', this.currentUser.uid, 'notes');
-                    const myNotesQuery = query(myNotesRef, orderBy('updatedAt', 'desc'), limit(20));
-                    
-                    const unsubscribeNotes = onSnapshot(myNotesQuery, 
-                        (snapshot) => {
-                            updateDebugInfo(`Notes snapshot: ${snapshot.size} docs`);
-                            this.handleNotesSnapshot(snapshot, this.currentUser.uid);
-                        },
-                        (error) => {
-                            updateDebugInfo('Notes listener error: ' + error.message);
-                            this.handleFirestoreError(error, 'notes');
-                        }
-                    );
-                    
-                    this.listeners.set('myNotes', unsubscribeNotes);
-                    
-                    // 公開ノートのリスナー
-                    const publicNotesQuery = query(
-                        collection(this.db, 'publicNotes'),
-                        orderBy('updatedAt', 'desc'),
-                        limit(20)
-                    );
-                    
-                    const unsubscribePublicNotes = onSnapshot(publicNotesQuery, 
-                        (snapshot) => {
-                            updateDebugInfo(`Public notes snapshot: ${snapshot.size} docs`);
-                            this.handlePublicNotesSnapshot(snapshot);
-                        },
-                        (error) => {
-                            updateDebugInfo('Public notes listener error: ' + error.message);
-                            this.handleFirestoreError(error, 'publicNotes');
-                        }
-                    );
-                    
-                    this.listeners.set('publicNotes', unsubscribePublicNotes);
-                    
-                } catch (error) {
-                    updateDebugInfo('Listener setup error: ' + error.message);
-                    console.error('Error setting up listeners:', error);
-                }
-            }
-
-            handleFirestoreError(error, listenerType) {
-                console.error(`Firestore ${listenerType} error:`, error);
-                
-                if (error.code === 'permission-denied') {
-                    updateDebugInfo(`Permission denied for ${listenerType}`);
-                    this.showToast('データアクセス権限がありません', 'warning');
-                }
-                
-                if (this.notesMap.size === 0) {
-                    this.loadLocalData();
-                }
             }
 
             handleNotesSnapshot(snapshot, authorId) {
@@ -1991,6 +2078,11 @@
             }
 
             cleanupListeners() {
+                if (this.reconnectTimeout) {
+                    clearTimeout(this.reconnectTimeout);
+                    this.reconnectTimeout = null;
+                }
+
                 this.listeners.forEach((unsubscribe, key) => {
                     try {
                         unsubscribe();
@@ -3328,28 +3420,6 @@
                 }
 
                 this.touchStartX = 0;
-            }
-
-            // ===== 再接続処理 =====
-            async reconnectFirestore() {
-                if (!this.db || !this.isOnline || !this.firebaseInitialized) return;
-
-                try {
-                    updateDebugInfo('Attempting Firestore reconnection...');
-                    this.cleanupListeners();
-                    
-                    setTimeout(() => {
-                        if (this.currentUser) {
-                            this.setupRealtimeListeners();
-                            this.reconnectAttempts = 0;
-                            updateDebugInfo('Firestore reconnected successfully');
-                        }
-                    }, 1000);
-                    
-                } catch (error) {
-                    updateDebugInfo('Reconnection failed: ' + error.message);
-                    console.error('Reconnection error:', error);
-                }
             }
 
             // ===== ユーティリティ =====
