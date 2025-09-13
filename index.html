@@ -1308,6 +1308,9 @@
                 this.isEditing = false;
                 this.isOnline = navigator.onLine;
 
+                // 認証関連フラグ（新規追加）
+                this.explicitLogout = false; // 明示的なログアウトかどうかのフラグ
+
                 // Firebase インスタンス
                 this.firebaseApp = null;
                 this.auth = null;
@@ -1396,20 +1399,20 @@
                 }
             }
 
-            // ===== 初期化 =====
+            // ===== 初期化（修正版 - 重複削除） =====
             async init() {
                 try {
                     updateDebugInfo('Initializing...');
                     document.getElementById('loadingText').textContent = 'Firebase初期化中...';
 
-                    // Firebase SDKの読み込みを待つ
+                    // Firebase SDKの読み込みを待つ（タイムアウトを短縮）
                     if (!window.firebaseReady) {
                         updateDebugInfo('Waiting for Firebase...');
                         await new Promise((resolve) => {
                             const timeout = setTimeout(() => {
                                 updateDebugInfo('Firebase timeout - continuing without Firebase');
                                 resolve();
-                            }, 10000);
+                            }, 5000); // タイムアウトを5秒に短縮
                             
                             window.addEventListener('firebaseReady', () => {
                                 clearTimeout(timeout);
@@ -1431,6 +1434,15 @@
                     // データロード
                     if (this.auth && this.firebaseInitialized) {
                         updateDebugInfo('Setting up auth...');
+                        
+                        // 既に認証済みユーザーがいるかチェック
+                        const currentUser = this.auth.currentUser;
+                        if (currentUser) {
+                            updateDebugInfo('Found cached user: ' + currentUser.displayName);
+                            await this.handleAuthStateChange(currentUser);
+                        }
+                        
+                        // 認証状態の監視を設定
                         this.auth.onAuthStateChanged(this.handleAuthStateChange.bind(this));
                     } else {
                         updateDebugInfo('Using local mode');
@@ -1440,7 +1452,7 @@
                         this.handlePendingSharedNote();
                     }
 
-                    // ローディング完了
+                    // ローディング完了（表示時間を短縮）
                     document.getElementById('loadingText').textContent = '完了';
                     updateDebugInfo('Initialization complete');
                     
@@ -1451,8 +1463,8 @@
                             if (debugInfo) {
                                 debugInfo.style.display = 'none';
                             }
-                        }, 3000);
-                    }, 800);
+                        }, 2000); // デバッグ情報の表示時間も短縮
+                    }, 500); // ローディング画面の表示時間を短縮
 
                 } catch (error) {
                     updateDebugInfo('Init error: ' + error.message);
@@ -1460,7 +1472,7 @@
                     
                     setTimeout(() => {
                         document.getElementById('loadingScreen').classList.add('hidden');
-                    }, 2000);
+                    }, 1000);
                 }
             }
 
@@ -1479,15 +1491,22 @@
                     this.firebaseApp = initializeApp(this.firebaseConfig);
                     this.auth = getAuth(this.firebaseApp);
                     
-                    // 認証の永続化を設定
-                    await setPersistence(this.auth, browserLocalPersistence);
-                    updateDebugInfo('Auth persistence set to local');
+                    // 認証の永続化を設定（修正：初期化直後に設定）
+                    try {
+                        await setPersistence(this.auth, browserLocalPersistence);
+                        updateDebugInfo('Auth persistence set to local');
+                    } catch (persistenceError) {
+                        // 永続化設定に失敗してもエラーを投げない（ブラウザサポート問題の場合があるため）
+                        updateDebugInfo('Auth persistence setting failed (non-critical): ' + persistenceError.message);
+                    }
                     
                     this.db = getFirestore(this.firebaseApp);
                     
                     // オフライン永続化を有効化（修正版）
                     try {
-                        await enableIndexedDbPersistence(this.db, { forceOwnership: true });
+                        await enableIndexedDbPersistence(this.db, { 
+                            forceOwnership: false // 複数タブ対応のため false に変更
+                        });
                         updateDebugInfo('Firestore offline persistence enabled');
                     } catch (err) {
                         if (err.code === 'failed-precondition') {
@@ -1512,6 +1531,61 @@
                     this.db = null;
                     this.storage = null;
                     this.firebaseInitialized = false;
+                }
+            }
+
+            // ===== 認証状態変更処理（修正版 - 重複削除） =====
+            async handleAuthStateChange(user) {
+                try {
+                    // 認証状態の変更を少し遅延させて安定化
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    
+                    if (user) {
+                        updateDebugInfo('User signed in: ' + user.displayName);
+                        await this.handleAuthSuccess(user);
+                    } else {
+                        updateDebugInfo('User signed out');
+                        // 明示的なログアウトでない限り、認証状態をリセットしない
+                        if (!this.explicitLogout) {
+                            updateDebugInfo('Checking for cached auth state...');
+                            // 少し待ってから再確認（Firebase が認証状態を復元するまで待つ）
+                            setTimeout(() => {
+                                if (this.auth && !this.auth.currentUser && !this.explicitLogout) {
+                                    updateDebugInfo('No cached auth found, proceeding with logout');
+                                    this.handleAuthLogout();
+                                }
+                            }, 1000);
+                        } else {
+                            this.handleAuthLogout();
+                            this.explicitLogout = false; // フラグをリセット
+                        }
+                    }
+                    
+                    this.dataLoadingComplete = true;
+                    this.handlePendingSharedNote();
+                    
+                } catch (error) {
+                    updateDebugInfo('Auth state change error: ' + error.message);
+                    this.handleError(error, '認証処理でエラーが発生しました');
+                }
+            }
+
+            // ===== ログアウト処理（修正版 - 重複削除） =====
+            async handleLogout() {
+                this.explicitLogout = true; // 明示的なログアウトフラグを設定
+                
+                if (this.auth && this.firebaseInitialized) {
+                    const { signOut } = window.firebaseModules;
+                    try {
+                        await signOut(this.auth);
+                        updateDebugInfo('Logout successful');
+                    } catch (error) {
+                        updateDebugInfo('Logout error: ' + error.message);
+                        // エラーが発生してもログアウト処理を続行
+                        this.handleAuthLogout();
+                    }
+                } else {
+                    this.handleAuthLogout();
                 }
             }
 
@@ -1711,26 +1785,6 @@
                     updateDebugInfo('Reconnection failed: ' + error.message);
                     console.error('Reconnection error:', error);
                     this.scheduleReconnect();
-                }
-            }
-
-            // ===== 認証状態変更処理 =====
-            async handleAuthStateChange(user) {
-                try {
-                    if (user) {
-                        updateDebugInfo('User signed in: ' + user.displayName);
-                        await this.handleAuthSuccess(user);
-                    } else {
-                        updateDebugInfo('User signed out');
-                        this.handleAuthLogout();
-                    }
-                    
-                    this.dataLoadingComplete = true;
-                    this.handlePendingSharedNote();
-                    
-                } catch (error) {
-                    updateDebugInfo('Auth state change error: ' + error.message);
-                    this.handleError(error, '認証処理でエラーが発生しました');
                 }
             }
 
@@ -2145,13 +2199,6 @@
                 } catch (error) {
                     updateDebugInfo('Sign-in error: ' + error.message);
                     this.handleError(error, 'ログインに失敗しました');
-                }
-            }
-
-            async handleLogout() {
-                if (this.auth && this.firebaseInitialized) {
-                    const { signOut } = window.firebaseModules;
-                    await signOut(this.auth);
                 }
             }
 
