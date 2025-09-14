@@ -3912,6 +3912,15 @@
                 updateDebugInfo('Global error: ' + (event.reason || event.message || 'Unknown error'));
                 console.error('Global error:', event);
             }
+                updateDebugInfo('ERROR: ' + error.message);
+                console.error(error);
+                this.showToast(userMessage || 'エラーが発生しました', 'error');
+            }
+
+            handleGlobalError(event) {
+                updateDebugInfo('Global error: ' + (event.reason || event.message || 'Unknown error'));
+                console.error('Global error:', event);
+            }
         }
 
         // アプリケーション起動
