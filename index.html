@@ -18,96 +18,6 @@
     
     <title>StudyBook - 学習ノート共有プラットフォーム</title>
     
-    <!-- Firebase SDK v9 Modular -->
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
-        import { 
-            getAuth, 
-            GoogleAuthProvider, 
-            signInWithPopup, 
-            signOut, 
-            onAuthStateChanged,
-            setPersistence,
-            browserLocalPersistence,
-            createUserWithEmailAndPassword,
-            signInWithEmailAndPassword,
-            sendPasswordResetEmail,
-            updateProfile
-        } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
-        import { 
-            getFirestore, 
-            collection, 
-            doc, 
-            setDoc, 
-            getDoc, 
-            getDocs, 
-            query, 
-            where, 
-            orderBy, 
-            limit, 
-            updateDoc, 
-            deleteDoc, 
-            serverTimestamp, 
-            addDoc, 
-            increment, 
-            onSnapshot,
-            enableNetwork,
-            disableNetwork,
-            enableIndexedDbPersistence
-        } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
-        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-storage.js';
-
-        // Firebaseをグローバルに公開
-        window.firebaseModules = {
-            initializeApp,
-            getAuth,
-            GoogleAuthProvider,
-            signInWithPopup,
-            signOut,
-            onAuthStateChanged,
-            setPersistence,
-            browserLocalPersistence,
-            createUserWithEmailAndPassword,
-            signInWithEmailAndPassword,
-            sendPasswordResetEmail,
-            updateProfile,
-            getFirestore,
-            collection,
-            doc,
-            setDoc,
-            getDoc,
-            getDocs,
-            query,
-            where,
-            orderBy,
-            limit,
-            updateDoc,
-            deleteDoc,
-            serverTimestamp,
-            addDoc,
-            increment,
-            onSnapshot,
-            enableNetwork,
-            disableNetwork,
-            enableIndexedDbPersistence,
-            getStorage,
-            ref,
-            uploadBytes,
-            getDownloadURL,
-            deleteObject
-        };
-        
-        // Firebase準備完了を通知
-        window.firebaseReady = true;
-        window.dispatchEvent(new CustomEvent('firebaseReady'));
-        console.log('Firebase modules loaded successfully');
-    </script>
-    
-    <!-- 外部ライブラリ -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
-    
     <style>
         :root {
             /* カラーパレット */
@@ -158,7 +68,7 @@
             justify-content: center;
             align-items: center;
             z-index: 9999;
-            transition: opacity 0.5s, visibility 0.5s;
+            transition: opacity 0.3s, visibility 0.3s;
         }
 
         .loading-screen.hidden {
@@ -372,11 +282,9 @@
             border: none;
             cursor: pointer;
             transition: var(--transition-base);
-            font-size: 0.9rem;
-            font-weight: 500;
         }
 
-        .btn-filled:hover:not(:disabled) {
+        .btn-filled:hover {
             background: var(--primary-dark);
         }
 
@@ -386,10 +294,6 @@
 
         .btn-filled.btn-danger {
             background: var(--error-color);
-        }
-
-        .btn-filled.btn-secondary {
-            background: var(--text-secondary);
         }
 
         /* タグ */
@@ -485,10 +389,17 @@
             margin: 0 0.5rem;
         }
 
+        /* ズームコントロール（デスクトップのみ表示） */
         .zoom-controls {
-            display: flex;
+            display: none;
             gap: 0.25rem;
             align-items: center;
+        }
+
+        @media (min-width: 769px) {
+            .zoom-controls {
+                display: flex;
+            }
         }
 
         .zoom-level {
@@ -607,6 +518,15 @@
             border: 1px solid var(--border-color);
             transform-origin: top left;
             transition: transform 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .page-content-wrapper {
+            touch-action: pan-x pan-y pinch-zoom;
+            transform-origin: center center;
+            transition: transform 0.1s ease-out;
+            width: 100%;
         }
 
         /* Markdownスタイル */
@@ -723,7 +643,6 @@
             border-radius: 6px;
             font-size: 1rem;
             margin-bottom: 1rem;
-            transition: var(--transition-base);
         }
 
         .modal-input:focus {
@@ -736,7 +655,6 @@
             display: flex;
             gap: 0.5rem;
             justify-content: flex-end;
-            margin-top: 1rem;
         }
 
         .password-section {
@@ -775,119 +693,6 @@
 
         .share-btn.facebook {
             background: #1877F2;
-        }
-
-        /* 認証フォーム */
-        .auth-form {
-            background: var(--bg-secondary);
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: var(--shadow-md);
-            max-width: 400px;
-            width: 100%;
-            border: 1px solid var(--border-color);
-        }
-
-        .auth-tabs {
-            display: flex;
-            margin-bottom: 2rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .auth-tab {
-            flex: 1;
-            padding: 0.75rem;
-            text-align: center;
-            cursor: pointer;
-            transition: var(--transition-base);
-            border: none;
-            background: transparent;
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-        }
-
-        .auth-tab.active {
-            color: var(--primary-color);
-            border-bottom: 2px solid var(--primary-color);
-        }
-
-        .auth-tab:hover {
-            color: var(--text-primary);
-        }
-
-        .auth-form-content {
-            display: none;
-        }
-
-        .auth-form-content.active {
-            display: block;
-        }
-
-        .form-group {
-            margin-bottom: 1rem;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: var(--text-primary);
-            font-size: 0.9rem;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 1rem;
-            transition: var(--transition-base);
-            background: var(--bg-color);
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .forgot-password {
-            text-align: center;
-            margin-top: 1rem;
-        }
-
-        .forgot-password a {
-            color: var(--primary-color);
-            text-decoration: none;
-            font-size: 0.9rem;
-        }
-
-        .forgot-password a:hover {
-            text-decoration: underline;
-        }
-
-        .divider {
-            display: flex;
-            align-items: center;
-            margin: 1.5rem 0;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-        .divider::before,
-        .divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--border-color);
-        }
-
-        .divider::before {
-            margin-right: 1rem;
-        }
-
-        .divider::after {
-            margin-left: 1rem;
         }
 
         /* トースト通知 */
@@ -1033,38 +838,6 @@
                 margin: 1rem;
                 padding: 1.5rem;
             }
-
-            .zoom-controls {
-                gap: 0.125rem;
-            }
-
-            .zoom-level {
-                font-size: 0.7rem;
-                margin: 0 0.25rem;
-                min-width: 35px;
-            }
-
-            .auth-form {
-                margin: 1rem;
-                padding: 1.5rem;
-            }
-        }
-
-        /* デバッグ情報 */
-        .debug-info {
-            position: fixed;
-            top: 60px;
-            right: 10px;
-            background: rgba(0,0,0,0.8);
-            color: white;
-            padding: 8px;
-            border-radius: 4px;
-            font-size: 10px;
-            max-width: 200px;
-            z-index: 10000;
-            display: none;
-            max-height: 120px;
-            overflow-y: auto;
         }
 
         .sr-only {
@@ -1084,11 +857,6 @@
     <!-- 接続状態インジケーター -->
     <div id="connectionStatus" class="connection-status">
         <span id="connectionText">オフライン</span>
-    </div>
-
-    <!-- デバッグ情報 -->
-    <div id="debugInfo" class="debug-info">
-        <div id="debugContent">初期化中...</div>
     </div>
 
     <!-- ローディング画面 -->
@@ -1119,7 +887,7 @@
             </div>
 
             <div id="authSection">
-                <button class="btn btn-primary" onclick="app.showAuthModal()" aria-label="ログイン" title="ログイン">
+                <button class="btn btn-primary" onclick="app.handleLogin()" aria-label="ログイン" title="ログイン">
                     👤
                 </button>
             </div>
@@ -1185,7 +953,7 @@
             <span id="pageInfo" class="page-info">1 / 1</span>
             
             <div class="header-group">
-                <!-- ズーム機能 -->
+                <!-- ズーム機能（デスクトップのみ） -->
                 <div class="zoom-controls">
                     <button class="btn btn-secondary" onclick="app.zoomOut()" aria-label="縮小" title="縮小">🔍－</button>
                     <span id="zoomLevel" class="zoom-level">100%</span>
@@ -1209,79 +977,80 @@
         <!-- メインコンテンツ -->
         <main>
             <div id="pageContent" class="page-content">
-                <div id="viewMode">
-                    <h1 id="pageTitle" style="font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 2px solid var(--border-color);"></h1>
-                    <img id="pageImage" style="display: none; max-width: 100%; height: auto; object-fit: contain; border-radius: 6px; margin: 1rem 0; box-shadow: var(--shadow-sm);" alt="ページ画像">
-                    <div id="pageBody" class="markdown-body"></div>
-                </div>
-                
-                <div id="editMode" style="display: none;">
-                    <!-- ノートタイトル編集 -->
-                    <div id="bookTitleSection" class="book-title-section" style="display: none;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem;">ノートタイトル</label>
+                <div class="page-content-wrapper" id="pageContentWrapper">
+                    <div id="viewMode">
+                        <h1 id="pageTitle" style="font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 2px solid var(--border-color);"></h1>
+                        <img id="pageImage" style="display: none; max-width: 100%; height: auto; object-fit: contain; border-radius: 6px; margin: 1rem 0; box-shadow: var(--shadow-sm);" alt="ページ画像">
+                        <div id="pageBody" class="markdown-body"></div>
+                    </div>
+                    
+                    <div id="editMode" style="display: none;">
+                        <!-- ノートタイトル編集 -->
+                        <div id="bookTitleSection" class="book-title-section" style="display: none;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem;">ノートタイトル</label>
+                            <input 
+                                type="text" 
+                                id="bookTitleInput" 
+                                class="book-title-input"
+                                placeholder="ノートのタイトル"
+                                maxlength="100"
+                            >
+                        </div>
+
                         <input 
                             type="text" 
-                            id="bookTitleInput" 
-                            class="book-title-input"
-                            placeholder="ノートのタイトル"
+                            id="pageTitleInput" 
+                            style="width: 100%; margin-bottom: 1rem; font-size: 1.25rem; font-weight: 600; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color);"
+                            placeholder="ページタイトル"
                             maxlength="100"
                         >
-                    </div>
+                        
+                        <div style="border: 2px dashed var(--border-color); border-radius: 6px; padding: 2rem; text-align: center; margin: 1rem 0; cursor: pointer; transition: var(--transition-base); background: var(--bg-color);" 
+                             onclick="document.getElementById('imageInput').click()"
+                             ondragover="event.preventDefault(); this.style.borderColor='var(--primary-color)'"
+                             ondragleave="this.style.borderColor='var(--border-color)'"
+                             ondrop="app.handleDrop(event)">
+                            <div style="font-size: 1rem;">📷 画像をアップロード</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem;">クリック or ドラッグ&ドロップ（最大5MB）</div>
+                            <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="app.handleImageUpload(event)">
+                        </div>
+                        
+                        <div id="imagePreview" style="margin: 1rem 0;"></div>
+                        
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem;">タグ（カンマ区切り）</label>
+                            <input 
+                                type="text" 
+                                id="pageTagsInput" 
+                                style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color);"
+                                placeholder="例: 数学, 微分積分, 大学"
+                                maxlength="200"
+                            >
+                        </div>
 
-                    <input 
-                        type="text" 
-                        id="pageTitleInput" 
-                        style="width: 100%; margin-bottom: 1rem; font-size: 1.25rem; font-weight: 600; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color);"
-                        placeholder="ページタイトル"
-                        maxlength="100"
-                    >
-                    
-                    <div style="border: 2px dashed var(--border-color); border-radius: 6px; padding: 2rem; text-align: center; margin: 1rem 0; cursor: pointer; transition: var(--transition-base); background: var(--bg-color);" 
-                         onclick="document.getElementById('imageInput').click()"
-                         ondragover="event.preventDefault(); this.style.borderColor='var(--primary-color)'"
-                         ondragleave="this.style.borderColor='var(--border-color)'"
-                         ondrop="app.handleDrop(event)">
-                        <div style="font-size: 1rem;">📷 画像をアップロード</div>
-                        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem;">クリック or ドラッグ&ドロップ（最大5MB）</div>
-                        <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="app.handleImageUpload(event)">
-                    </div>
-                    
-                    <div id="imagePreview" style="margin: 1rem 0;"></div>
-                    
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem;">タグ（カンマ区切り）</label>
-                        <input 
-                            type="text" 
-                            id="pageTagsInput" 
-                            style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color);"
-                            placeholder="例: 数学, 微分積分, 大学"
-                            maxlength="200"
-                        >
-                    </div>
-
-                    <!-- エディターツールバー -->
-                    <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem; padding: 0.5rem; background: var(--bg-color); border-radius: 6px; border: 1px solid var(--border-color);">
-                        <button class="btn btn-secondary" onclick="app.insertImageInContent()" title="画像を挿入" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
-                            📷 画像挿入
-                        </button>
-                        <button class="btn btn-secondary" onclick="app.insertMarkdown('**', '**')" title="太字" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
-                            <strong>B</strong>
-                        </button>
-                        <button class="btn btn-secondary" onclick="app.insertMarkdown('*', '*')" title="斜体" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
-                            <em>I</em>
-                        </button>
-                        <button class="btn btn-secondary" onclick="app.insertMarkdown('`', '`')" title="コード" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
-                            &lt;&gt;
-                        </button>
-                        <button class="btn btn-secondary" onclick="app.insertMarkdown('## ', '')" title="見出し" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
-                            H2
-                        </button>
-                    </div>
-                    
-                    <textarea 
-                        id="pageContentInput" 
-                        style="width: 100%; min-height: 300px; padding: 1rem; font-size: 0.9rem; border: 1px solid var(--border-color); border-radius: 6px; resize: vertical; font-family: 'SF Mono', Monaco, monospace; background: var(--bg-color); transition: var(--transition-base);"
-                        placeholder="Markdownで内容を入力
+                        <!-- エディターツールバー -->
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem; padding: 0.5rem; background: var(--bg-color); border-radius: 6px; border: 1px solid var(--border-color);">
+                            <button class="btn btn-secondary" onclick="app.insertImageInContent()" title="画像を挿入" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                📷 画像挿入
+                            </button>
+                            <button class="btn btn-secondary" onclick="app.insertMarkdown('**', '**')" title="太字" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                <strong>B</strong>
+                            </button>
+                            <button class="btn btn-secondary" onclick="app.insertMarkdown('*', '*')" title="斜体" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                <em>I</em>
+                            </button>
+                            <button class="btn btn-secondary" onclick="app.insertMarkdown('`', '`')" title="コード" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                &lt;&gt;
+                            </button>
+                            <button class="btn btn-secondary" onclick="app.insertMarkdown('## ', '')" title="見出し" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                H2
+                            </button>
+                        </div>
+                        
+                        <textarea 
+                            id="pageContentInput" 
+                            style="width: 100%; min-height: 300px; padding: 1rem; font-size: 0.9rem; border: 1px solid var(--border-color); border-radius: 6px; resize: vertical; font-family: 'SF Mono', Monaco, monospace; background: var(--bg-color); transition: var(--transition-base);"
+                            placeholder="Markdownで内容を入力
 
 # 見出し1
 ## 見出し2
@@ -1298,7 +1067,8 @@
 [リンク](https://example.com)
 
 ![画像](image-url)"
-                        maxlength="50000"></textarea>
+                            maxlength="50000"></textarea>
+                    </div>
                 </div>
             </div>
 
@@ -1313,88 +1083,6 @@
                 </button>
             </nav>
         </main>
-    </div>
-
-    <!-- 認証モーダル -->
-    <div id="authModal" class="modal-overlay">
-        <div class="auth-form">
-            <div class="auth-tabs">
-                <button class="auth-tab active" onclick="app.switchAuthTab('login')">ログイン</button>
-                <button class="auth-tab" onclick="app.switchAuthTab('register')">新規登録</button>
-            </div>
-
-            <!-- ログインフォーム -->
-            <div id="loginForm" class="auth-form-content active">
-                <div class="form-group">
-                    <label class="form-label">メールアドレス</label>
-                    <input type="email" id="loginEmail" class="form-input" placeholder="example@gmail.com" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">パスワード</label>
-                    <input type="password" id="loginPassword" class="form-input" placeholder="パスワード" required>
-                </div>
-                <button class="btn-filled" onclick="app.handleEmailLogin()" style="width: 100%; margin-bottom: 1rem;">
-                    ログイン
-                </button>
-                <div class="forgot-password">
-                    <a href="#" onclick="app.showForgotPassword()">パスワードを忘れた場合</a>
-                </div>
-            </div>
-
-            <!-- 新規登録フォーム -->
-            <div id="registerForm" class="auth-form-content">
-                <div class="form-group">
-                    <label class="form-label">表示名</label>
-                    <input type="text" id="registerName" class="form-input" placeholder="山田太郎" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">メールアドレス</label>
-                    <input type="email" id="registerEmail" class="form-input" placeholder="example@gmail.com" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">パスワード（6文字以上）</label>
-                    <input type="password" id="registerPassword" class="form-input" placeholder="パスワード" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">パスワード確認</label>
-                    <input type="password" id="registerPasswordConfirm" class="form-input" placeholder="パスワード確認" required>
-                </div>
-                <button class="btn-filled" onclick="app.handleEmailRegister()" style="width: 100%; margin-bottom: 1rem;">
-                    新規登録
-                </button>
-            </div>
-
-            <div class="divider">または</div>
-
-            <button class="btn-filled" onclick="app.handleGoogleLogin()" style="width: 100%; background: #4285F4;">
-                🔍 Googleでログイン
-            </button>
-
-            <div style="text-align: center; margin-top: 1rem;">
-                <button class="btn btn-secondary" onclick="app.closeAuthModal()">キャンセル</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- パスワードリセットモーダル -->
-    <div id="forgotPasswordModal" class="modal-overlay">
-        <div class="modal-content">
-            <h3>パスワードリセット</h3>
-            <p style="color: var(--text-secondary); margin-bottom: 1rem;">
-                登録したメールアドレスにパスワードリセット用のリンクを送信します。
-            </p>
-            <input 
-                type="email" 
-                id="forgotEmail" 
-                class="modal-input"
-                placeholder="メールアドレス"
-                required
-            >
-            <div class="modal-buttons">
-                <button class="btn-filled" onclick="app.sendPasswordReset()">送信</button>
-                <button class="btn-filled btn-secondary" onclick="app.closeForgotPassword()">キャンセル</button>
-            </div>
-        </div>
     </div>
 
     <!-- 公開設定モーダル -->
@@ -1488,27 +1176,78 @@
     <!-- トースト通知 -->
     <div id="toast" class="toast" role="alert" aria-live="polite"></div>
 
-    <script>
-        // デバッグ機能（最適化版）
-        function updateDebugInfo(message) {
-            // 本番環境ではデバッグ情報を無効化
-            if (window.location.hostname === 'localhost') {
-                const debugContent = document.getElementById('debugContent');
-                if (debugContent) {
-                    if (debugContent.innerHTML.length > 1000) {
-                        debugContent.innerHTML = '初期化中...<br>';
-                    }
-                    debugContent.innerHTML += '<br>' + message;
-                }
-            }
-            console.log('DEBUG:', message);
-        }
+    <!-- Firebase SDK（非同期・遅延読み込み） -->
+    <script type="module">
+        // Firebase SDKの非同期読み込み
+        (async () => {
+            try {
+                const [
+                    { initializeApp },
+                    { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence },
+                    { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where, orderBy, limit, updateDoc, deleteDoc, serverTimestamp, addDoc, increment, onSnapshot, enableNetwork, disableNetwork, enableIndexedDbPersistence },
+                    { getStorage, ref, uploadBytes, getDownloadURL, deleteObject }
+                ] = await Promise.all([
+                    import('https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js'),
+                    import('https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js'),
+                    import('https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js'),
+                    import('https://www.gstatic.com/firebasejs/10.7.0/firebase-storage.js')
+                ]);
 
-        // ===== StudyBook Application - メールアドレス認証対応版 =====
+                // Firebaseをグローバルに公開
+                window.firebaseModules = {
+                    initializeApp,
+                    getAuth,
+                    GoogleAuthProvider,
+                    signInWithPopup,
+                    signOut,
+                    onAuthStateChanged,
+                    setPersistence,
+                    browserLocalPersistence,
+                    getFirestore,
+                    collection,
+                    doc,
+                    setDoc,
+                    getDoc,
+                    getDocs,
+                    query,
+                    where,
+                    orderBy,
+                    limit,
+                    updateDoc,
+                    deleteDoc,
+                    serverTimestamp,
+                    addDoc,
+                    increment,
+                    onSnapshot,
+                    enableNetwork,
+                    disableNetwork,
+                    enableIndexedDbPersistence,
+                    getStorage,
+                    ref,
+                    uploadBytes,
+                    getDownloadURL,
+                    deleteObject
+                };
+                
+                window.firebaseReady = true;
+                window.dispatchEvent(new CustomEvent('firebaseReady'));
+            } catch (error) {
+                console.warn('Firebase SDK load failed:', error);
+                window.firebaseReady = false;
+                window.dispatchEvent(new CustomEvent('firebaseReady'));
+            }
+        })();
+    </script>
+    
+    <!-- 外部ライブラリ（非同期読み込み） -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2" defer></script>
+    
+    <script>
+        // ===== StudyBook Application - 最適化版 =====
         class StudyBookApp {
             constructor() {
-                updateDebugInfo('App starting...');
-                
                 // Firebase設定
                 this.firebaseConfig = {
                     apiKey: "AIzaSyCRRsnIRzveG6B7XzDhUR-OoBWq-SY-5Ew",
@@ -1529,7 +1268,6 @@
 
                 // 認証関連フラグ
                 this.explicitLogout = false;
-                this.currentAuthTab = 'login';
 
                 // Firebase インスタンス
                 this.firebaseApp = null;
@@ -1572,6 +1310,13 @@
                 this.minZoom = 0.5;
                 this.maxZoom = 3.0;
                 this.zoomStep = 0.1;
+
+                // ピンチズーム関連
+                this.isPinching = false;
+                this.initialPinchDistance = 0;
+                this.currentScale = 1;
+                this.minScale = 0.5;
+                this.maxScale = 3;
 
                 // PWA & オフライン対応
                 this.setupOfflineHandling();
@@ -1622,21 +1367,17 @@
             // ===== 初期化（最適化版） =====
             async init() {
                 try {
-                    updateDebugInfo('Initializing...');
-                    document.getElementById('loadingText').textContent = 'Firebase初期化中...';
+                    document.getElementById('loadingText').textContent = '読み込み中...';
 
-                    // Firebase SDKの読み込みを待つ
+                    // Firebase SDKの読み込みを待つ（タイムアウトを1秒に短縮）
                     if (!window.firebaseReady) {
-                        updateDebugInfo('Waiting for Firebase...');
                         await new Promise((resolve) => {
                             const timeout = setTimeout(() => {
-                                updateDebugInfo('Firebase timeout - continuing without Firebase');
                                 resolve();
-                            }, 1500);
+                            }, 1000); // タイムアウトを1秒に短縮
                             
                             window.addEventListener('firebaseReady', () => {
                                 clearTimeout(timeout);
-                                updateDebugInfo('Firebase ready');
                                 resolve();
                             }, { once: true });
                         });
@@ -1653,42 +1394,33 @@
 
                     // データロード
                     if (this.auth && this.firebaseInitialized) {
-                        updateDebugInfo('Setting up auth...');
-                        
-                        // 認証状態の監視を設定
+                        // 認証状態の監視を設定（一度だけ）
                         this.auth.onAuthStateChanged(this.handleAuthStateChange.bind(this));
                         
                         // 現在のユーザーを即座にチェック
                         const currentUser = this.auth.currentUser;
                         if (currentUser) {
-                            updateDebugInfo('Found cached user: ' + currentUser.displayName);
+                            // 直接認証成功処理を実行
                             await this.handleAuthSuccess(currentUser);
                             this.dataLoadingComplete = true;
                             this.handlePendingSharedNote();
                         }
                         
                     } else {
-                        updateDebugInfo('Using local mode');
                         this.loadLocalData();
                         this.dataLoadingComplete = true;
                         this.updateUI();
                         this.handlePendingSharedNote();
                     }
 
-                    // ローディング完了
+                    // ローディング完了（表示時間を200msに短縮）
                     document.getElementById('loadingText').textContent = '完了';
-                    updateDebugInfo('Initialization complete');
                     
                     setTimeout(() => {
                         document.getElementById('loadingScreen').classList.add('hidden');
-                        const debugInfo = document.getElementById('debugInfo');
-                        if (debugInfo) {
-                            debugInfo.style.display = 'none';
-                        }
-                    }, 200);
+                    }, 200); // 200msに短縮
 
                 } catch (error) {
-                    updateDebugInfo('Init error: ' + error.message);
                     this.handleError(error, 'アプリの初期化に失敗しました');
                     
                     setTimeout(() => {
@@ -1699,10 +1431,7 @@
 
             // ===== Firebase初期化 =====
             async initFirebase() {
-                updateDebugInfo('Firebase init start');
-                
                 if (!window.firebaseModules) {
-                    updateDebugInfo('No Firebase modules - using local mode');
                     return;
                 }
 
@@ -1715,9 +1444,8 @@
                     // 認証の永続化を設定
                     try {
                         await setPersistence(this.auth, browserLocalPersistence);
-                        updateDebugInfo('Auth persistence set to local');
                     } catch (persistenceError) {
-                        updateDebugInfo('Auth persistence setting failed (non-critical): ' + persistenceError.message);
+                        console.warn('Auth persistence setting failed:', persistenceError);
                     }
                     
                     this.db = getFirestore(this.firebaseApp);
@@ -1727,24 +1455,15 @@
                         await enableIndexedDbPersistence(this.db, { 
                             forceOwnership: false
                         });
-                        updateDebugInfo('Firestore offline persistence enabled');
                     } catch (err) {
-                        if (err.code === 'failed-precondition') {
-                            updateDebugInfo('Multiple tabs open, persistence can only be enabled in one tab at a time');
-                        } else if (err.code === 'unimplemented') {
-                            updateDebugInfo('Browser does not support offline persistence');
-                        } else {
-                            updateDebugInfo('Persistence error: ' + err.message);
-                        }
+                        console.warn('Persistence setup:', err.code);
                     }
                     
                     this.storage = getStorage(this.firebaseApp);
                     
                     this.firebaseInitialized = true;
-                    updateDebugInfo('Firebase init success');
                     
                 } catch (error) {
-                    updateDebugInfo('Firebase init failed: ' + error.message);
                     console.warn("Firebase initialization failed", error);
                     
                     this.auth = null;
@@ -1754,236 +1473,13 @@
                 }
             }
 
-            // ===== 認証関連（新規追加・強化版） =====
-            showAuthModal() {
-                document.getElementById('authModal').classList.add('active');
-                setTimeout(() => {
-                    document.getElementById('loginEmail').focus();
-                }, 100);
-            }
-
-            closeAuthModal() {
-                document.getElementById('authModal').classList.remove('active');
-            }
-
-            switchAuthTab(tab) {
-                this.currentAuthTab = tab;
-                
-                // タブの見た目を更新
-                document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-                document.querySelector(`.auth-tab:nth-child(${tab === 'login' ? '1' : '2'})`).classList.add('active');
-                
-                // フォームの表示を切り替え
-                document.querySelectorAll('.auth-form-content').forEach(f => f.classList.remove('active'));
-                document.getElementById(tab === 'login' ? 'loginForm' : 'registerForm').classList.add('active');
-                
-                // フォーカス設定
-                setTimeout(() => {
-                    const focusElement = tab === 'login' ? 
-                        document.getElementById('loginEmail') : 
-                        document.getElementById('registerName');
-                    if (focusElement) focusElement.focus();
-                }, 100);
-            }
-
-            // ===== メールアドレスログイン =====
-            async handleEmailLogin() {
-                if (!this.firebaseInitialized || !this.auth) {
-                    this.showToast('Firebase接続エラー', 'error');
-                    return;
-                }
-
-                const email = document.getElementById('loginEmail').value.trim();
-                const password = document.getElementById('loginPassword').value;
-
-                if (!email || !password) {
-                    this.showToast('メールアドレスとパスワードを入力してください', 'warning');
-                    return;
-                }
-
-                if (!this.checkRateLimit('email-login', 5, 60000)) {
-                    this.showToast('ログイン試行が多すぎます', 'error');
-                    return;
-                }
-
-                try {
-                    updateDebugInfo('Email login attempt: ' + email);
-                    const { signInWithEmailAndPassword } = window.firebaseModules;
-                    
-                    const result = await signInWithEmailAndPassword(this.auth, email, password);
-                    updateDebugInfo('Email login success');
-                    
-                    this.closeAuthModal();
-                    
-                } catch (error) {
-                    updateDebugInfo('Email login error: ' + error.message);
-                    
-                    let errorMessage = 'ログインに失敗しました';
-                    if (error.code === 'auth/user-not-found') {
-                        errorMessage = 'ユーザーが見つかりません';
-                    } else if (error.code === 'auth/wrong-password') {
-                        errorMessage = 'パスワードが間違っています';
-                    } else if (error.code === 'auth/invalid-email') {
-                        errorMessage = 'メールアドレスが無効です';
-                    } else if (error.code === 'auth/too-many-requests') {
-                        errorMessage = '試行回数が多すぎます。しばらく待ってからお試しください';
-                    }
-                    
-                    this.showToast(errorMessage, 'error');
-                }
-            }
-
-            // ===== メールアドレス新規登録 =====
-            async handleEmailRegister() {
-                if (!this.firebaseInitialized || !this.auth) {
-                    this.showToast('Firebase接続エラー', 'error');
-                    return;
-                }
-
-                const name = document.getElementById('registerName').value.trim();
-                const email = document.getElementById('registerEmail').value.trim();
-                const password = document.getElementById('registerPassword').value;
-                const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
-
-                if (!name || !email || !password || !passwordConfirm) {
-                    this.showToast('すべての項目を入力してください', 'warning');
-                    return;
-                }
-
-                if (password !== passwordConfirm) {
-                    this.showToast('パスワードが一致しません', 'error');
-                    return;
-                }
-
-                if (password.length < 6) {
-                    this.showToast('パスワードは6文字以上にしてください', 'error');
-                    return;
-                }
-
-                if (!this.checkRateLimit('email-register', 3, 60000)) {
-                    this.showToast('登録試行が多すぎます', 'error');
-                    return;
-                }
-
-                try {
-                    updateDebugInfo('Email register attempt: ' + email);
-                    const { createUserWithEmailAndPassword, updateProfile } = window.firebaseModules;
-                    
-                    const result = await createUserWithEmailAndPassword(this.auth, email, password);
-                    
-                    // ユーザー名を設定
-                    await updateProfile(result.user, {
-                        displayName: name
-                    });
-                    
-                    updateDebugInfo('Email register success: ' + name);
-                    
-                    this.closeAuthModal();
-                    this.showToast('新規登録が完了しました', 'success');
-                    
-                } catch (error) {
-                    updateDebugInfo('Email register error: ' + error.message);
-                    
-                    let errorMessage = '新規登録に失敗しました';
-                    if (error.code === 'auth/email-already-in-use') {
-                        errorMessage = 'このメールアドレスは既に使用されています';
-                    } else if (error.code === 'auth/invalid-email') {
-                        errorMessage = 'メールアドレスが無効です';
-                    } else if (error.code === 'auth/weak-password') {
-                        errorMessage = 'パスワードが弱すぎます';
-                    }
-                    
-                    this.showToast(errorMessage, 'error');
-                }
-            }
-
-            // ===== Googleログイン =====
-            async handleGoogleLogin() {
-                if (!this.firebaseInitialized || !this.auth) {
-                    this.showToast('Firebase接続エラー', 'error');
-                    return;
-                }
-
-                if (!this.checkRateLimit('google-login', 5, 60000)) {
-                    this.showToast('ログイン試行が多すぎます', 'error');
-                    return;
-                }
-
-                try {
-                    updateDebugInfo('Google login attempt');
-                    const { GoogleAuthProvider, signInWithPopup } = window.firebaseModules;
-                    const provider = new GoogleAuthProvider();
-                    
-                    const result = await signInWithPopup(this.auth, provider);
-                    updateDebugInfo('Google login success');
-                    
-                    this.closeAuthModal();
-                    
-                } catch (error) {
-                    updateDebugInfo('Google login error: ' + error.message);
-                    
-                    if (error.code !== 'auth/popup-closed-by-user') {
-                        this.handleError(error, 'Googleログインに失敗しました');
-                    }
-                }
-            }
-
-            // ===== パスワードリセット =====
-            showForgotPassword() {
-                document.getElementById('forgotEmail').value = document.getElementById('loginEmail').value;
-                document.getElementById('forgotPasswordModal').classList.add('active');
-                setTimeout(() => {
-                    document.getElementById('forgotEmail').focus();
-                }, 100);
-            }
-
-            closeForgotPassword() {
-                document.getElementById('forgotPasswordModal').classList.remove('active');
-            }
-
-            async sendPasswordReset() {
-                if (!this.firebaseInitialized || !this.auth) {
-                    this.showToast('Firebase接続エラー', 'error');
-                    return;
-                }
-
-                const email = document.getElementById('forgotEmail').value.trim();
-
-                if (!email) {
-                    this.showToast('メールアドレスを入力してください', 'warning');
-                    return;
-                }
-
-                try {
-                    const { sendPasswordResetEmail } = window.firebaseModules;
-                    await sendPasswordResetEmail(this.auth, email);
-                    
-                    updateDebugInfo('Password reset email sent to: ' + email);
-                    this.closeForgotPassword();
-                    this.showToast('パスワードリセットメールを送信しました', 'success');
-                    
-                } catch (error) {
-                    updateDebugInfo('Password reset error: ' + error.message);
-                    
-                    let errorMessage = 'メール送信に失敗しました';
-                    if (error.code === 'auth/user-not-found') {
-                        errorMessage = 'ユーザーが見つかりません';
-                    } else if (error.code === 'auth/invalid-email') {
-                        errorMessage = 'メールアドレスが無効です';
-                    }
-                    
-                    this.showToast(errorMessage, 'error');
-                }
-            }
-
             // ===== 認証状態変更処理（最適化版） =====
             async handleAuthStateChange(user) {
                 try {
                     if (user) {
-                        updateDebugInfo('User signed in: ' + (user.displayName || user.email));
                         await this.handleAuthSuccess(user);
                     } else {
-                        updateDebugInfo('User signed out');
+                        // 明示的なログアウトの時のみログアウト処理
                         if (this.explicitLogout) {
                             this.handleAuthLogout();
                             this.explicitLogout = false;
@@ -1994,7 +1490,6 @@
                     this.handlePendingSharedNote();
                     
                 } catch (error) {
-                    updateDebugInfo('Auth state change error: ' + error.message);
                     this.handleError(error, '認証処理でエラーが発生しました');
                 }
             }
@@ -2007,76 +1502,11 @@
                     const { signOut } = window.firebaseModules;
                     try {
                         await signOut(this.auth);
-                        updateDebugInfo('Logout successful');
                     } catch (error) {
-                        updateDebugInfo('Logout error: ' + error.message);
                         this.handleAuthLogout();
                     }
                 } else {
                     this.handleAuthLogout();
-                }
-            }
-
-            // ===== 認証成功処理 =====
-            async handleAuthSuccess(user) {
-                this.currentUser = {
-                    uid: user.uid,
-                    displayName: user.displayName || user.email?.split('@')[0] || 'ユーザー',
-                    email: user.email,
-                    photoURL: user.photoURL
-                };
-                updateDebugInfo('Auth success: ' + this.currentUser.displayName);
-                
-                await this.ensureUserDocument();
-                await this.loadNotesFromFirestore();
-                
-                this.showToast('ログインしました', 'success');
-            }
-
-            handleAuthLogout() {
-                this.cleanupListeners();
-                
-                this.currentUser = null;
-                this.notesMap.clear();
-                this.passwordCache.clear();
-                
-                const keys = Object.keys(localStorage);
-                keys.forEach(key => {
-                    if (key.startsWith('studybook_')) {
-                        localStorage.removeItem(key);
-                    }
-                });
-                
-                updateDebugInfo('Logged out');
-                this.showToast('ログアウトしました', 'info');
-                this.updateUI();
-            }
-
-            async ensureUserDocument() {
-                if (!this.db || !this.currentUser || !this.firebaseInitialized) return;
-                
-                try {
-                    const { doc, getDoc, setDoc, serverTimestamp } = window.firebaseModules;
-                    const userDocRef = doc(this.db, 'users', this.currentUser.uid);
-                    const userDoc = await getDoc(userDocRef);
-                    
-                    if (!userDoc.exists()) {
-                        await setDoc(userDocRef, {
-                            displayName: this.currentUser.displayName,
-                            email: this.currentUser.email,
-                            photoURL: this.currentUser.photoURL,
-                            createdAt: serverTimestamp(),
-                            updatedAt: serverTimestamp()
-                        });
-                        updateDebugInfo('Created user document');
-                    } else {
-                        await setDoc(userDocRef, {
-                            updatedAt: serverTimestamp()
-                        }, { merge: true });
-                    }
-                } catch (error) {
-                    updateDebugInfo('User doc error: ' + error.message);
-                    console.error('Error ensuring user document:', error);
                 }
             }
 
@@ -2114,6 +1544,7 @@
                 }
             }
 
+            // ===== 進捗保存 =====
             saveReadingProgress(noteId, pageIndex) {
                 if (!this.currentUser || !noteId) return;
 
@@ -2141,19 +1572,6 @@
                 }
             }
 
-            displayContinueReading(progress) {
-                const note = this.findNoteById(progress.noteId);
-                if (!note) return;
-
-                const container = document.getElementById('continueReading');
-                container.innerHTML = `
-                    <div class="continue-reading" onclick="app.openBook('${progress.noteId}', false); app.currentPage = ${progress.pageIndex}; app.updateViewer();">
-                        📖 続きから読む: ${this.escapeHtml(note.title)} (${progress.pageIndex + 1}/${note.pages.length}ページ)
-                    </div>
-                `;
-                container.style.display = 'block';
-            }
-
             // ===== リアルタイムリスナー設定 =====
             setupRealtimeListeners() {
                 if (!this.db || !this.currentUser || !this.firebaseInitialized) return;
@@ -2166,12 +1584,10 @@
                     
                     const unsubscribeNotes = onSnapshot(myNotesQuery, 
                         (snapshot) => {
-                            updateDebugInfo(`Notes snapshot: ${snapshot.size} docs`);
                             this.handleNotesSnapshot(snapshot, this.currentUser.uid);
                             this.reconnectAttempts = 0;
                         },
                         (error) => {
-                            updateDebugInfo('Notes listener error: ' + error.message);
                             this.handleFirestoreError(error, 'notes');
                             this.scheduleReconnect();
                         }
@@ -2187,12 +1603,10 @@
                     
                     const unsubscribePublicNotes = onSnapshot(publicNotesQuery, 
                         (snapshot) => {
-                            updateDebugInfo(`Public notes snapshot: ${snapshot.size} docs`);
                             this.handlePublicNotesSnapshot(snapshot);
                             this.reconnectAttempts = 0;
                         },
                         (error) => {
-                            updateDebugInfo('Public notes listener error: ' + error.message);
                             this.handleFirestoreError(error, 'publicNotes');
                             this.scheduleReconnect();
                         }
@@ -2201,7 +1615,6 @@
                     this.listeners.set('publicNotes', unsubscribePublicNotes);
                     
                 } catch (error) {
-                    updateDebugInfo('Listener setup error: ' + error.message);
                     console.error('Error setting up listeners:', error);
                 }
             }
@@ -2213,14 +1626,11 @@
                 }
 
                 if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-                    updateDebugInfo('Max reconnection attempts reached');
                     return;
                 }
 
                 const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
                 this.reconnectAttempts++;
-
-                updateDebugInfo(`Scheduling reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`);
 
                 this.reconnectTimeout = setTimeout(() => {
                     if (this.isOnline && this.firebaseInitialized) {
@@ -2238,7 +1648,6 @@
                 }
                 
                 if (error.code === 'permission-denied') {
-                    updateDebugInfo(`Permission check for ${listenerType}`);
                     if (this.notesMap.size === 0) {
                         this.loadLocalData();
                     }
@@ -2250,8 +1659,6 @@
                 if (!this.db || !this.isOnline || !this.firebaseInitialized) return;
 
                 try {
-                    updateDebugInfo('Attempting Firestore reconnection...');
-                    
                     this.cleanupListeners();
                     
                     const { enableNetwork } = window.firebaseModules;
@@ -2261,12 +1668,10 @@
                         if (this.currentUser) {
                             this.setupRealtimeListeners();
                             this.reconnectAttempts = 0;
-                            updateDebugInfo('Firestore reconnected successfully');
                         }
                     }, 1000);
                     
                 } catch (error) {
-                    updateDebugInfo('Reconnection failed: ' + error.message);
                     console.error('Reconnection error:', error);
                     this.scheduleReconnect();
                 }
@@ -2278,7 +1683,6 @@
                 const noteId = urlParams.get('book');
 
                 if (noteId) {
-                    updateDebugInfo(`Shared note requested: ${noteId}`);
                     this.pendingSharedNoteId = noteId;
                     
                     if (this.dataLoadingComplete) {
@@ -2296,13 +1700,10 @@
                 const noteId = this.pendingSharedNoteId;
                 this.pendingSharedNoteId = null;
 
-                updateDebugInfo(`Processing pending shared note: ${noteId}`);
-
                 let note = this.findNoteById(noteId);
 
                 if (note) {
                     if (await this.checkPasswordProtection(note)) {
-                        updateDebugInfo(`Found shared note in memory: ${note.title}`);
                         this.openBook(noteId, false);
                         return;
                     } else {
@@ -2313,7 +1714,6 @@
                 if (this.db && this.firebaseInitialized) {
                     await this.loadPublicNoteDirectly(noteId);
                 } else {
-                    updateDebugInfo('No Firebase connection for shared note');
                     this.showToast('オフラインでは共有ノートを開けません', 'error');
                 }
             }
@@ -2398,7 +1798,6 @@
                 }
                 
                 try {
-                    updateDebugInfo(`Loading public note directly: ${noteId}`);
                     const { doc, getDoc } = window.firebaseModules;
                     
                     const publicNoteRef = doc(this.db, 'publicNotes', noteId);
@@ -2409,7 +1808,6 @@
                         
                         if (noteData.isPublic || noteData.visibility?.type === 'password' || noteData.password) {
                             this.notesMap.set(noteId, noteData);
-                            updateDebugInfo(`Loaded note: ${noteData.title}`);
                             
                             if (await this.checkPasswordProtection(noteData)) {
                                 this.openBook(noteId, false);
@@ -2421,7 +1819,6 @@
                     await this.findNoteInUserCollections(noteId);
                     
                 } catch (error) {
-                    updateDebugInfo(`Public note load error: ${error.message}`);
                     this.handleError(error, '共有ノートの読み込みに失敗しました');
                 }
             }
@@ -2429,7 +1826,6 @@
             // ===== ユーザーコレクションから検索 =====
             async findNoteInUserCollections(noteId) {
                 try {
-                    updateDebugInfo(`Searching for note in user collections: ${noteId}`);
                     const { collection, query, getDocs, limit } = window.firebaseModules;
                     
                     const usersRef = collection(this.db, 'users');
@@ -2446,7 +1842,6 @@
                                 
                                 if (noteData.isPublic || noteData.visibility?.type === 'password' || noteData.password) {
                                     this.notesMap.set(noteId, noteData);
-                                    updateDebugInfo(`Found note in user collection: ${noteData.title}`);
                                     
                                     if (await this.checkPasswordProtection(noteData)) {
                                         this.openBook(noteId, false);
@@ -2459,11 +1854,9 @@
                         }
                     }
                     
-                    updateDebugInfo(`Shared note not found: ${noteId}`);
                     this.showToast('共有ノートが見つからないか、アクセス権限がありません', 'error');
                     
                 } catch (error) {
-                    updateDebugInfo(`User collections search error: ${error.message}`);
                     this.showToast('共有ノートの検索中にエラーが発生しました', 'error');
                 }
             }
@@ -2476,11 +1869,8 @@
                 }
 
                 try {
-                    updateDebugInfo('Loading notes from Firestore...');
-                    
                     const now = Date.now();
                     if (now - this.lastFetchTime < this.cacheTimeout && this.notesMap.size > 0) {
-                        updateDebugInfo('Using cached data');
                         this.updateUI();
                         return;
                     }
@@ -2492,13 +1882,10 @@
                     this.setupRealtimeListeners();
                     
                     this.lastFetchTime = now;
-                    updateDebugInfo(`Loaded ${this.notesMap.size} notes`);
                     
                 } catch (error) {
-                    updateDebugInfo('Load error: ' + error.message);
-                    
                     if (error.code === 'permission-denied') {
-                        updateDebugInfo('Permission check - loading local data');
+                        console.log('Permission check - loading local data');
                     } else {
                         this.handleError(error, 'データの読み込みに失敗しました');
                     }
@@ -2520,8 +1907,6 @@
                         const noteData = { id: doc.id, ...doc.data(), authorId: this.currentUser.uid };
                         this.notesMap.set(doc.id, noteData);
                     });
-                    
-                    updateDebugInfo(`Loaded ${mySnapshot.size} personal notes`);
 
                     const publicNotesQuery = query(
                         collection(this.db, 'publicNotes'),
@@ -2536,8 +1921,6 @@
                             this.notesMap.set(doc.id, noteData);
                         }
                     });
-                    
-                    updateDebugInfo(`Loaded ${publicSnapshot.size} public notes`);
 
                     this.updateSearchIndex();
                     this.updateUI();
@@ -2547,6 +1930,19 @@
                     console.error('One-time load error:', error);
                     throw error;
                 }
+            }
+
+            displayContinueReading(progress) {
+                const note = this.findNoteById(progress.noteId);
+                if (!note) return;
+
+                const container = document.getElementById('continueReading');
+                container.innerHTML = `
+                    <div class="continue-reading" onclick="app.openBook('${progress.noteId}', false); app.currentPage = ${progress.pageIndex}; app.updateViewer();">
+                        📖 続きから読む: ${this.escapeHtml(note.title)} (${progress.pageIndex + 1}/${note.pages.length}ページ)
+                    </div>
+                `;
+                container.style.display = 'block';
             }
 
             handleNotesSnapshot(snapshot, authorId) {
@@ -2608,7 +2004,6 @@
                 this.listeners.forEach((unsubscribe, key) => {
                     try {
                         unsubscribe();
-                        updateDebugInfo(`Cleaned up listener: ${key}`);
                     } catch (error) {
                         console.warn(`Error cleaning up listener ${key}:`, error);
                     }
@@ -2625,12 +2020,10 @@
                         notes.forEach(note => {
                             this.notesMap.set(note.id, note);
                         });
-                        updateDebugInfo(`Loaded ${notes.length} notes from local storage`);
                     }
                     this.updateSearchIndex();
                     this.updateUI();
                 } catch (error) {
-                    updateDebugInfo('Local data load error: ' + error.message);
                     console.error('Error loading local data:', error);
                 }
             }
@@ -2644,10 +2037,275 @@
                 }
             }
 
+            // ===== 認証処理 =====
+            async handleLogin() {
+                if (!this.auth || !this.firebaseInitialized) {
+                    this.showToast('Firebase接続エラー', 'error');
+                    return;
+                }
+
+                if (!this.checkRateLimit('login', 5, 60000)) {
+                    this.showToast('ログイン試行が多すぎます', 'error');
+                    return;
+                }
+
+                try {
+                    const { GoogleAuthProvider, signInWithPopup } = window.firebaseModules;
+                    const provider = new GoogleAuthProvider();
+                    const result = await signInWithPopup(this.auth, provider);
+                } catch (error) {
+                    this.handleError(error, 'ログインに失敗しました');
+                }
+            }
+
+            async handleAuthSuccess(user) {
+                this.currentUser = {
+                    uid: user.uid,
+                    displayName: user.displayName || 'ユーザー',
+                    email: user.email,
+                    photoURL: user.photoURL
+                };
+                
+                await this.ensureUserDocument();
+                await this.loadNotesFromFirestore();
+                
+                this.showToast('ログインしました', 'success');
+            }
+
+            handleAuthLogout() {
+                this.cleanupListeners();
+                
+                this.currentUser = null;
+                this.notesMap.clear();
+                this.passwordCache.clear();
+                
+                const keys = Object.keys(localStorage);
+                keys.forEach(key => {
+                    if (key.startsWith('studybook_')) {
+                        localStorage.removeItem(key);
+                    }
+                });
+                
+                this.showToast('ログアウトしました', 'info');
+                this.updateUI();
+            }
+
+            async ensureUserDocument() {
+                if (!this.db || !this.currentUser || !this.firebaseInitialized) return;
+                
+                try {
+                    const { doc, getDoc, setDoc, serverTimestamp } = window.firebaseModules;
+                    const userDocRef = doc(this.db, 'users', this.currentUser.uid);
+                    const userDoc = await getDoc(userDocRef);
+                    
+                    if (!userDoc.exists()) {
+                        await setDoc(userDocRef, {
+                            displayName: this.currentUser.displayName,
+                            email: this.currentUser.email,
+                            photoURL: this.currentUser.photoURL,
+                            createdAt: serverTimestamp(),
+                            updatedAt: serverTimestamp()
+                        });
+                    } else {
+                        await setDoc(userDocRef, {
+                            updatedAt: serverTimestamp()
+                        }, { merge: true });
+                    }
+                } catch (error) {
+                    console.error('Error ensuring user document:', error);
+                }
+            }
+
+            // ===== ズーム機能（デスクトップのみ） =====
+            zoomIn() {
+                this.zoomLevel = Math.min(this.maxZoom, this.zoomLevel + this.zoomStep);
+                this.applyZoom();
+            }
+
+            zoomOut() {
+                this.zoomLevel = Math.max(this.minZoom, this.zoomLevel - this.zoomStep);
+                this.applyZoom();
+            }
+
+            resetZoom() {
+                this.zoomLevel = 1.0;
+                this.currentScale = 1.0;
+                this.applyZoom();
+            }
+
+            applyZoom() {
+                const wrapper = document.getElementById('pageContentWrapper');
+                if (wrapper) {
+                    wrapper.style.transform = `scale(${this.zoomLevel})`;
+                    const zoomLevelEl = document.getElementById('zoomLevel');
+                    if (zoomLevelEl) {
+                        zoomLevelEl.textContent = Math.round(this.zoomLevel * 100) + '%';
+                    }
+                }
+            }
+
+            // ===== ピンチズーム機能（モバイル） =====
+            setupPinchZoom() {
+                const wrapper = document.getElementById('pageContentWrapper');
+                if (!wrapper) return;
+
+                let initialDistance = 0;
+                let initialScale = 1;
+
+                wrapper.addEventListener('touchstart', (e) => {
+                    if (e.touches.length === 2) {
+                        this.isPinching = true;
+                        initialDistance = this.getPinchDistance(e.touches);
+                        initialScale = this.currentScale;
+                    }
+                }, { passive: true });
+
+                wrapper.addEventListener('touchmove', (e) => {
+                    if (this.isPinching && e.touches.length === 2) {
+                        e.preventDefault();
+                        const currentDistance = this.getPinchDistance(e.touches);
+                        const scale = (currentDistance / initialDistance) * initialScale;
+                        
+                        this.currentScale = Math.min(Math.max(scale, this.minScale), this.maxScale);
+                        this.zoomLevel = this.currentScale;
+                        wrapper.style.transform = `scale(${this.currentScale})`;
+                    }
+                }, { passive: false });
+
+                wrapper.addEventListener('touchend', (e) => {
+                    if (e.touches.length < 2) {
+                        this.isPinching = false;
+                    }
+                }, { passive: true });
+            }
+
+            getPinchDistance(touches) {
+                const dx = touches[0].clientX - touches[1].clientX;
+                const dy = touches[0].clientY - touches[1].clientY;
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+
+            // ===== イベントリスナー設定 =====
+            setupEventListeners() {
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) {
+                    searchInput.addEventListener('input', this.debounce(this.handleSearch.bind(this), 300));
+                    document.addEventListener('click', (e) => {
+                        if (!searchInput.contains(e.target)) {
+                            document.getElementById('searchResults').classList.remove('active');
+                        }
+                    });
+                }
+
+                document.addEventListener('change', (e) => {
+                    if (e.target.name === 'visibility') {
+                        this.toggleVisibilityOptions(e.target.value);
+                    }
+                });
+
+                const pageContent = document.getElementById('pageContent');
+                if (pageContent) {
+                    pageContent.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: true });
+                    pageContent.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: true });
+                    pageContent.addEventListener('touchend', this.handleTouchEnd.bind(this));
+                }
+
+                // ピンチズームのセットアップ
+                this.setupPinchZoom();
+
+                document.addEventListener('keydown', (e) => {
+                    if (this.currentNote) {
+                        if (e.key === 'ArrowLeft') this.previousPage();
+                        if (e.key === 'ArrowRight') this.nextPage();
+                        if (e.key === 'Escape') this.toggleSidebar();
+                        
+                        // デスクトップのみのズーム
+                        if (window.innerWidth > 768) {
+                            if (e.ctrlKey || e.metaKey) {
+                                if (e.key === '=') {
+                                    e.preventDefault();
+                                    this.zoomIn();
+                                } else if (e.key === '-') {
+                                    e.preventDefault();
+                                    this.zoomOut();
+                                } else if (e.key === '0') {
+                                    e.preventDefault();
+                                    this.resetZoom();
+                                }
+                            }
+                        }
+                    }
+
+                    if (e.key === 'Enter' && document.getElementById('passwordPromptModal').classList.contains('active')) {
+                        this.submitPassword();
+                    }
+                });
+            }
+
+            // ===== 検索機能 =====
+            updateSearchIndex() {
+                const notes = Array.from(this.notesMap.values());
+                
+                if (typeof Fuse !== 'undefined' && notes.length > 0) {
+                    this.fuseInstance = new Fuse(notes, {
+                        keys: [
+                            { name: 'title', weight: 0.3 },
+                            { name: 'author', weight: 0.2 },
+                            { name: 'tags', weight: 0.2 },
+                            { name: 'pages.title', weight: 0.15 },
+                            { name: 'pages.content', weight: 0.15 }
+                        ],
+                        threshold: 0.3,
+                        includeScore: true
+                    });
+                }
+            }
+
+            handleSearch(event) {
+                const query = event.target.value.trim();
+                
+                if (!query) {
+                    document.getElementById('searchResults').classList.remove('active');
+                    return;
+                }
+
+                if (!this.fuseInstance) {
+                    this.updateSearchIndex();
+                }
+
+                if (this.fuseInstance) {
+                    const results = this.fuseInstance.search(query).slice(0, 8);
+                    this.displaySearchResults(results);
+                }
+            }
+
+            displaySearchResults(results) {
+                const container = document.getElementById('searchResults');
+                
+                if (results.length === 0) {
+                    container.innerHTML = '<div class="search-result-item">検索結果がありません</div>';
+                } else {
+                    container.innerHTML = results.map(result => {
+                        const note = result.item;
+                        const hasPassword = note.password || note.visibility?.type === 'password';
+                        const passwordIcon = hasPassword ? ' 🔐' : '';
+                        
+                        return `
+                            <div class="search-result-item" onclick="app.openBook('${note.id}', false)">
+                                <div style="font-weight: 500; margin-bottom: 0.25rem;">${this.escapeHtml(note.title)}${passwordIcon}</div>
+                                <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                                    ${this.escapeHtml(note.author)} • ${note.pages.length}ページ
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+                
+                container.classList.add('active');
+            }
+
             // ===== ノート作成 =====
             async createNewBook() {
-                updateDebugInfo('Creating new note...');
-                
                 if (!this.currentUser) {
                     this.showToast('ログインが必要です', 'warning');
                     return;
@@ -2676,7 +2334,6 @@
 
                 if (this.db && this.firebaseInitialized) {
                     try {
-                        updateDebugInfo('Saving to Firestore...');
                         const { collection, addDoc, serverTimestamp } = window.firebaseModules;
                         
                         const noteToSave = {
@@ -2688,16 +2345,13 @@
                         const notesRef = collection(this.db, 'users', this.currentUser.uid, 'notes');
                         const docRef = await addDoc(notesRef, noteToSave);
                         newNote.id = docRef.id;
-                        updateDebugInfo('Saved: ' + docRef.id);
                         
                     } catch (error) {
-                        updateDebugInfo('Save error: ' + error.message);
                         this.handleError(error, 'ノートの作成に失敗しました');
                         return;
                     }
                 } else {
                     newNote.id = 'note_' + Date.now();
-                    updateDebugInfo('Local save: ' + newNote.id);
                 }
 
                 this.notesMap.set(newNote.id, newNote);
@@ -2709,18 +2363,14 @@
 
             // ===== ノートを開く =====
             async openBook(noteId, editMode = false) {
-                updateDebugInfo(`Opening book: ${noteId}, edit: ${editMode}`);
-                
                 const note = this.findNoteById(noteId);
                 
                 if (!note) {
-                    updateDebugInfo(`Note not found: ${noteId}`);
                     this.showToast('ノートが見つかりません', 'error');
                     return;
                 }
 
                 if (editMode && (!this.currentUser || note.authorId !== this.currentUser.uid)) {
-                    updateDebugInfo(`Edit permission denied for note: ${noteId}`);
                     this.showToast('編集権限がありません', 'warning');
                     editMode = false;
                 }
@@ -2748,10 +2398,10 @@
                 }
 
                 this.resetZoom();
+                this.setupPinchZoom();
+
                 this.updateViewer();
                 window.scrollTo(0, 0);
-                
-                updateDebugInfo(`Opened note: ${note.title} (edit: ${editMode})`);
             }
 
             // ===== 統計 =====
@@ -3002,19 +2652,16 @@
                         };
                         
                         await setDoc(doc(this.db, 'publicNotes', actualNoteId), publicNoteData);
-                        updateDebugInfo(`Synced to public notes: ${actualNoteId}`);
                         
                     } else {
                         try {
                             await deleteDoc(doc(this.db, 'publicNotes', actualNoteId));
-                            updateDebugInfo(`Removed from public notes: ${actualNoteId}`);
                         } catch (error) {
-                            updateDebugInfo(`Public note not found for deletion: ${actualNoteId}`);
+                            console.log('Public note not found for deletion');
                         }
                     }
                 } catch (error) {
                     console.error('Public notes sync error:', error);
-                    updateDebugInfo(`Sync error: ${error.message}`);
                 }
             }
 
@@ -3140,8 +2787,6 @@
                 }
                 
                 document.getElementById('shareModal').style.display = 'flex';
-                
-                updateDebugInfo(`Share URL generated: ${shareUrl}`);
             }
 
             closeShareModal() {
@@ -3410,8 +3055,6 @@
                                 console.log('Public note deletion skipped:', error);
                             }
                         }
-                        
-                        updateDebugInfo('Deleted from Firestore: ' + noteId);
                     }
 
                     this.notesMap.delete(noteId);
@@ -3459,7 +3102,7 @@
                     document.getElementById('myBooksSection').style.display = 'block';
                 } else {
                     authSection.innerHTML = `
-                        <button class="btn btn-primary" onclick="app.showAuthModal()" title="ログイン">👤</button>
+                        <button class="btn btn-primary" onclick="app.handleLogin()" title="ログイン">👤</button>
                     `;
                     document.getElementById('myBooksSection').style.display = 'none';
                 }
@@ -3609,160 +3252,6 @@
                 `).join('');
             }
 
-            // ===== ズーム機能 =====
-            zoomIn() {
-                this.zoomLevel = Math.min(this.maxZoom, this.zoomLevel + this.zoomStep);
-                this.applyZoom();
-            }
-
-            zoomOut() {
-                this.zoomLevel = Math.max(this.minZoom, this.zoomLevel - this.zoomStep);
-                this.applyZoom();
-            }
-
-            resetZoom() {
-                this.zoomLevel = 1.0;
-                this.applyZoom();
-            }
-
-            applyZoom() {
-                const pageContent = document.getElementById('pageContent');
-                if (pageContent) {
-                    pageContent.style.transform = `scale(${this.zoomLevel})`;
-                    document.getElementById('zoomLevel').textContent = Math.round(this.zoomLevel * 100) + '%';
-                    
-                    const margin = this.zoomLevel === 1.0 ? '1rem' : `${this.zoomLevel}rem`;
-                    pageContent.style.marginBottom = margin;
-                }
-            }
-
-            // ===== イベントリスナー設定 =====
-            setupEventListeners() {
-                const searchInput = document.getElementById('searchInput');
-                if (searchInput) {
-                    searchInput.addEventListener('input', this.debounce(this.handleSearch.bind(this), 300));
-                    document.addEventListener('click', (e) => {
-                        if (!searchInput.contains(e.target)) {
-                            document.getElementById('searchResults').classList.remove('active');
-                        }
-                    });
-                }
-
-                document.addEventListener('change', (e) => {
-                    if (e.target.name === 'visibility') {
-                        this.toggleVisibilityOptions(e.target.value);
-                    }
-                });
-
-                const pageContent = document.getElementById('pageContent');
-                if (pageContent) {
-                    pageContent.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: true });
-                    pageContent.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: true });
-                    pageContent.addEventListener('touchend', this.handleTouchEnd.bind(this));
-                }
-
-                document.addEventListener('keydown', (e) => {
-                    if (this.currentNote) {
-                        if (e.key === 'ArrowLeft') this.previousPage();
-                        if (e.key === 'ArrowRight') this.nextPage();
-                        if (e.key === 'Escape') this.toggleSidebar();
-                        
-                        if (e.ctrlKey || e.metaKey) {
-                            if (e.key === '=') {
-                                e.preventDefault();
-                                this.zoomIn();
-                            } else if (e.key === '-') {
-                                e.preventDefault();
-                                this.zoomOut();
-                            } else if (e.key === '0') {
-                                e.preventDefault();
-                                this.resetZoom();
-                            }
-                        }
-                    }
-
-                    if (e.key === 'Enter' && document.getElementById('passwordPromptModal').classList.contains('active')) {
-                        this.submitPassword();
-                    }
-                    
-                    if (e.key === 'Enter' && document.getElementById('authModal').classList.contains('active')) {
-                        if (this.currentAuthTab === 'login') {
-                            this.handleEmailLogin();
-                        } else {
-                            this.handleEmailRegister();
-                        }
-                    }
-                });
-
-                document.addEventListener('touchmove', (e) => {
-                    if (e.touches.length > 1) {
-                        e.preventDefault();
-                    }
-                }, { passive: false });
-            }
-
-            // ===== 検索機能 =====
-            updateSearchIndex() {
-                const notes = Array.from(this.notesMap.values());
-                
-                if (typeof Fuse !== 'undefined' && notes.length > 0) {
-                    this.fuseInstance = new Fuse(notes, {
-                        keys: [
-                            { name: 'title', weight: 0.3 },
-                            { name: 'author', weight: 0.2 },
-                            { name: 'tags', weight: 0.2 },
-                            { name: 'pages.title', weight: 0.15 },
-                            { name: 'pages.content', weight: 0.15 }
-                        ],
-                        threshold: 0.3,
-                        includeScore: true
-                    });
-                }
-            }
-
-            handleSearch(event) {
-                const query = event.target.value.trim();
-                
-                if (!query) {
-                    document.getElementById('searchResults').classList.remove('active');
-                    return;
-                }
-
-                if (!this.fuseInstance) {
-                    this.updateSearchIndex();
-                }
-
-                if (this.fuseInstance) {
-                    const results = this.fuseInstance.search(query).slice(0, 8);
-                    this.displaySearchResults(results);
-                }
-            }
-
-            displaySearchResults(results) {
-                const container = document.getElementById('searchResults');
-                
-                if (results.length === 0) {
-                    container.innerHTML = '<div class="search-result-item">検索結果がありません</div>';
-                } else {
-                    container.innerHTML = results.map(result => {
-                        const note = result.item;
-                        const hasPassword = note.password || note.visibility?.type === 'password';
-                        const passwordIcon = hasPassword ? ' 🔐' : '';
-                        
-                        return `
-                            <div class="search-result-item" onclick="app.openBook('${note.id}', false)">
-                                <div style="font-weight: 500; margin-bottom: 0.25rem;">${this.escapeHtml(note.title)}${passwordIcon}</div>
-                                <div style="font-size: 0.8rem; color: var(--text-secondary);">
-                                    ${this.escapeHtml(note.author)} • ${note.pages.length}ページ
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
-                }
-                
-                container.classList.add('active');
-            }
-
             // ===== その他の機能 =====
             toggleSidebar() {
                 const sidebar = document.getElementById('sidebar');
@@ -3903,22 +3392,11 @@
 
             // ===== エラーハンドリング =====
             handleError(error, userMessage) {
-                updateDebugInfo('ERROR: ' + error.message);
                 console.error(error);
                 this.showToast(userMessage || 'エラーが発生しました', 'error');
             }
 
             handleGlobalError(event) {
-                updateDebugInfo('Global error: ' + (event.reason || event.message || 'Unknown error'));
-                console.error('Global error:', event);
-            }
-                updateDebugInfo('ERROR: ' + error.message);
-                console.error(error);
-                this.showToast(userMessage || 'エラーが発生しました', 'error');
-            }
-
-            handleGlobalError(event) {
-                updateDebugInfo('Global error: ' + (event.reason || event.message || 'Unknown error'));
                 console.error('Global error:', event);
             }
         }
@@ -3928,12 +3406,10 @@
         
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
-                updateDebugInfo('DOM ready');
                 app = new StudyBookApp();
                 window.app = app;
             });
         } else {
-            updateDebugInfo('DOM already ready');
             app = new StudyBookApp();
             window.app = app;
         }
