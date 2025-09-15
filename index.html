@@ -1592,13 +1592,20 @@
         // ===== StudyBook Application - 完全版（メール認証・Google認証両対応・本棚UI） =====
         
         /*
-         * 重要：Firebase Consoleでの設定
-         * 1. Authentication → Sign-in method で以下を有効化：
-         *    - メール/パスワード認証
-         *    - Google認証
-         * 2. 承認済みドメインに追加：
-         *    - localhost
-         *    - あなたのドメイン.netlify.app
+         * ⚠️ 重要：Firebase Consoleでの必須設定 ⚠️
+         * 
+         * 1. Firebase Console (https://console.firebase.google.com) にアクセス
+         * 2. あなたのプロジェクト「book-study-1f25e」を選択
+         * 3. 左メニューから「Authentication」を選択
+         * 4. 「Sign-in method」タブをクリック
+         * 5. 以下を有効化：
+         *    ✅ メール/パスワード認証 → 有効にする
+         *    ✅ Google認証 → 有効にする → プロジェクトのサポートメールを設定
+         * 6. 「Settings」タブ → 「承認済みドメイン」に追加：
+         *    - localhost (デフォルトで追加済み)
+         *    - neon-sunshine-b6cc02.netlify.app (あなたのドメイン)
+         * 
+         * これらの設定をしないとGoogle認証ボタンが機能しません！
          */
         class StudyBookApp {
             constructor() {
@@ -1779,7 +1786,7 @@
                     return;
                 }
 
-                const { initializeApp, getAuth, getFirestore, getStorage, setPersistence, browserLocalPersistence, enableIndexedDbPersistence } = window.firebaseModules;
+                const { initializeApp, getAuth, getFirestore, getStorage, setPersistence, browserLocalPersistence, initializeFirestore, persistentLocalCache, persistentSingleTabManager } = window.firebaseModules;
 
                 try {
                     // Firebase設定の検証
@@ -1795,18 +1802,37 @@
                         console.warn('Auth persistence setting failed:', persistenceError);
                     }
                     
-                    this.db = getFirestore(this.firebaseApp);
-                    
-                    // オフライン永続化を有効化
-                    try {
-                        await enableIndexedDbPersistence(this.db, { 
-                            forceOwnership: false
-                        });
-                    } catch (err) {
-                        if (err.code === 'failed-precondition') {
-                            console.log('Multiple tabs open, persistence can only be enabled in one tab at a time.');
-                        } else if (err.code === 'unimplemented') {
-                            console.log('The current browser does not support offline persistence');
+                    // Firestore初期化（新しい方法でキャッシュ設定）
+                    if (initializeFirestore && persistentLocalCache && persistentSingleTabManager) {
+                        // 新しいAPIが利用可能な場合
+                        try {
+                            this.db = initializeFirestore(this.firebaseApp, {
+                                localCache: persistentLocalCache({
+                                    tabManager: persistentSingleTabManager()
+                                })
+                            });
+                        } catch (err) {
+                            console.log('Using default Firestore initialization');
+                            this.db = getFirestore(this.firebaseApp);
+                        }
+                    } else {
+                        // 従来の方法
+                        this.db = getFirestore(this.firebaseApp);
+                        
+                        // 旧APIでのオフライン永続化（非推奨だが互換性のため）
+                        try {
+                            const { enableIndexedDbPersistence } = window.firebaseModules;
+                            if (enableIndexedDbPersistence) {
+                                await enableIndexedDbPersistence(this.db, { 
+                                    forceOwnership: false
+                                });
+                            }
+                        } catch (err) {
+                            if (err.code === 'failed-precondition') {
+                                console.log('Multiple tabs open, persistence can only be enabled in one tab at a time.');
+                            } else if (err.code === 'unimplemented') {
+                                console.log('The current browser does not support offline persistence');
+                            }
                         }
                     }
                     
@@ -1990,6 +2016,8 @@
             handleGoogleAuthError(error) {
                 let message = 'ログインに失敗しました';
                 
+                console.error('Google auth error details:', error);
+                
                 switch(error.code) {
                     case 'auth/popup-closed-by-user':
                         message = 'ログインがキャンセルされました';
@@ -2003,12 +2031,23 @@
                     case 'auth/network-request-failed':
                         message = 'ネットワークエラーです。接続を確認してください';
                         break;
+                    case 'auth/unauthorized-domain':
+                        message = 'このドメインは承認されていません。Firebase Consoleで設定してください';
+                        this.showToast('Firebase ConsoleでGoogle認証を有効化し、承認済みドメインを追加してください', 'warning');
+                        break;
+                    case 'auth/operation-not-allowed':
+                        message = 'Google認証が無効です。Firebase Consoleで有効化してください';
+                        this.showToast('Firebase Console → Authentication → Sign-in method → Google を有効化してください', 'warning');
+                        break;
                     case 'auth/too-many-requests':
                         message = '試行回数が多すぎます。しばらくお待ちください';
                         break;
                     default:
                         if (error.message) {
-                            console.error('Google auth error:', error);
+                            if (error.message.includes('auth/configuration-not-found')) {
+                                message = 'Google認証の設定が見つかりません';
+                                this.showToast('Firebase ConsoleでGoogle認証を設定してください', 'warning');
+                            }
                         }
                 }
                 
