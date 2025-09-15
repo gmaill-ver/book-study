@@ -1080,6 +1080,38 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
+        .btn-filled.btn-google {
+            background: #4285f4;
+        }
+
+        .btn-filled.btn-google:hover {
+            background: #357ae8;
+        }
+
+        .auth-divider {
+            margin: 1.5rem 0;
+            text-align: center;
+            position: relative;
+        }
+
+        .auth-divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--border-color);
+        }
+
+        .auth-divider span {
+            background: var(--bg-secondary);
+            padding: 0 1rem;
+            position: relative;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
         /* レスポンシブ */
         @media (max-width: 768px) {
             .search-container {
@@ -1557,7 +1589,17 @@
     <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2" defer></script>
     
     <script>
-        // ===== StudyBook Application - 完全版（メール認証・本棚UI対応） =====
+        // ===== StudyBook Application - 完全版（メール認証・Google認証両対応・本棚UI） =====
+        
+        /*
+         * 重要：Firebase Consoleでの設定
+         * 1. Authentication → Sign-in method で以下を有効化：
+         *    - メール/パスワード認証
+         *    - Google認証
+         * 2. 承認済みドメインに追加：
+         *    - localhost
+         *    - あなたのドメイン.netlify.app
+         */
         class StudyBookApp {
             constructor() {
                 // Firebase設定
@@ -1919,6 +1961,58 @@
                 } catch (error) {
                     this.handleAuthError(error);
                 }
+            }
+
+            // Google認証処理
+            async handleGoogleLogin() {
+                if (!this.auth || !this.firebaseInitialized) {
+                    this.showToast('認証サービスに接続できません', 'error');
+                    return;
+                }
+
+                if (!this.checkRateLimit('auth', 5, 60000)) {
+                    this.showToast('試行回数が多すぎます。しばらくお待ちください', 'error');
+                    return;
+                }
+
+                try {
+                    const { GoogleAuthProvider, signInWithPopup } = window.firebaseModules;
+                    const provider = new GoogleAuthProvider();
+                    const result = await signInWithPopup(this.auth, provider);
+                    
+                    this.closeAuthModal();
+                    
+                } catch (error) {
+                    this.handleGoogleAuthError(error);
+                }
+            }
+
+            handleGoogleAuthError(error) {
+                let message = 'ログインに失敗しました';
+                
+                switch(error.code) {
+                    case 'auth/popup-closed-by-user':
+                        message = 'ログインがキャンセルされました';
+                        break;
+                    case 'auth/popup-blocked':
+                        message = 'ポップアップがブロックされました。ブラウザの設定を確認してください';
+                        break;
+                    case 'auth/cancelled-popup-request':
+                        message = 'ログインがキャンセルされました';
+                        break;
+                    case 'auth/network-request-failed':
+                        message = 'ネットワークエラーです。接続を確認してください';
+                        break;
+                    case 'auth/too-many-requests':
+                        message = '試行回数が多すぎます。しばらくお待ちください';
+                        break;
+                    default:
+                        if (error.message) {
+                            console.error('Google auth error:', error);
+                        }
+                }
+                
+                this.showToast(message, 'error');
             }
 
             validateEmail(email) {
