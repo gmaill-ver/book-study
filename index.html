@@ -610,6 +610,76 @@
     color: var(--primary-color);
 }
 
+        /* 目次アコーディオン */
+.toc-section {
+    margin-bottom: 0.5rem;
+}
+
+.toc-section-header {
+    padding: 0.75rem 1rem;
+    background: var(--bg-color);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: var(--transition-base);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.toc-section-header:hover {
+    background: rgba(44, 62, 80, 0.05);
+}
+
+.toc-section-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.toc-section-content.expanded {
+    max-height: 500px;
+}
+
+.toc-chevron {
+    transition: transform 0.3s ease;
+}
+
+/* 各ページの区切り線 */
+.toc-page {
+    padding: 0.75rem 1rem 0.75rem 2rem;
+    border-bottom: 1px solid rgba(220, 223, 230, 0.3);
+}
+
+.toc-page:last-child {
+    border-bottom: none;
+}
+
+        .page-content {
+    padding: 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.page-content-wrapper {
+    padding: 1.5rem 2rem;
+    transform-origin: center top;
+}
+
+.markdown-body {
+    line-height: 1.8;
+    padding: 0 1rem;
+}
+
+@media (max-width: 768px) {
+    .page-content {
+        padding: 1rem;
+    }
+    
+    .page-content-wrapper {
+        padding: 1rem;
+    }
+}
+
         /* その他のスタイル（簡略化のため省略） */
         .tags-container { display: flex; flex-wrap: wrap; gap: 0.375rem; margin-top: 0.5rem; }
         .tag { padding: 0.25rem 0.5rem; background: var(--bg-color); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 12px; font-size: 0.75rem; cursor: pointer; transition: var(--transition-base); }
@@ -1052,32 +1122,32 @@
 
     <!-- Firebase SDK（非同期・遅延読み込み） -->
     <script type="module">
-        // Firebase SDKの非同期読み込み（高速化）
-        (async () => {
-            try {
-                const modules = await Promise.all([
-                    import('https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js'),
-                    import('https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js'),
-                    import('https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js'),
-                    import('https://www.gstatic.com/firebasejs/10.7.0/firebase-storage.js')
-                ]);
+    // Firebase SDKの非同期読み込み（高速化）
+    (async () => {
+        try {
+            const modules = await Promise.all([
+                import('https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js'),
+                import('https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js'),
+                import('https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js'),
+                import('https://www.gstatic.com/firebasejs/10.13.2/firebase-storage.js')
+            ]);
 
-                window.firebaseModules = {
-                    ...modules[0],
-                    ...modules[1],
-                    ...modules[2],
-                    ...modules[3]
-                };
-                
-                window.firebaseReady = true;
-                window.dispatchEvent(new CustomEvent('firebaseReady'));
-            } catch (error) {
-                console.warn('Firebase SDK load failed:', error);
-                window.firebaseReady = false;
-                window.dispatchEvent(new CustomEvent('firebaseReady'));
-            }
-        })();
-    </script>
+            window.firebaseModules = {
+                ...modules[0],
+                ...modules[1],
+                ...modules[2],
+                ...modules[3]
+            };
+            
+            window.firebaseReady = true;
+            window.dispatchEvent(new CustomEvent('firebaseReady'));
+        } catch (error) {
+            console.warn('Firebase SDK load failed:', error);
+            window.firebaseReady = false;
+            window.dispatchEvent(new CustomEvent('firebaseReady'));
+        }
+    })();
+</script>
     
     <!-- 外部ライブラリ（非同期読み込み） -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
@@ -1248,107 +1318,118 @@
                     }
                     
                     // Firebase初期化
-                    if (window.firebaseReady && window.firebaseModules) {
-                        await this.initFirebase();
-                    }
+if (window.firebaseReady && window.firebaseModules) {
+    await this.initFirebase();
+}
 
-                    // URL パラメータをチェック
-                    this.checkUrlParams();
+// URL パラメータをチェック
+this.checkUrlParams();
 
-                    // データロード完了
-                    this.dataLoadingComplete = true;
-                    this.handlePendingSharedNote();
+// データロード完了
+this.dataLoadingComplete = true;
+this.handlePendingSharedNote();
 
-                    // ローディング完了（高速化：300ms）
-                    document.getElementById('loadingText').textContent = '完了';
-                    
-                    setTimeout(() => {
-                        document.getElementById('loadingScreen').classList.add('hidden');
-                    }, 300);
+// ローディング完了（高速化：300ms）
+document.getElementById('loadingText').textContent = '完了';
 
-                } catch (error) {
-                    this.handleError(error, 'アプリの初期化に失敗しました');
-                    
-                    setTimeout(() => {
-                        document.getElementById('loadingScreen').classList.add('hidden');
-                    }, 500);
-                }
+setTimeout(() => {
+    document.getElementById('loadingScreen').classList.add('hidden');
+}, 300);
+
+} catch (error) {
+    this.handleError(error, 'アプリの初期化に失敗しました');
+    
+    setTimeout(() => {
+        document.getElementById('loadingScreen').classList.add('hidden');
+    }, 500);
+}
+}
+
+// ===== Firebase初期化（改善版） =====
+async initFirebase() {
+    if (!window.firebaseModules) {
+        console.warn('Firebase modules not available');
+        return;
+    }
+
+    const { initializeApp, getAuth, getFirestore, getStorage, setPersistence, browserLocalPersistence } = window.firebaseModules;
+
+    try {
+        // Firebase設定の検証
+        this.validateFirebaseConfig();
+
+        this.firebaseApp = initializeApp(this.firebaseConfig);
+        this.auth = getAuth(this.firebaseApp);
+        
+        // 認証の永続化を設定
+        try {
+            await setPersistence(this.auth, browserLocalPersistence);
+        } catch (persistenceError) {
+            console.warn('Auth persistence setting failed:', persistenceError);
+        }
+        
+        // Firestoreの初期化（シンプルに）
+        this.db = getFirestore(this.firebaseApp);
+        
+        // オフライン永続化は一旦無効にする（CORSエラー回避のため）
+        // 以下のコードをコメントアウト
+        /*
+        // 新しいAPIでのキャッシュ設定
+        if (initializeFirestore && persistentLocalCache && persistentSingleTabManager) {
+            try {
+                this.db = initializeFirestore(this.firebaseApp, {
+                    localCache: persistentLocalCache({
+                        tabManager: persistentSingleTabManager()
+                    })
+                });
+            } catch (err) {
+                console.log('Using default Firestore initialization');
+                this.db = getFirestore(this.firebaseApp);
             }
-
-            // ===== Firebase初期化（改善版） =====
-            async initFirebase() {
-                if (!window.firebaseModules) {
-                    console.warn('Firebase modules not available');
-                    return;
-                }
-
-                const { initializeApp, getAuth, getFirestore, getStorage, setPersistence, browserLocalPersistence, initializeFirestore, persistentLocalCache, persistentSingleTabManager } = window.firebaseModules;
-
-                try {
-                    // Firebase設定の検証
-                    this.validateFirebaseConfig();
-
-                    this.firebaseApp = initializeApp(this.firebaseConfig);
-                    this.auth = getAuth(this.firebaseApp);
-                    
-                    // 認証の永続化を設定
-                    try {
-                        await setPersistence(this.auth, browserLocalPersistence);
-                    } catch (persistenceError) {
-                        console.warn('Auth persistence setting failed:', persistenceError);
-                    }
-                    
-                    // Firestore初期化（新しい方法でキャッシュ設定）
-                    if (initializeFirestore && persistentLocalCache && persistentSingleTabManager) {
-                        // 新しいAPIが利用可能な場合
-                        try {
-                            this.db = initializeFirestore(this.firebaseApp, {
-                                localCache: persistentLocalCache({
-                                    tabManager: persistentSingleTabManager()
-                                })
-                            });
-                        } catch (err) {
-                            console.log('Using default Firestore initialization');
-                            this.db = getFirestore(this.firebaseApp);
-                        }
-                    } else {
-                        // 従来の方法
-                        this.db = getFirestore(this.firebaseApp);
-                        
-                        // 旧APIでのオフライン永続化（非推奨だが互換性のため）
-                        try {
-                            const { enableIndexedDbPersistence } = window.firebaseModules;
-                            if (enableIndexedDbPersistence) {
-                                await enableIndexedDbPersistence(this.db, { 
-                                    forceOwnership: false
-                                });
-                            }
-                        } catch (err) {
-                            if (err.code === 'failed-precondition') {
-                                console.log('Multiple tabs open, persistence can only be enabled in one tab at a time.');
-                            } else if (err.code === 'unimplemented') {
-                                console.log('The current browser does not support offline persistence');
-                            }
-                        }
-                    }
-                    
-                    this.storage = getStorage(this.firebaseApp);
-                    
-                    this.firebaseInitialized = true;
-
-                    // 認証状態の監視
-                    const { onAuthStateChanged } = window.firebaseModules;
-                    onAuthStateChanged(this.auth, this.handleAuthStateChange.bind(this));
-
-                    // 接続テスト（非同期）
-                    this.testFirebaseConnection();
-                    
-                } catch (error) {
-                    console.error("Firebase initialization failed", error);
-                    this.firebaseInitialized = false;
-                    this.showToast('オフラインモードで動作中', 'info');
-                }
+        }
+        
+        // 旧APIでのオフライン永続化
+        try {
+            const { enableIndexedDbPersistence } = window.firebaseModules;
+            if (enableIndexedDbPersistence) {
+                await enableIndexedDbPersistence(this.db, { 
+                    forceOwnership: false
+                });
             }
+        } catch (err) {
+            if (err.code === 'failed-precondition') {
+                console.log('Multiple tabs open, persistence can only be enabled in one tab at a time.');
+            } else if (err.code === 'unimplemented') {
+                console.log('The current browser does not support offline persistence');
+            }
+        }
+        */
+        
+        this.storage = getStorage(this.firebaseApp);
+        
+        this.firebaseInitialized = true;
+
+        // 認証状態の監視
+        const { onAuthStateChanged } = window.firebaseModules;
+        onAuthStateChanged(this.auth, this.handleAuthStateChange.bind(this));
+
+        // 接続テスト（非同期・軽量化）
+        setTimeout(() => {
+            this.testFirebaseConnection();
+        }, 1000);
+        
+    } catch (error) {
+        console.error("Firebase initialization failed", error);
+        this.firebaseInitialized = false;
+        
+        // エラーメッセージを詳細に
+        if (error.message && error.message.includes('auth/configuration-not-found')) {
+            this.showToast('Firebase設定を確認してください', 'warning');
+        } else {
+            this.showToast('オフラインモードで動作中', 'info');
+        }
+    }
+}
 
             // ===== Firebase設定検証 =====
             validateFirebaseConfig() {
@@ -1973,17 +2054,23 @@
             }
 
             handleFirestoreError(error, listenerType) {
-                console.log(`Firestore ${listenerType} listener warning:`, error.message);
-                
-                if (error.message && error.message.includes('WebChannel')) {
-                    return;
-                }
-                
-                if (error.code === 'permission-denied') {
-                    if (this.notesMap.size === 0) {
-                        this.loadLocalData();
-                    }
-                }
+    // WebChannelエラーは無視（正常動作の一部）
+    if (error.message && 
+        (error.message.includes('WebChannel') || 
+         error.message.includes('RPC') ||
+         error.message.includes('transport errored'))) {
+        // これらのエラーは通常の動作で発生することがあるので無視
+        return;
+    }
+    
+    console.log(`Firestore ${listenerType} listener warning:`, error.message);
+    
+    if (error.code === 'permission-denied') {
+        if (this.notesMap.size === 0) {
+            this.loadLocalData();
+        }
+    }
+}
                 
                 if (error.message && error.message.includes('Failed to get document because the client is offline')) {
                     this.scheduleReconnect();
@@ -3370,140 +3457,154 @@
             }
 
             updateTOC() {
-                const tocList = document.getElementById('tocList');
-                if (!this.currentNote) return;
-                
-                const pageGroups = [];
-                const groupSize = 10;
-                
-                for (let i = 0; i < this.currentNote.pages.length; i += groupSize) {
-                    const groupPages = this.currentNote.pages.slice(i, i + groupSize);
-                    pageGroups.push({
-                        title: `第${Math.floor(i / groupSize) + 1}章 (${i + 1}-${Math.min(i + groupSize, this.currentNote.pages.length)}ページ)`,
-                        startIndex: i,
-                        pages: groupPages
-                    });
-                }
+    const tocList = document.getElementById('tocList');
+    if (!this.currentNote) return;
+    
+    const pageGroups = [];
+    const groupSize = 10;
+    
+    for (let i = 0; i < this.currentNote.pages.length; i += groupSize) {
+        const groupPages = this.currentNote.pages.slice(i, i + groupSize);
+        pageGroups.push({
+            title: `第${Math.floor(i / groupSize) + 1}章 (${i + 1}-${Math.min(i + groupSize, this.currentNote.pages.length)}ページ)`,
+            startIndex: i,
+            pages: groupPages
+        });
+    }
 
-                tocList.innerHTML = pageGroups.map((group, groupIndex) => {
-                    const isCurrentGroup = this.currentPage >= group.startIndex && this.currentPage < group.startIndex + group.pages.length;
-                    const expandedClass = isCurrentGroup ? 'expanded' : '';
-                    const chevron = isCurrentGroup ? '▼' : '▶';
-                    
-                    const pagesHtml = group.pages.map((page, pageIndex) => {
-                        const actualPageIndex = group.startIndex + pageIndex;
-                        const activeClass = actualPageIndex === this.currentPage ? 'active' : '';
-                        
-                        return `
-                            <div class="toc-page ${activeClass}" onclick="app.goToPage(${actualPageIndex})">
-                                <span>${this.escapeHtml(page.title || 'ページ' + (actualPageIndex + 1))}</span>
-                                ${this.isEditing && this.currentNote.pages.length > 1 ? `
-                                    <button class="btn btn-danger" onclick="app.deletePage(${actualPageIndex}, event)" style="padding: 0.2rem 0.4rem; font-size: 0.7rem; margin-left: 0.5rem;" title="削除">
-                                        ×
-                                    </button>
-                                ` : ''}
-                            </div>
-                        `;
-                    }).join('');
+    tocList.innerHTML = pageGroups.map((group, groupIndex) => {
+        const isCurrentGroup = this.currentPage >= group.startIndex && 
+                              this.currentPage < group.startIndex + group.pages.length;
+        
+        const pagesHtml = group.pages.map((page, pageIndex) => {
+            const actualPageIndex = group.startIndex + pageIndex;
+            const activeClass = actualPageIndex === this.currentPage ? 'active' : '';
+            
+            return `
+                <div class="toc-page ${activeClass}" onclick="app.goToPage(${actualPageIndex})">
+                    <span>${this.escapeHtml(page.title || 'ページ' + (actualPageIndex + 1))}</span>
+                    ${this.isEditing && this.currentNote.pages.length > 1 ? `
+                        <button class="btn btn-danger" onclick="app.deletePage(${actualPageIndex}, event)" 
+                                style="padding: 0.2rem 0.4rem; font-size: 0.7rem; margin-left: 0.5rem;" 
+                                title="削除">×</button>
+                    ` : ''}
+                </div>
+            `;
+        }).join('');
 
-                    return `
-                        <div class="toc-section">
-                            <div class="toc-section-header" onclick="app.toggleTOCSection(${groupIndex})">
-                                <span>${group.title}</span>
-                                <span class="toc-chevron" id="chevron-${groupIndex}">${chevron}</span>
-                            </div>
-                            <div class="toc-section-content ${expandedClass}" id="section-${groupIndex}">
-                                ${pagesHtml}
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            }
+        return `
+            <div class="toc-section">
+                <div class="toc-section-header" onclick="app.toggleTOCSection(${groupIndex})">
+                    <span>${group.title}</span>
+                    <span class="toc-chevron" id="chevron-${groupIndex}">
+                        ${isCurrentGroup ? '▼' : '▶'}
+                    </span>
+                </div>
+                <div class="toc-section-content ${isCurrentGroup ? 'expanded' : ''}" 
+                     id="section-${groupIndex}">
+                    ${pagesHtml}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
 
             toggleTOCSection(groupIndex) {
-                const section = document.getElementById(`section-${groupIndex}`);
-                const chevron = document.getElementById(`chevron-${groupIndex}`);
-                
-                if (section.classList.contains('expanded')) {
-                    section.classList.remove('expanded');
-                    chevron.textContent = '▶';
-                } else {
-                    section.classList.add('expanded');
-                    chevron.textContent = '▼';
-                }
-            }
+    const section = document.getElementById(`section-${groupIndex}`);
+    const chevron = document.getElementById(`chevron-${groupIndex}`);
+    
+    if (!section || !chevron) return; // nullチェックを追加
+    
+    // 他のセクションを閉じる（オプション - より良いUXのため）
+    document.querySelectorAll('.toc-section-content').forEach((el, index) => {
+        if (index !== groupIndex) {
+            el.classList.remove('expanded');
+            const otherChevron = document.getElementById(`chevron-${index}`);
+            if (otherChevron) otherChevron.textContent = '▶';
+        }
+    });
+    
+    // 現在のセクションをトグル
+    if (section.classList.contains('expanded')) {
+        section.classList.remove('expanded');
+        chevron.textContent = '▶';
+    } else {
+        section.classList.add('expanded');
+        chevron.textContent = '▼';
+    }
+}
 
-            updatePageNavigation() {
-                if (!this.currentNote) return;
-                
-                document.getElementById('prevBtn').disabled = this.currentPage === 0;
-                document.getElementById('nextBtn').disabled = this.currentPage === this.currentNote.pages.length - 1;
+updatePageNavigation() {
+    if (!this.currentNote) return;
+    
+    document.getElementById('prevBtn').disabled = this.currentPage === 0;
+    document.getElementById('nextBtn').disabled = this.currentPage === this.currentNote.pages.length - 1;
+    
+    const dotsContainer = document.getElementById('pageDots');
+    dotsContainer.innerHTML = this.currentNote.pages.map((_, index) => `
+        <div class="page-dot ${index === this.currentPage ? 'active' : ''}"
+             onclick="app.goToPage(${index})"
+             title="ページ${index + 1}"></div>
+    `).join('');
+}
 
-                const dotsContainer = document.getElementById('pageDots');
-                dotsContainer.innerHTML = this.currentNote.pages.map((_, index) => `
-                    <div class="page-dot ${index === this.currentPage ? 'active' : ''}"
-                         onclick="app.goToPage(${index})"
-                         title="ページ${index + 1}"></div>
-                `).join('');
-            }
+// ===== その他の機能 =====
+toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    sidebar.classList.toggle('open');
+}
 
-            // ===== その他の機能 =====
-            toggleSidebar() {
-                const sidebar = document.getElementById('sidebar');
-                sidebar.classList.toggle('open');
-            }
+goHome() {
+    if (this.isEditing && this.currentNote) {
+        if (confirm('変更を保存しますか？')) {
+            this.saveBook();
+        }
+    }
+    
+    document.getElementById('homeView').style.display = 'block';
+    document.getElementById('viewerContainer').style.display = 'none';
+    document.getElementById('sidebar').classList.remove('open');
+    this.currentNote = null;
+    this.currentPage = 0;
+    this.isEditing = false;
+    this.resetZoom();
+    this.updateUI();
+}
 
-            goHome() {
-                if (this.isEditing && this.currentNote) {
-                    if (confirm('変更を保存しますか？')) {
-                        this.saveBook();
-                    }
-                }
+showPublicBooks() {
+    document.getElementById('publicBooksSection').style.display = 'block';
+    document.getElementById('publicBooksSection').scrollIntoView({ behavior: 'smooth' });
+}
 
-                document.getElementById('homeView').style.display = 'block';
-                document.getElementById('viewerContainer').style.display = 'none';
-                document.getElementById('sidebar').classList.remove('open');
-                this.currentNote = null;
-                this.currentPage = 0;
-                this.isEditing = false;
-                this.resetZoom();
-                this.updateUI();
-            }
+showPopularTags() {
+    const tagCount = new Map();
+    
+    Array.from(this.notesMap.values()).forEach(note => {
+        (note.tags || []).forEach(tag => {
+            tagCount.set(tag, (tagCount.get(tag) || 0) + 1);
+        });
+    });
+    
+    const popularTags = Array.from(tagCount.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 15);
+    
+    const container = document.getElementById('popularTagsList');
+    container.innerHTML = popularTags.map(([tag, count]) => 
+        `<span class="tag" onclick="app.searchByTag('${this.escapeHtml(tag)}')" style="font-size: ${Math.min(1.2, 0.75 + count * 0.05)}rem;">
+            ${this.escapeHtml(tag)} (${count})
+        </span>`
+    ).join('');
+    
+    document.getElementById('popularTagsSection').style.display = 'block';
+    document.getElementById('popularTagsSection').scrollIntoView({ behavior: 'smooth' });
+}
 
-            showPublicBooks() {
-                document.getElementById('publicBooksSection').style.display = 'block';
-                document.getElementById('publicBooksSection').scrollIntoView({ behavior: 'smooth' });
-            }
-
-            showPopularTags() {
-                const tagCount = new Map();
-                
-                Array.from(this.notesMap.values()).forEach(note => {
-                    (note.tags || []).forEach(tag => {
-                        tagCount.set(tag, (tagCount.get(tag) || 0) + 1);
-                    });
-                });
-
-                const popularTags = Array.from(tagCount.entries())
-                    .sort((a, b) => b[1] - a[1])
-                    .slice(0, 15);
-
-                const container = document.getElementById('popularTagsList');
-                container.innerHTML = popularTags.map(([tag, count]) => 
-                    `<span class="tag" onclick="app.searchByTag('${this.escapeHtml(tag)}')" style="font-size: ${Math.min(1.2, 0.75 + count * 0.05)}rem;">
-                        ${this.escapeHtml(tag)} (${count})
-                    </span>`
-                ).join('');
-
-                document.getElementById('popularTagsSection').style.display = 'block';
-                document.getElementById('popularTagsSection').scrollIntoView({ behavior: 'smooth' });
-            }
-
-            searchByTag(tag) {
-                document.getElementById('searchInput').value = tag;
-                this.handleSearch({ target: { value: tag } });
-                document.getElementById('searchInput').scrollIntoView({ behavior: 'smooth' });
-            }
+searchByTag(tag) {
+    document.getElementById('searchInput').value = tag;
+    this.handleSearch({ target: { value: tag } });
+    document.getElementById('searchInput').scrollIntoView({ behavior: 'smooth' });
+}
 
             // ===== タッチイベント処理 =====
             handleTouchStart(e) {
