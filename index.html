@@ -2713,6 +2713,128 @@
                 }
             }
 
+            // ===== ノート削除機能（新規追加） =====
+            async deleteBook() {
+                // 権限チェック
+                if (!this.currentUser || !this.currentNote || this.currentNote.authorId !== this.currentUser.uid) {
+                    this.showToast('自分のノートのみ削除できます', 'warning');
+                    return;
+                }
+
+                // 確認ダイアログ
+                if (!confirm(`「${this.currentNote.title}」を完全に削除しますか？この操作は取り消せません。`)) {
+                    return;
+                }
+
+                const noteId = this.currentNote.id;
+                const isPublicOrPassword = this.currentNote.isPublic || 
+                                         this.currentNote.visibility?.type === 'password' ||
+                                         this.currentNote.password;
+
+                try {
+                    // UIを先に更新（即座に反映）
+                    this.currentNote = null;
+                    this.currentPage = 0;
+                    this.isEditing = false;
+                    this.goHome();
+
+                    // Firebase削除（エラーを無視して続行）
+                    if (this.db && this.firebaseInitialized) {
+                        const { doc, deleteDoc } = window.firebaseModules;
+                        
+                        // 非同期削除（エラーが起きても続行）
+                        deleteDoc(doc(this.db, 'users', this.currentUser.uid, 'notes', noteId))
+                            .catch(error => console.warn('メインノート削除エラー:', error));
+                        
+                        if (isPublicOrPassword) {
+                            deleteDoc(doc(this.db, 'publicNotes', noteId))
+                                .catch(error => console.warn('公開ノート削除エラー:', error));
+                        }
+                    }
+
+                    // ローカルデータから削除
+                    this.notesMap.delete(noteId);
+                    this.notesMap.delete('public_' + noteId);
+                    this.passwordCache.delete(noteId);
+                    
+                    // 関連するローカルストレージをクリア
+                    const keysToRemove = [];
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        if (key && key.includes(noteId)) {
+                            keysToRemove.push(key);
+                        }
+                    }
+                    keysToRemove.forEach(key => localStorage.removeItem(key));
+                    
+                    this.saveLocalData();
+                    this.showToast('ノートを削除しました', 'success');
+                    this.updateUI();
+                    
+                } catch (error) {
+                    // エラーが起きてもローカル削除は成功
+                    console.error('削除処理エラー:', error);
+                    this.showToast('削除処理でエラーが発生しましたが、ローカルからは削除されました', 'warning');
+                }
+            }
+
+            // ===== ページ削除機能の改良 =====
+            deletePage(index, event) {
+                if (event) {
+                    event.stopPropagation();
+                }
+                
+                if (!this.isEditing || this.currentNote.pages.length <= 1) {
+                    if (this.currentNote.pages.length <= 1) {
+                        this.showToast('最後のページは削除できません', 'warning');
+                    }
+                    return;
+                }
+
+                if (confirm('このページを削除しますか？')) {
+                    // ページを削除
+                    this.currentNote.pages.splice(index, 1);
+                    
+                    // 現在のページ位置を調整
+                    if (this.currentPage >= this.currentNote.pages.length) {
+                        this.currentPage = this.currentNote.pages.length - 1;
+                    } else if (this.currentPage > index) {
+                        this.currentPage--;
+                    }
+                    
+                    // Firebase保存（エラーを無視）
+                    if (this.db && this.firebaseInitialized) {
+                        try {
+                            const { doc, setDoc, serverTimestamp } = window.firebaseModules;
+                            
+                            const noteToSave = {
+                                ...this.currentNote,
+                                updatedAt: serverTimestamp()
+                            };
+                            
+                            setDoc(
+                                doc(this.db, 'users', this.currentUser.uid, 'notes', this.currentNote.id),
+                                noteToSave
+                            ).then(() => {
+                                this.syncToPublicNotes();
+                            }).catch(error => {
+                                console.warn('ページ削除の保存エラー:', error);
+                            });
+                            
+                        } catch (error) {
+                            console.warn('Page deletion save error:', error);
+                        }
+                    }
+                    
+                    // ローカル更新
+                    this.notesMap.set(this.currentNote.id, this.currentNote);
+                    this.saveLocalData();
+                    
+                    this.updateViewer();
+                    this.showToast('ページを削除しました', 'info');
+                }
+            }
+
             // ===== UI更新 =====
             updateUI() {
                 this.updateAuthSection();
@@ -3341,17 +3463,107 @@
             }
         }
 
-        // アプリケーション起動
+        // ===== アプリケーション起動とバインディング（完全版） =====
         let app;
-        
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
+
+        function initializeApp() {
+            try {
                 app = new StudyBookApp();
                 window.app = app;
+                
+                // 重要な関数を明示的にグローバルバインド（削除機能含む）
+                window.deleteBook = () => app.deleteBook();
+                window.deletePage = (index, event) => app.deletePage(index, event);
+                window.openBook = (noteId, editMode) => app.openBook(noteId, editMode);
+                window.saveBook = () => app.saveBook();
+                window.addPage = () => app.addPage();
+                window.goHome = () => app.goHome();
+                window.toggleSidebar = () => app.toggleSidebar();
+                window.showAuthModal = () => app.showAuthModal();
+                window.closeAuthModal = () => app.closeAuthModal();
+                window.handleAuthSubmit = (event) => app.handleAuthSubmit(event);
+                window.toggleAuthMode = (event) => app.toggleAuthMode(event);
+                window.handleGoogleLogin = () => app.handleGoogleLogin();
+                window.showVisibilitySettings = () => app.showVisibilitySettings();
+                window.closeVisibilityModal = () => app.closeVisibilityModal();
+                window.saveVisibilitySettings = () => app.saveVisibilitySettings();
+                window.showShareModal = () => app.showShareModal();
+                window.closeShareModal = () => app.closeShareModal();
+                window.copyShareUrl = () => app.copyShareUrl();
+                window.shareToTwitter = () => app.shareToTwitter();
+                window.shareToLine = () => app.shareToLine();
+                window.shareToFacebook = () => app.shareToFacebook();
+                window.submitPassword = () => app.submitPassword();
+                window.closePasswordPrompt = () => app.closePasswordPrompt();
+                window.previousPage = () => app.previousPage();
+                window.nextPage = () => app.nextPage();
+                window.goToPage = (pageIndex) => app.goToPage(pageIndex);
+                window.insertMarkdown = (before, after) => app.insertMarkdown(before, after);
+                window.insertImageInContent = () => app.insertImageInContent();
+                window.handleImageUpload = (event) => app.handleImageUpload(event);
+                window.handleDrop = (event) => app.handleDrop(event);
+                window.removeImage = () => app.removeImage();
+                window.createNewBook = () => app.createNewBook();
+                window.showPublicBooks = () => app.showPublicBooks();
+                window.showPopularTags = () => app.showPopularTags();
+                window.searchByTag = (tag) => app.searchByTag(tag);
+                window.setViewMode = (mode) => app.setViewMode(mode);
+                window.toggleTOCSection = (groupIndex) => app.toggleTOCSection(groupIndex);
+                window.handleLogout = () => app.handleLogout();
+                
+                console.log('App initialized successfully with global bindings');
+                
+            } catch (error) {
+                console.error('App initialization error:', error);
+                // フォールバック：基本的なアプリインスタンスは作成
+                try {
+                    app = new StudyBookApp();
+                    window.app = app;
+                    // 最低限の削除機能だけでもバインド
+                    window.deleteBook = () => app.deleteBook && app.deleteBook();
+                    window.deletePage = (index, event) => app.deletePage && app.deletePage(index, event);
+                } catch (fallbackError) {
+                    console.error('Fallback initialization also failed:', fallbackError);
+                    // 最後の手段：ダミー関数を提供
+                    window.deleteBook = () => console.warn('deleteBook not available');
+                    window.deletePage = () => console.warn('deletePage not available');
+                }
+            }
+        }
+
+        // デバッグ用関数（開発者コンソールで使用可能）
+        window.debugApp = () => {
+            console.log('App status:', {
+                app: !!window.app,
+                deleteBook: typeof window.app?.deleteBook,
+                globalDeleteBook: typeof window.deleteBook,
+                globalDeletePage: typeof window.deletePage,
+                methods: window.app ? Object.getOwnPropertyNames(Object.getPrototypeOf(window.app)) : 'No app',
+                firebaseReady: window.firebaseReady,
+                firebaseModules: !!window.firebaseModules
             });
+        };
+
+        // 手動削除関数（緊急時用）
+        window.forceDeleteBook = () => {
+            if (window.app && window.app.currentNote) {
+                const noteId = window.app.currentNote.id;
+                window.app.notesMap.delete(noteId);
+                window.app.currentNote = null;
+                window.app.goHome();
+                window.app.saveLocalData();
+                window.app.updateUI();
+                console.log('Force deleted current note:', noteId);
+            } else {
+                console.log('No current note to delete');
+            }
+        };
+
+        // アプリケーション起動
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeApp);
         } else {
-            app = new StudyBookApp();
-            window.app = app;
+            initializeApp();
         }
     </script>
 </body>
