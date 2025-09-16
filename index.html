@@ -286,17 +286,16 @@
 
         .bookshelf {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
             gap: 8px;
             padding: 1rem;
-            background: linear-gradient(to bottom, #3a3a3a 0%, #2c2c2c 100%);
+            background: linear-gradient(to bottom, #8b7355 0%, #6b5d4f 100%);
             border-radius: 8px;
             box-shadow: 
                 inset 0 2px 5px rgba(0,0,0,0.3),
                 0 4px 8px rgba(0,0,0,0.2);
             position: relative;
             transform-style: preserve-3d;
-            transform: rotateX(5deg);
             min-height: 240px;
         }
 
@@ -643,7 +642,7 @@
             .search-container { max-width: 150px; margin: 0 0.5rem; }
             .books-grid { grid-template-columns: 1fr; gap: 1rem; }
             .header { padding: 0.5rem; }
-            .bookshelf { grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 5px; }
+            .bookshelf { grid-template-columns: repeat(auto-fill, minmax(30px, 1fr)); gap: 5px; }
             .book-spine { height: 150px; }
         }
     </style>
@@ -834,13 +833,7 @@
             <span id="pageInfo" class="page-info">1 / 1</span>
             
             <div class="header-group">
-                <!-- ズーム機能（デスクトップのみ） -->
-                <div class="zoom-controls">
-                    <button class="btn btn-secondary" onclick="app.zoomOut()" aria-label="縮小" title="縮小">🔍－</button>
-                    <span id="zoomLevel" class="zoom-level">100%</span>
-                    <button class="btn btn-secondary" onclick="app.zoomIn()" aria-label="拡大" title="拡大">🔍＋</button>
-                    <button class="btn btn-secondary" onclick="app.resetZoom()" aria-label="リセット" title="ズームリセット">⌂</button>
-                </div>
+                
                 <button id="visibilityBtn" class="btn btn-secondary" onclick="app.showVisibilitySettings()" aria-label="公開設定" title="公開設定">👁️</button>
                 <button class="btn btn-primary" onclick="app.showShareModal()" aria-label="シェア" title="シェア">🔗</button>
             </div>
