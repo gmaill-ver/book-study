@@ -1015,12 +1015,33 @@ body {
         padding: 1rem;
     }
     
-    /* モバイルでのスワイプ領域を確保 */
+    /* モバイルでのスワイプとズームの両立 */
     .viewer-container {
-        touch-action: pan-y;
+        /* touch-action: pan-y; ← この行を削除 */
+        /* ズーム操作を許可するため、touch-actionの制限を解除 */
     }
     
+    /* ページコンテンツエリアでのタッチ操作を細かく制御 */
     #pageContent {
         min-height: 50vh;
+        /* スワイプ操作とズーム操作の両立 */
+        touch-action: pan-x pan-y pinch-zoom;
+    }
+    
+    /* 読み取り専用のページコンテンツではズームを優先 */
+    #viewMode {
+        /* ズーム操作を最優先 */
+        touch-action: manipulation;
+    }
+    
+    /* 編集モードでは入力フィールドの操作性を重視 */
+    #editMode {
+        touch-action: pan-x pan-y pinch-zoom;
+    }
+    
+    /* テキストエリアや入力フィールドでは通常のタッチ操作 */
+    #editMode textarea,
+    #editMode input {
+        touch-action: manipulation;
     }
 }
