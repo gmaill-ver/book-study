@@ -643,63 +643,101 @@ class StudyBookApp {
         });
     }
 
-    // ===== スワイプ機能 =====
-    setupSwipeHandlers() {
-        const pageContent = document.getElementById('pageContent');
-        if (!pageContent) return;
+    // ===== スワイプ機能（ズーム対応版） =====
+setupSwipeHandlers() {
+    const pageContent = document.getElementById('pageContent');
+    if (!pageContent) return;
 
-        // タッチ開始
-        pageContent.addEventListener('touchstart', (e) => {
-            this.touchStartX = e.touches[0].clientX;
-            this.touchStartY = e.touches[0].clientY;
-            this.touchStartTime = Date.now();
+    // タッチ開始
+    pageContent.addEventListener('touchstart', (e) => {
+        // マルチタッチ（ズーム操作）の場合はスワイプを無効化
+        if (e.touches.length > 1) {
             this.isSwiping = false;
-        }, { passive: true });
+            return;
+        }
+        
+        this.touchStartX = e.touches[0].clientX;
+        this.touchStartY = e.touches[0].clientY;
+        this.touchStartTime = Date.now();
+        this.isSwiping = false;
+    }, { passive: true });
 
-        // タッチ移動
-        pageContent.addEventListener('touchmove', (e) => {
-            if (!this.currentNote) return;
+    // タッチ移動
+    pageContent.addEventListener('touchmove', (e) => {
+        if (!this.currentNote) return;
+        
+        // マルチタッチ（ズーム操作）の場合はスワイプを無効化
+        if (e.touches.length > 1) {
+            this.isSwiping = false;
+            return;
+        }
 
-            const currentX = e.touches[0].clientX;
-            const currentY = e.touches[0].clientY;
-            const diffX = Math.abs(currentX - this.touchStartX);
-            const diffY = Math.abs(currentY - this.touchStartY);
+        const currentX = e.touches[0].clientX;
+        const currentY = e.touches[0].clientY;
+        const diffX = Math.abs(currentX - this.touchStartX);
+        const diffY = Math.abs(currentY - this.touchStartY);
 
-            // 水平方向のスワイプが優勢な場合
-            if (diffX > diffY && diffX > 10) {
-                this.isSwiping = true;
-                // スクロールを防止
-                if (diffX > 30) {
-                    e.preventDefault();
-                }
+        // 水平方向のスワイプが優勢で、かつ単一タッチの場合のみ
+        if (diffX > diffY && diffX > 10) {
+            this.isSwiping = true;
+            // スクロールを防止（ただし、ズーム中でない場合のみ）
+            if (diffX > 30 && !this.isZooming()) {
+                e.preventDefault();
             }
-        }, { passive: false });
+        }
+    }, { passive: false });
 
-        // タッチ終了
-        pageContent.addEventListener('touchend', (e) => {
-            if (!this.currentNote || !this.isSwiping) return;
+    // タッチ終了
+    pageContent.addEventListener('touchend', (e) => {
+        if (!this.currentNote || !this.isSwiping) return;
+        
+        // マルチタッチだった場合は処理しない
+        if (e.changedTouches.length > 1) {
+            this.isSwiping = false;
+            return;
+        }
 
-            this.touchEndX = e.changedTouches[0].clientX;
-            this.touchEndY = e.changedTouches[0].clientY;
+        this.touchEndX = e.changedTouches[0].clientX;
+        this.touchEndY = e.changedTouches[0].clientY;
+        
+        const swipeDistanceX = this.touchEndX - this.touchStartX;
+        const swipeDistanceY = Math.abs(this.touchEndY - this.touchStartY);
+
+        // 水平スワイプの判定（ズーム中でない場合のみ）
+        if (Math.abs(swipeDistanceX) > this.minSwipeDistance && 
+            swipeDistanceY < 100 && 
+            !this.isZooming()) {
             
-            const swipeDistanceX = this.touchEndX - this.touchStartX;
-            const swipeDistanceY = Math.abs(this.touchEndY - this.touchStartY);
-
-            // 水平スワイプの判定
-            if (Math.abs(swipeDistanceX) > this.minSwipeDistance && 
-                swipeDistanceY < 100) {
-                
-                if (swipeDistanceX > 0) {
-                    // 右スワイプ → 前のページ
-                    this.previousPage();
-                } else {
-                    // 左スワイプ → 次のページ
-                    this.nextPage();
-                }
+            if (swipeDistanceX > 0) {
+                // 右スワイプ → 前のページ
+                this.previousPage();
+            } else {
+                // 左スワイプ → 次のページ
+                this.nextPage();
             }
+        }
 
-            this.isSwiping = false;
-        }, { passive: true });
+        this.isSwiping = false;
+    }, { passive: true });
+}
+
+// ===== ズーム状態の検出 =====
+isZooming() {
+    // ページがズーム状態かどうかを判定
+    // visualViewportが利用可能な場合は使用
+    if (window.visualViewport) {
+        return window.visualViewport.scale > 1;
+    }
+    
+    // フォールバック: documentElementのscaleを確認
+    const scale = window.devicePixelRatio || 1;
+    const computedStyle = window.getComputedStyle(document.documentElement);
+    const transform = computedStyle.transform;
+    
+    if (transform && transform !== 'none') {
+        // transformでscaleが適用されている場合
+        const matrix = new DOMMatrix(transform);
+        return Math.abs(matrix.a - 1) > 0.01 || Math.abs(matrix.d - 1) > 0.01;
     }
 
     // ===== スワイプヒント表示 =====
