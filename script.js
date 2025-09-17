@@ -739,18 +739,22 @@ isZooming() {
         const matrix = new DOMMatrix(transform);
         return Math.abs(matrix.a - 1) > 0.01 || Math.abs(matrix.d - 1) > 0.01;
     }
+    
+    // デフォルトはズームしていない状態
+    return false;
+}
 
-    // ===== スワイプヒント表示 =====
-    showSwipeHint() {
-        const hint = document.getElementById('swipeHint');
-        if (hint && !localStorage.getItem('studybook_swipe_hint_shown')) {
-            hint.style.opacity = '1';
-            setTimeout(() => {
-                hint.style.opacity = '0';
-                localStorage.setItem('studybook_swipe_hint_shown', 'true');
-            }, 3000);
-        }
+// ===== スワイプヒント表示 =====
+showSwipeHint() {
+    const hint = document.getElementById('swipeHint');
+    if (hint && !localStorage.getItem('studybook_swipe_hint_shown')) {
+        hint.style.opacity = '1';
+        setTimeout(() => {
+            hint.style.opacity = '0';
+            localStorage.setItem('studybook_swipe_hint_shown', 'true');
+        }, 3000);
     }
+}
 
     // ===== 進捗管理 =====
     async loadReadingProgress() {
