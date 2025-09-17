@@ -166,6 +166,7 @@ class StudyBookApp {
             const checkFirebase = () => {
                 attempts++;
                 if (typeof firebase !== 'undefined') {
+                    console.log('Firebase SDK loaded successfully');
                     resolve();
                 } else if (attempts >= maxAttempts) {
                     console.warn('Firebase SDK timeout');
@@ -175,40 +176,72 @@ class StudyBookApp {
                 }
             };
             
-            checkFirebase();
+            // 初回チェックを少し遅延
+            setTimeout(checkFirebase, 500);
         });
     }
 
     // ===== Firebase初期化 =====
     async initFirebase() {
         try {
+            // SDKの確認
+            if (typeof firebase === 'undefined') {
+                console.error('Firebase SDK not loaded');
+                this.showToast('Firebase SDKの読み込みに失敗しました', 'error');
+                return;
+            }
+
             // Firebase設定の検証
             this.validateFirebaseConfig();
 
-            firebase.initializeApp(this.firebaseConfig);
+            // Firebase初期化
+            if (!firebase.apps.length) {
+                firebase.initializeApp(this.firebaseConfig);
+                console.log('Firebase initialized with config:', this.firebaseConfig.projectId);
+            } else {
+                console.log('Firebase already initialized');
+            }
+            
             this.auth = firebase.auth();
             this.db = firebase.firestore();
             this.storage = firebase.storage();
             
             this.firebaseInitialized = true;
+            console.log('Firebase services initialized');
 
             // 認証の永続化を設定
-            await this.auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+            try {
+                await this.auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+                console.log('Auth persistence set');
+            } catch (persistError) {
+                console.warn('Auth persistence error:', persistError);
+            }
 
-            // オフライン永続化
-            await this.db.enablePersistence({ synchronizeTabs: true })
-                .catch(err => console.log('Persistence error:', err));
+            // Firestoreオフライン永続化
+            try {
+                await this.db.enablePersistence({ synchronizeTabs: true });
+                console.log('Firestore persistence enabled');
+            } catch (err) {
+                if (err.code === 'failed-precondition') {
+                    console.log('Multiple tabs open, persistence can only be enabled in one tab at a time.');
+                } else if (err.code === 'unimplemented') {
+                    console.log('The current browser does not support offline persistence');
+                }
+            }
 
             // 認証状態の監視
             this.auth.onAuthStateChanged(this.handleAuthStateChange.bind(this));
+            console.log('Auth state listener attached');
 
             // 接続テスト（非同期）
-            this.testFirebaseConnection();
+            setTimeout(() => {
+                this.testFirebaseConnection();
+            }, 1000);
             
         } catch (error) {
-            console.error("Firebase initialization failed", error);
+            console.error("Firebase initialization failed:", error);
             this.firebaseInitialized = false;
-            this.showToast('オフラインモードで動作中', 'info');
+            this.showToast('Firebase初期化エラー: ' + error.message, 'error');
         }
     }
 
@@ -330,7 +363,8 @@ class StudyBookApp {
     // Google認証処理
     async handleGoogleLogin() {
         if (!this.auth || !this.firebaseInitialized) {
-            this.showToast('認証サービスに接続できません', 'error');
+            this.showToast('認証サービスに接続できません。ページを再読み込みしてください。', 'error');
+            console.error('Auth not initialized. Auth:', !!this.auth, 'Firebase:', this.firebaseInitialized);
             return;
         }
 
@@ -341,9 +375,14 @@ class StudyBookApp {
 
         try {
             const provider = new firebase.auth.GoogleAuthProvider();
-            await this.auth.signInWithPopup(provider);
+            console.log('Google provider created');
+            
+            const result = await this.auth.signInWithPopup(provider);
+            console.log('Google sign-in successful');
+            
             this.closeAuthModal();
         } catch (error) {
+            console.error('Google auth error:', error);
             this.handleGoogleAuthError(error);
         }
     }
@@ -351,19 +390,34 @@ class StudyBookApp {
     handleGoogleAuthError(error) {
         let message = 'ログインに失敗しました';
         
+        console.error('Google auth error details:', error);
+        
         switch(error.code) {
             case 'auth/popup-closed-by-user':
                 message = 'ログインがキャンセルされました';
                 break;
             case 'auth/popup-blocked':
-                message = 'ポップアップがブロックされました';
+                message = 'ポップアップがブロックされました。ブラウザの設定を確認してください';
                 break;
             case 'auth/network-request-failed':
-                message = 'ネットワークエラーです';
+                message = 'ネットワークエラーです。接続を確認してください';
                 break;
             case 'auth/unauthorized-domain':
-                message = 'このドメインは承認されていません';
+                message = 'このドメインは承認されていません。Firebase Consoleで承認済みドメインに追加してください';
+                console.error('Add domain to Firebase Console > Authentication > Settings > Authorized domains');
                 break;
+            case 'auth/operation-not-allowed':
+                message = 'Google認証が無効です。Firebase ConsoleでGoogle認証を有効化してください';
+                console.error('Enable Google Auth in Firebase Console > Authentication > Sign-in method');
+                break;
+            case 'auth/invalid-api-key':
+                message = 'APIキーが無効です。Firebase設定を確認してください';
+                break;
+            case 'auth/configuration-not-found':
+                message = 'Firebase設定が見つかりません';
+                break;
+            default:
+                message = `エラー: ${error.code || error.message}`;
         }
         
         this.showToast(message, 'error');
