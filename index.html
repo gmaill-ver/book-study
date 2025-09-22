@@ -137,33 +137,12 @@
             <!-- 続きから読む -->
             <div id="continueReading" style="display: none;"></div>
 
-            <!-- アクションカード -->
-            <div class="action-cards">
-                <div class="book-card" onclick="app.createNewBook()" role="button" tabindex="0">
-                    <div style="font-size: 2rem; text-align: center; margin-bottom: 1rem;">📝</div>
-                    <h3 style="font-size: 1rem; text-align: center; margin-bottom: 0.5rem;">新規作成</h3>
-                    <p style="color: var(--text-secondary); text-align: center; font-size: 0.9rem;">学習ノートを作成</p>
-                </div>
-                
-                <div class="book-card" onclick="app.showPublicBooks()" role="button" tabindex="0">
-                    <div style="font-size: 2rem; text-align: center; margin-bottom: 1rem;">📚</div>
-                    <h3 style="font-size: 1rem; text-align: center; margin-bottom: 0.5rem;">みんなのノート</h3>
-                    <p style="color: var(--text-secondary); text-align: center; font-size: 0.9rem;">公開ノートを探す</p>
-                </div>
-                
-                <div class="book-card" onclick="app.showPopularTags()" role="button" tabindex="0">
-                    <div style="font-size: 2rem; text-align: center; margin-bottom: 1rem;">🏷️</div>
-                    <h3 style="font-size: 1rem; text-align: center; margin-bottom: 0.5rem;">人気のタグ</h3>
-                    <p style="color: var(--text-secondary); text-align: center; font-size: 0.9rem;">タグから探す</p>
-                </div>
-            </div>
-
-            <!-- マイノート（本棚UI） -->
+            <!-- マイノート（本棚UI） - 最優先表示 -->
             <section id="myBooksSection" style="display: none;">
                 <h2 style="color: var(--text-primary); font-size: 1.25rem; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
                     📚 マイライブラリ
                 </h2>
-                
+
                 <!-- 表示切り替え -->
                 <div class="shelf-toggle">
                     <button id="shelfViewBtn" class="active" onclick="app.setViewMode('shelf')">
@@ -173,17 +152,38 @@
                         📋 グリッド表示
                     </button>
                 </div>
-                
+
                 <!-- 本棚表示 -->
                 <div id="bookshelfView" class="bookshelf-container">
                     <div id="myBookshelf" class="bookshelf"></div>
                 </div>
-                
+
                 <!-- グリッド表示 -->
                 <div id="gridView" style="display: none;">
                     <div id="myBooksList" class="books-grid"></div>
                 </div>
             </section>
+
+            <!-- アクションカード -->
+            <div class="action-cards">
+                <div class="book-card" onclick="app.createNewBook()" role="button" tabindex="0">
+                    <div style="font-size: 2rem; text-align: center; margin-bottom: 1rem;">📝</div>
+                    <h3 style="font-size: 1rem; text-align: center; margin-bottom: 0.5rem;">新規作成</h3>
+                    <p style="color: var(--text-secondary); text-align: center; font-size: 0.9rem;">学習ノートを作成</p>
+                </div>
+
+                <div class="book-card" onclick="app.showPublicBooks()" role="button" tabindex="0">
+                    <div style="font-size: 2rem; text-align: center; margin-bottom: 1rem;">📚</div>
+                    <h3 style="font-size: 1rem; text-align: center; margin-bottom: 0.5rem;">みんなのノート</h3>
+                    <p style="color: var(--text-secondary); text-align: center; font-size: 0.9rem;">公開ノートを探す</p>
+                </div>
+
+                <div class="book-card" onclick="app.showPopularTags()" role="button" tabindex="0">
+                    <div style="font-size: 2rem; text-align: center; margin-bottom: 1rem;">🏷️</div>
+                    <h3 style="font-size: 1rem; text-align: center; margin-bottom: 0.5rem;">人気のタグ</h3>
+                    <p style="color: var(--text-secondary); text-align: center; font-size: 0.9rem;">タグから探す</p>
+                </div>
+            </div>
 
             <!-- みんなのノート -->
             <section id="publicBooksSection" style="display: none; margin-top: 3rem;">
