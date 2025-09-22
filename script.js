@@ -1913,7 +1913,12 @@ showSwipeHint() {
                     authorId: this.currentUser.uid,
                     author: this.currentUser.displayName || 'ユーザー'
                 };
-                
+
+                console.log('=== Saving Public Note ===');
+                console.log('Note title:', this.currentNote.title);
+                console.log('Note tags:', this.currentNote.tags);
+                console.log('PublicNoteData:', publicNoteData);
+
                 await this.db.collection('publicNotes').doc(actualNoteId).set(publicNoteData);
                 
             } else {
@@ -3279,11 +3284,16 @@ showSwipeHint() {
         const tagCount = new Map();
 
         // 全ての公開ノートからタグを収集
+        console.log('=== loadPopularTags Debug ===');
+        console.log('publicNotes count:', this.publicNotes.length);
         this.publicNotes.forEach(note => {
+            console.log('Note:', note.title, 'Tags:', note.tags);
             (note.tags || []).forEach(tag => {
+                console.log('Adding tag:', tag);
                 tagCount.set(tag, (tagCount.get(tag) || 0) + 1);
             });
         });
+        console.log('Final tagCount:', tagCount);
 
         // タグを使用回数順にソート
         const sortedTags = Array.from(tagCount.entries())
