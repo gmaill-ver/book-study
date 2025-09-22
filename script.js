@@ -597,7 +597,7 @@ class StudyBookApp {
                      title="${this.escapeHtml(note.title)}"
                      style="background: ${bookColor}; border-color: ${borderColor};">
                     ${lockIcon}
-                    <div class="book-spine-title">${this.escapeHtml(note.title)}</div>
+                    <div class="book-spine-title">${this.escapeHtml(this.truncateTitle(note.title, 10))}</div>
                     <div class="book-spine-meta">${note.pages.length}P</div>
                 </div>
             `;
@@ -2468,6 +2468,14 @@ showSwipeHint() {
         };
 
         return colorMap[bgColor] || '#d0d0d0';
+    }
+
+    // タイトルを指定文字数で切り詰める
+    truncateTitle(title, maxLength) {
+        if (title.length <= maxLength) {
+            return title;
+        }
+        return title.substring(0, maxLength) + '…';
     }
 
     // テキストファイルのアップロード処理

@@ -299,8 +299,11 @@ body {
     font-size: 0.75rem;
     font-weight: 600;
     max-height: 140px;
+    max-width: 1.2em;
     overflow: hidden;
     text-align: center;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .book-spine-meta {
