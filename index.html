@@ -120,6 +120,7 @@
             </div>
 
             <div id="authSection">
+                <button class="btn btn-secondary" onclick="app.showKeyboardHelp()" aria-label="キーボードヘルプ" title="キーボードショートカット (?)">⌨️</button>
                 <button class="btn btn-primary" onclick="app.showAuthModal()" aria-label="ログイン" title="ログイン">
                     👤
                 </button>
@@ -207,6 +208,7 @@
             <span id="pageInfo" class="page-info">1 / 1</span>
             
             <div class="header-group">
+                <button class="btn btn-secondary" onclick="app.showKeyboardHelp()" aria-label="キーボードヘルプ" title="キーボードショートカット (?)">⌨️</button>
                 <button id="visibilityBtn" class="btn btn-secondary" onclick="app.showVisibilitySettings()" aria-label="公開設定" title="公開設定">👁️</button>
                 <button class="btn btn-primary" onclick="app.showShareModal()" aria-label="シェア" title="シェア">🔗</button>
             </div>
@@ -513,6 +515,10 @@
                         <div class="shortcut-item">
                             <span class="shortcut-key">?</span>
                             <span class="shortcut-desc">このヘルプを表示</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">⌨️</span>
+                            <span class="shortcut-desc">ヘッダーのキーボードボタン</span>
                         </div>
                     </div>
                 </div>
