@@ -1520,7 +1520,14 @@ showSwipeHint() {
 
             // Markdown処理（画像サイズ制限付き）
             if (typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
-                const cleanContent = DOMPurify.sanitize(page.content || '');
+                let cleanContent = DOMPurify.sanitize(page.content || '');
+
+                // Markdownパースの前に改行を保持するための処理
+                // 空行（連続した改行）を<br><br>に変換
+                cleanContent = cleanContent.replace(/\n\s*\n/g, '\n\n<br>\n\n');
+                // 単一の改行も保持（Markdownで処理されない場合のため）
+                cleanContent = cleanContent.replace(/([^\n])\n([^\n])/g, '$1  \n$2');
+
                 let htmlContent = marked.parse(cleanContent);
                 
                 // すべての画像タグにスタイルを追加

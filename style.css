@@ -638,6 +638,8 @@ body {
 .markdown-body {
     line-height: 1.8;
     padding: 0 1rem;
+    white-space: pre-wrap;
+    word-wrap: break-word;
 }
 
 .markdown-body img {
