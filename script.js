@@ -2,15 +2,8 @@
 
 class StudyBookApp {
     constructor() {
-        // Firebase設定
-        this.firebaseConfig = {
-            apiKey: "AIzaSyCRRsnIRzveG6B7XzDhUR-OoBWq-SY-5Ew",
-            authDomain: "book-study-1f25e.firebaseapp.com",
-            projectId: "book-study-1f25e",
-            storageBucket: "book-study-1f25e.firebasestorage.app",
-            messagingSenderId: "716923175090",
-            appId: "1:716923175090:web:2cc8c093c6cdf4ddbe09ab"
-        };
+        // Firebase設定を環境変数から取得
+        this.firebaseConfig = getFirebaseConfig();
 
         // 状態管理
         this.currentUser = null;
@@ -1509,7 +1502,7 @@ showSwipeHint() {
 
             if (page.image) {
                 const pageImage = document.getElementById('pageImage');
-                pageImage.src = page.image;
+                this.setupLazyImage(pageImage, page.image, `${page.title}の画像`);
                 pageImage.style.display = 'block';
                 // 画像サイズ制限を強制
                 pageImage.style.maxWidth = '100%';
@@ -1946,17 +1939,27 @@ showSwipeHint() {
         }
 
         try {
+            // 画像を圧縮
+            const compressedFile = await this.compressImage(file);
+            const finalFile = compressedFile || file;
+
+            // ファイルサイズの削減をユーザーに通知
+            if (compressedFile && compressedFile.size < file.size) {
+                const reduction = ((file.size - compressedFile.size) / file.size * 100).toFixed(1);
+                this.showToast(`画像を圧縮しました (${reduction}% 削減)`, 'info');
+            }
+
             let imageUrl;
 
             if (this.storage && this.firebaseInitialized) {
-                const storageRef = this.storage.ref(`images/${this.currentUser.uid}/${Date.now()}_${file.name}`);
-                const snapshot = await storageRef.put(file);
+                const storageRef = this.storage.ref(`images/${this.currentUser.uid}/${Date.now()}_${finalFile.name || file.name}`);
+                const snapshot = await storageRef.put(finalFile);
                 imageUrl = await snapshot.ref.getDownloadURL();
             } else {
                 imageUrl = await new Promise((resolve) => {
                     const reader = new FileReader();
                     reader.onload = (e) => resolve(e.target.result);
-                    reader.readAsDataURL(file);
+                    reader.readAsDataURL(finalFile);
                 });
             }
 
@@ -1987,6 +1990,132 @@ showSwipeHint() {
         this.currentNote.pages[this.currentPage].image = null;
         document.getElementById('imagePreview').innerHTML = '';
         this.showToast('画像を削除しました', 'info');
+    }
+
+    // 画像圧縮機能
+    async compressImage(file, maxWidth = 1200, maxHeight = 1200, quality = 0.8) {
+        return new Promise((resolve) => {
+            // 圧縮が不要な小さいファイルの場合はそのまま返す
+            if (file.size < 500 * 1024) { // 500KB未満
+                resolve(null);
+                return;
+            }
+
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+
+            img.onload = () => {
+                // 新しいサイズを計算
+                const { width, height } = this.calculateNewDimensions(img, maxWidth, maxHeight);
+
+                canvas.width = width;
+                canvas.height = height;
+
+                // 高品質な描画設定
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+
+                // 画像を描画
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Blobとして出力
+                canvas.toBlob((blob) => {
+                    if (blob && blob.size < file.size) {
+                        // ファイル名を保持
+                        const compressedFile = new File([blob], file.name, {
+                            type: 'image/jpeg',
+                            lastModified: Date.now()
+                        });
+                        resolve(compressedFile);
+                    } else {
+                        // 圧縮効果がない場合は元ファイルを使用
+                        resolve(null);
+                    }
+                }, 'image/jpeg', quality);
+            };
+
+            img.onerror = () => resolve(null);
+            img.src = URL.createObjectURL(file);
+        });
+    }
+
+    // 画像サイズ計算（アスペクト比を保持）
+    calculateNewDimensions(img, maxWidth, maxHeight) {
+        let { width, height } = img;
+
+        // 最大サイズ以下の場合はそのまま
+        if (width <= maxWidth && height <= maxHeight) {
+            return { width, height };
+        }
+
+        // アスペクト比を保持してリサイズ
+        const aspectRatio = width / height;
+
+        if (width > height) {
+            width = Math.min(width, maxWidth);
+            height = width / aspectRatio;
+        } else {
+            height = Math.min(height, maxHeight);
+            width = height * aspectRatio;
+        }
+
+        return {
+            width: Math.round(width),
+            height: Math.round(height)
+        };
+    }
+
+    // 遅延読み込み機能
+    setupLazyImage(imgElement, src, alt = '') {
+        // プレースホルダー画像（グレーの背景）
+        const placeholder = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuiqrOOBv+i+vOOBv+S4rS4uLjwvdGV4dD48L3N2Zz4=';
+
+        imgElement.alt = alt;
+        imgElement.style.transition = 'opacity 0.3s ease';
+
+        // 初期状態はプレースホルダー
+        imgElement.src = placeholder;
+        imgElement.style.opacity = '0.7';
+
+        // Intersection Observer で遅延読み込み
+        if ('IntersectionObserver' in window) {
+            const imageObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        this.loadImage(img, src);
+                        observer.unobserve(img);
+                    }
+                });
+            }, {
+                rootMargin: '50px 0px' // 50px手前で読み込み開始
+            });
+
+            imageObserver.observe(imgElement);
+        } else {
+            // Intersection Observer が利用できない場合は即座に読み込み
+            this.loadImage(imgElement, src);
+        }
+    }
+
+    // 画像読み込み処理
+    loadImage(imgElement, src) {
+        const tempImg = new Image();
+
+        tempImg.onload = () => {
+            imgElement.src = src;
+            imgElement.style.opacity = '1';
+        };
+
+        tempImg.onerror = () => {
+            // 読み込みエラー時のフォールバック
+            imgElement.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjVmNWY1IiBzdHJva2U9IiNkZGQiIHN0cm9rZS13aWR0aD0iMiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7nlLvlg4/jgpLoqq3jgb/ovrzjgb/jgb7jgZvjgpPjgafjgZfjgZ88L3RleHQ+PC9zdmc+';
+            imgElement.style.opacity = '1';
+            console.warn('画像の読み込みに失敗しました:', src);
+        };
+
+        tempImg.src = src;
     }
 
     // ===== ページ管理 =====
