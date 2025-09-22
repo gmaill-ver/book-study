@@ -665,7 +665,7 @@ class StudyBookApp {
                     this.closeShareModal();
                 } else if (document.getElementById('visibilityModal').style.display !== 'none') {
                     this.closeVisibilityModal();
-                } else if (document.getElementById('keyboardHelpModal') && document.getElementById('keyboardHelpModal').style.display !== 'none') {
+                } else if (document.getElementById('keyboardHelpModal') && document.getElementById('keyboardHelpModal').classList.contains('active')) {
                     this.closeKeyboardHelp();
                 } else {
                     this.toggleSidebar();
@@ -762,9 +762,11 @@ class StudyBookApp {
 
     // ===== スワイプ機能（改善版：限定領域＋ズーム分離） =====
 setupSwipeHandlers() {
-    // ページコンテンツ内でのみスワイプを有効にする
-    const pageContentWrapper = document.getElementById('pageContentWrapper');
-    if (!pageContentWrapper) return;
+    // ページコンテンツ内でのみスワイプを有効にする（より限定的に）
+    const viewMode = document.getElementById('viewMode');
+    const editMode = document.getElementById('editMode');
+
+    if (!viewMode || !editMode) return;
 
     // スワイプ検出の閾値設定
     this.swipeThreshold = {
@@ -774,127 +776,138 @@ setupSwipeHandlers() {
         timeLimit: 500     // 最大時間
     };
 
-    // タッチ開始（ページコンテンツ内に限定）
-    pageContentWrapper.addEventListener('touchstart', (e) => {
-        // マルチタッチ（ズーム操作）の場合はスワイプを無効化
-        if (e.touches.length > 1) {
-            this.isSwiping = false;
-            this.isMultiTouch = true;
-            return;
-        }
-
-        // 編集モードの場合はスワイプを制限
-        if (this.isEditing) {
-            // テキストエリアやインプット要素上では無効化
-            const target = e.target;
-            if (target.tagName === 'TEXTAREA' ||
-                target.tagName === 'INPUT' ||
-                target.contentEditable === 'true') {
+    // 閲覧モードでのみスワイプを有効にする（より安全）
+    const setupSwipeForElement = (element) => {
+        // タッチ開始
+        element.addEventListener('touchstart', (e) => {
+            // 編集モードの場合は完全に無効化
+            if (this.isEditing) {
                 this.isSwiping = false;
                 return;
             }
-        }
 
-        this.touchStartX = e.touches[0].clientX;
-        this.touchStartY = e.touches[0].clientY;
-        this.touchStartTime = Date.now();
-        this.isSwiping = false;
-        this.isMultiTouch = false;
-        this.swipeStarted = false;
-    }, { passive: true });
+            // マルチタッチ（ズーム操作）の場合はスワイプを無効化
+            if (e.touches.length > 1) {
+                this.isSwiping = false;
+                this.isMultiTouch = true;
+                return;
+            }
 
-    // タッチ移動（ページコンテンツ内に限定）
-    pageContentWrapper.addEventListener('touchmove', (e) => {
-        if (!this.currentNote || this.isMultiTouch) return;
+            // クリック可能な要素上では無効化
+            const target = e.target;
+            if (target.tagName === 'BUTTON' ||
+                target.tagName === 'A' ||
+                target.onclick ||
+                target.closest('button') ||
+                target.closest('a')) {
+                this.isSwiping = false;
+                return;
+            }
 
-        // マルチタッチ（ズーム操作）の場合は無効化
-        if (e.touches.length > 1) {
-            this.isSwiping = false;
-            this.isMultiTouch = true;
-            return;
-        }
-
-        const currentX = e.touches[0].clientX;
-        const currentY = e.touches[0].clientY;
-        const diffX = currentX - this.touchStartX;
-        const diffY = Math.abs(currentY - this.touchStartY);
-
-        // 縦方向の移動が多い場合は縦スクロールと判定
-        if (diffY > this.swipeThreshold.maxVertical) {
-            this.isSwiping = false;
-            return;
-        }
-
-        // 水平方向の移動が閾値を超えた場合にスワイプ開始
-        const absDiffX = Math.abs(diffX);
-        if (absDiffX > 30 && !this.swipeStarted) { // 早期にスワイプを検出
-            this.swipeStarted = true;
-            this.isSwiping = true;
-
-            // スワイプ方向の視覚的フィードバック
-            pageContentWrapper.style.transform = `translateX(${diffX * 0.1}px)`;
-            pageContentWrapper.style.transition = 'none';
-        }
-
-        // スワイプ中の場合は既定のスクロール動作を防止
-        if (this.isSwiping) {
-            e.preventDefault();
-        }
-    }, { passive: false });
-
-    // タッチ終了（ページコンテンツ内に限定）
-    pageContentWrapper.addEventListener('touchend', (e) => {
-        const pageContentWrapper = document.getElementById('pageContentWrapper');
-
-        // 視覚的フィードバックをリセット
-        if (pageContentWrapper) {
-            pageContentWrapper.style.transform = '';
-            pageContentWrapper.style.transition = 'transform 0.2s ease';
-        }
-
-        if (!this.currentNote || !this.isSwiping || this.isMultiTouch) {
+            this.touchStartX = e.touches[0].clientX;
+            this.touchStartY = e.touches[0].clientY;
+            this.touchStartTime = Date.now();
             this.isSwiping = false;
             this.isMultiTouch = false;
-            return;
-        }
+            this.swipeStarted = false;
+        }, { passive: true });
 
-        this.touchEndX = e.changedTouches[0].clientX;
-        this.touchEndY = e.changedTouches[0].clientY;
+        // タッチ移動
+        element.addEventListener('touchmove', (e) => {
+            if (!this.currentNote || this.isMultiTouch || this.isEditing) return;
 
-        const swipeDistanceX = this.touchEndX - this.touchStartX;
-        const swipeDistanceY = Math.abs(this.touchEndY - this.touchStartY);
-        const swipeTime = Date.now() - this.touchStartTime;
-        const velocity = Math.abs(swipeDistanceX) / swipeTime;
-
-        // 改善されたスワイプ判定
-        const isValidSwipe = Math.abs(swipeDistanceX) > this.swipeThreshold.distance &&
-                           swipeDistanceY < this.swipeThreshold.maxVertical &&
-                           velocity > this.swipeThreshold.velocity &&
-                           swipeTime < this.swipeThreshold.timeLimit;
-
-        if (isValidSwipe) {
-            if (swipeDistanceX > 0) {
-                // 右スワイプ → 前のページ
-                this.previousPage();
-            } else {
-                // 左スワイプ → 次のページ
-                this.nextPage();
+            // マルチタッチ（ズーム操作）の場合は無効化
+            if (e.touches.length > 1) {
+                this.isSwiping = false;
+                this.isMultiTouch = true;
+                return;
             }
-        }
 
-        // 状態をリセット
-        this.isSwiping = false;
-        this.isMultiTouch = false;
-        this.swipeStarted = false;
-    }, { passive: true });
-    // スワイプエリアの視覚的境界を表示（デバッグ用）
-    if (pageContentWrapper && window.location.hash === '#debug') {
-        pageContentWrapper.style.border = '2px dashed rgba(52, 152, 219, 0.5)';
-        pageContentWrapper.style.position = 'relative';
+            const currentX = e.touches[0].clientX;
+            const currentY = e.touches[0].clientY;
+            const diffX = currentX - this.touchStartX;
+            const diffY = Math.abs(currentY - this.touchStartY);
 
-        // デバッグ情報を表示
+            // 縦方向の移動が多い場合は縦スクロールと判定
+            if (diffY > this.swipeThreshold.maxVertical) {
+                this.isSwiping = false;
+                return;
+            }
+
+            // 水平方向の移動が閾値を超えた場合にスワイプ開始
+            const absDiffX = Math.abs(diffX);
+            if (absDiffX > 30 && !this.swipeStarted) {
+                this.swipeStarted = true;
+                this.isSwiping = true;
+
+                // 視覚的フィードバック（viewModeのみ）
+                if (element.id === 'viewMode') {
+                    element.style.transform = `translateX(${diffX * 0.05}px)`;
+                    element.style.transition = 'none';
+                }
+            }
+
+            // スワイプ中の場合は既定のスクロール動作を防止
+            if (this.isSwiping) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // タッチ終了
+        element.addEventListener('touchend', (e) => {
+            // 視覚的フィードバックをリセット
+            if (element.id === 'viewMode') {
+                element.style.transform = '';
+                element.style.transition = 'transform 0.2s ease';
+            }
+
+            if (!this.currentNote || !this.isSwiping || this.isMultiTouch || this.isEditing) {
+                this.isSwiping = false;
+                this.isMultiTouch = false;
+                return;
+            }
+
+            this.touchEndX = e.changedTouches[0].clientX;
+            this.touchEndY = e.changedTouches[0].clientY;
+
+            const swipeDistanceX = this.touchEndX - this.touchStartX;
+            const swipeDistanceY = Math.abs(this.touchEndY - this.touchStartY);
+            const swipeTime = Date.now() - this.touchStartTime;
+            const velocity = Math.abs(swipeDistanceX) / swipeTime;
+
+            // 改善されたスワイプ判定
+            const isValidSwipe = Math.abs(swipeDistanceX) > this.swipeThreshold.distance &&
+                               swipeDistanceY < this.swipeThreshold.maxVertical &&
+                               velocity > this.swipeThreshold.velocity &&
+                               swipeTime < this.swipeThreshold.timeLimit;
+
+            if (isValidSwipe) {
+                if (swipeDistanceX > 0) {
+                    // 右スワイプ → 前のページ
+                    this.previousPage();
+                } else {
+                    // 左スワイプ → 次のページ
+                    this.nextPage();
+                }
+            }
+
+            // 状態をリセット
+            this.isSwiping = false;
+            this.isMultiTouch = false;
+            this.swipeStarted = false;
+        }, { passive: true });
+    };
+
+    // 閲覧モードのみにスワイプを設定
+    setupSwipeForElement(viewMode);
+
+    // デバッグモード：スワイプエリアを可視化
+    if (window.location.hash === '#debug') {
+        viewMode.style.border = '2px dashed rgba(52, 152, 219, 0.5)';
+        viewMode.style.position = 'relative';
+
         const debugInfo = document.createElement('div');
-        debugInfo.textContent = 'スワイプエリア';
+        debugInfo.textContent = 'スワイプエリア（閲覧モードのみ）';
         debugInfo.style.cssText = `
             position: absolute;
             top: 10px;
@@ -905,8 +918,9 @@ setupSwipeHandlers() {
             border-radius: 3px;
             font-size: 12px;
             pointer-events: none;
+            z-index: 1000;
         `;
-        pageContentWrapper.appendChild(debugInfo);
+        viewMode.appendChild(debugInfo);
     }
 }
 
@@ -2412,7 +2426,7 @@ showSwipeHint() {
     // ===== キーボードヘルプ機能 =====
     toggleKeyboardHelp() {
         const modal = document.getElementById('keyboardHelpModal');
-        if (modal.style.display === 'none' || !modal.style.display) {
+        if (modal && !modal.classList.contains('active')) {
             this.showKeyboardHelp();
         } else {
             this.closeKeyboardHelp();
@@ -2421,17 +2435,21 @@ showSwipeHint() {
 
     showKeyboardHelp() {
         const modal = document.getElementById('keyboardHelpModal');
-        modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
+        if (modal) {
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
 
-        // フォーカスをモーダルに移動（アクセシビリティ）
-        modal.focus();
+            // フォーカスをモーダルに移動（アクセシビリティ）
+            modal.focus();
+        }
     }
 
     closeKeyboardHelp() {
         const modal = document.getElementById('keyboardHelpModal');
-        modal.style.display = 'none';
-        document.body.style.overflow = '';
+        if (modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
     }
 
     // ===== ページ管理 =====
