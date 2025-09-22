@@ -253,102 +253,62 @@ body {
     font-size: 0.85rem;
 }
 
-/* 本棚UI（モノトーン） */
+/* 本棚UI（改善版・シンプル） */
 .bookshelf-container {
-    perspective: 1000px;
-    padding: 2rem;
-    background: linear-gradient(to bottom, #f8f6f0 0%, #f0ede5 100%);
-    border-radius: 12px;
-    box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
-    position: relative;
+    padding: 1.5rem;
+    background: #ffffff;
+    border: 2px solid #e0e0e0;
+    border-radius: 4px;
     margin: 2rem 0;
-    min-height: 300px;
+    min-height: 280px;
 }
 
 .bookshelf {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
-    gap: 8px;
-    padding: 1rem;
-    background: linear-gradient(to bottom, #faf7f0 0%, #f5f2eb 100%);
-    border-radius: 8px;
-    box-shadow: 
-        inset 0 2px 5px rgba(0,0,0,0.1),
-        0 4px 8px rgba(0,0,0,0.1);
-    position: relative;
-    transform-style: preserve-3d;
-    min-height: 240px;
+    grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+    gap: 2px;
+    min-height: 220px;
 }
 
 .book-spine {
-    height: 200px;
+    height: 180px;
     width: 100%;
-    background: linear-gradient(135deg, #f0f0f0 0%, #d0d0d0 50%, #b0b0b0 100%);
-    border-radius: 3px;
-    position: relative;
+    background: #f8f8f8;
+    border: 1px solid #d0d0d0;
     cursor: pointer;
-    transition: transform 0.3s ease;
-    transform-style: preserve-3d;
-    box-shadow: 
-        -2px 0 3px rgba(0,0,0,0.1),
-        2px 0 3px rgba(0,0,0,0.1),
-        0 2px 4px rgba(0,0,0,0.2);
+    transition: all 0.15s ease;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 1rem 0.5rem;
+    padding: 0.8rem 0.3rem;
+    position: relative;
     overflow: hidden;
 }
 
-/* 本の装飾線 */
-.book-spine::before {
-    content: '';
-    position: absolute;
-    top: 10px;
-    left: 3px;
-    right: 3px;
-    height: 2px;
-    background: rgba(0,0,0,0.1);
-}
-
-.book-spine::after {
-    content: '';
-    position: absolute;
-    bottom: 10px;
-    left: 3px;
-    right: 3px;
-    height: 2px;
-    background: rgba(0,0,0,0.1);
-}
-
 .book-spine:hover {
-    transform: translateY(-10px) rotateZ(-2deg);
-    box-shadow: 
-        -2px 0 5px rgba(0,0,0,0.2),
-        2px 0 5px rgba(0,0,0,0.2),
-        0 8px 12px rgba(0,0,0,0.3);
+    transform: translateY(-4px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    background: #e8e8e8;
 }
 
 .book-spine-title {
     writing-mode: vertical-rl;
     text-orientation: mixed;
-    color: #2c3e50;
-    font-size: 0.8rem;
+    color: #333;
+    font-size: 0.75rem;
     font-weight: 600;
-    text-shadow: 1px 1px 1px rgba(255,255,255,0.5);
-    max-height: 150px;
+    max-height: 140px;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    text-align: center;
 }
 
 .book-spine-meta {
     position: absolute;
-    bottom: 10px;
+    bottom: 8px;
     writing-mode: vertical-rl;
     font-size: 0.6rem;
-    color: #555;
+    color: #666;
 }
 
 .book-spine-lock {
@@ -358,13 +318,51 @@ body {
     font-size: 0.7rem;
 }
 
-/* 本の色パターン（モノトーン） */
-.book-spine:nth-child(odd) {
-    background: linear-gradient(135deg, #e8e8e8 0%, #c0c0c0 50%, #a0a0a0 100%);
+/* 本の色パターン（改善版・シンプル） */
+.book-spine:nth-child(2n) {
+    background: #f0f0f0;
+    border-color: #c0c0c0;
 }
 
-.book-spine:nth-child(even) {
-    background: linear-gradient(135deg, #d8d8d8 0%, #b0b0b0 50%, #909090 100%);
+.book-spine:nth-child(3n) {
+    background: #e8e8e8;
+    border-color: #b0b0b0;
+}
+
+.book-spine:nth-child(5n) {
+    background: #f5f5f5;
+    border-color: #d5d5d5;
+}
+
+/* 色選択UI */
+.color-option {
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.color-option:hover {
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.color-option.selected {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 3px var(--primary-color);
+}
+
+.color-option.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--primary-color);
+    font-weight: bold;
+    font-size: 1rem;
 }
 
 /* 本棚トグルボタン */

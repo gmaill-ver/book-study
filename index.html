@@ -278,12 +278,36 @@
                         
                         <div style="margin-bottom: 1rem;">
                             <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem;">タグ（カンマ区切り）</label>
-                            <input 
-                                type="text" 
-                                id="pageTagsInput" 
+                            <input
+                                type="text"
+                                id="pageTagsInput"
                                 class="form-input"
                                 placeholder="例: 数学, 微分積分, 大学"
                                 maxlength="200"
+                            >
+                        </div>
+
+                        <!-- 本の色選択 -->
+                        <div id="bookColorSection" style="margin-bottom: 1rem; display: none;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem;">本の背表紙の色</label>
+                            <div class="color-picker" style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <div class="color-option" data-color="#f8f8f8" style="background: #f8f8f8; border: 2px solid #d0d0d0;"></div>
+                                <div class="color-option" data-color="#f0f0f0" style="background: #f0f0f0; border: 2px solid #c0c0c0;"></div>
+                                <div class="color-option" data-color="#e8e8e8" style="background: #e8e8e8; border: 2px solid #b0b0b0;"></div>
+                                <div class="color-option" data-color="#e0f2f1" style="background: #e0f2f1; border: 2px solid #b2dfdb;"></div>
+                                <div class="color-option" data-color="#fff3e0" style="background: #fff3e0; border: 2px solid #ffcc02;"></div>
+                                <div class="color-option" data-color="#fce4ec" style="background: #fce4ec; border: 2px solid #f8bbd9;"></div>
+                                <div class="color-option" data-color="#e8f5e8" style="background: #e8f5e8; border: 2px solid #c8e6c9;"></div>
+                                <div class="color-option" data-color="#e3f2fd" style="background: #e3f2fd; border: 2px solid #90caf9;"></div>
+                                <div class="color-option" data-color="#f3e5f5" style="background: #f3e5f5; border: 2px solid #ce93d8;"></div>
+                                <div class="color-option" data-color="#fff8e1" style="background: #fff8e1; border: 2px solid #fff176;"></div>
+                                <div class="color-option" data-color="#fafafa" style="background: #fafafa; border: 2px solid #e0e0e0;"></div>
+                                <div class="color-option" data-color="#f5f5f5" style="background: #f5f5f5; border: 2px solid #d5d5d5;"></div>
+                            </div>
+                            <input
+                                type="hidden"
+                                id="bookColorInput"
+                                value="#f8f8f8"
                             >
                         </div>
 

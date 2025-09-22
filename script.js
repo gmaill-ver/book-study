@@ -588,11 +588,14 @@ class StudyBookApp {
         shelfContainer.innerHTML = myNotes.map((note, index) => {
             const hasPassword = note.password || note.visibility?.type === 'password';
             const lockIcon = hasPassword ? '<div class="book-spine-lock">🔐</div>' : '';
-            
+            const bookColor = note.bookColor || '#f8f8f8';
+            const borderColor = this.getBorderColorFromBackground(bookColor);
+
             return `
-                <div class="book-spine" 
-                     onclick="app.openBook('${note.id}', false)" 
-                     title="${this.escapeHtml(note.title)}">
+                <div class="book-spine"
+                     onclick="app.openBook('${note.id}', false)"
+                     title="${this.escapeHtml(note.title)}"
+                     style="background: ${bookColor}; border-color: ${borderColor};">
                     ${lockIcon}
                     <div class="book-spine-title">${this.escapeHtml(note.title)}</div>
                     <div class="book-spine-meta">${note.pages.length}P</div>
@@ -627,6 +630,9 @@ class StudyBookApp {
 
         // ドラッグ&ドロップ機能の設定
         this.setupDragAndDrop();
+
+        // 色選択機能の設定
+        this.setupColorPicker();
 
         // モーダル外クリックで閉じる
         document.addEventListener('click', (e) => {
@@ -1675,8 +1681,21 @@ showSwipeHint() {
             if (this.currentPage === 0) {
                 bookTitleSection.style.display = 'block';
                 document.getElementById('bookTitleInput').value = this.currentNote.title || '';
+
+                // 色選択セクションを表示
+                const colorSection = document.getElementById('bookColorSection');
+                if (colorSection) {
+                    colorSection.style.display = 'block';
+                    this.initializeColorPicker();
+                }
             } else {
                 bookTitleSection.style.display = 'none';
+
+                // 1ページ目以外では色選択を非表示
+                const colorSection = document.getElementById('bookColorSection');
+                if (colorSection) {
+                    colorSection.style.display = 'none';
+                }
             }
 
             document.getElementById('pageTitleInput').value = page.title || '';
@@ -2369,6 +2388,86 @@ showSwipeHint() {
                 imageDropZone.style.backgroundColor = '';
             });
         }
+    }
+
+    // ===== 色選択機能 =====
+    setupColorPicker() {
+        // 色選択オプションのクリックイベント
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('color-option')) {
+                // 選択状態をリセット
+                document.querySelectorAll('.color-option').forEach(option => {
+                    option.classList.remove('selected');
+                });
+
+                // 新しい選択をセット
+                e.target.classList.add('selected');
+
+                // 隠しフィールドに値を保存
+                const colorInput = document.getElementById('bookColorInput');
+                if (colorInput) {
+                    colorInput.value = e.target.dataset.color;
+                }
+
+                // 本の色を即座に更新（編集中の場合）
+                this.updateBookColor(e.target.dataset.color);
+            }
+        });
+    }
+
+    // 本の色を更新
+    updateBookColor(color) {
+        if (this.currentNote && this.isEditing) {
+            // 現在のノートに色情報を保存
+            this.currentNote.bookColor = color;
+
+            // 本棚表示の更新は保存時に行われる
+            this.showToast('本の色を変更しました', 'success');
+        }
+    }
+
+    // 色選択の初期化
+    initializeColorPicker() {
+        // 現在の本の色を取得（デフォルトは#f8f8f8）
+        const currentColor = this.currentNote?.bookColor || '#f8f8f8';
+
+        // 色選択状態をリセット
+        document.querySelectorAll('.color-option').forEach(option => {
+            option.classList.remove('selected');
+        });
+
+        // 現在の色を選択状態にする
+        const currentOption = document.querySelector(`[data-color="${currentColor}"]`);
+        if (currentOption) {
+            currentOption.classList.add('selected');
+        }
+
+        // 隠しフィールドに値を設定
+        const colorInput = document.getElementById('bookColorInput');
+        if (colorInput) {
+            colorInput.value = currentColor;
+        }
+    }
+
+    // 背景色から適切な境界線色を計算
+    getBorderColorFromBackground(bgColor) {
+        // 色の明度を計算して、適切な境界線色を決定
+        const colorMap = {
+            '#f8f8f8': '#d0d0d0',
+            '#f0f0f0': '#c0c0c0',
+            '#e8e8e8': '#b0b0b0',
+            '#e0f2f1': '#b2dfdb',
+            '#fff3e0': '#ffcc02',
+            '#fce4ec': '#f8bbd9',
+            '#e8f5e8': '#c8e6c9',
+            '#e3f2fd': '#90caf9',
+            '#f3e5f5': '#ce93d8',
+            '#fff8e1': '#fff176',
+            '#fafafa': '#e0e0e0',
+            '#f5f5f5': '#d5d5d5'
+        };
+
+        return colorMap[bgColor] || '#d0d0d0';
     }
 
     // テキストファイルのアップロード処理
