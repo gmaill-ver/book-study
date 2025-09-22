@@ -2941,7 +2941,12 @@ showSwipeHint() {
 
         document.getElementById('homeView').style.display = 'block';
         document.getElementById('viewerContainer').style.display = 'none';
+        document.getElementById('publicNotesView').style.display = 'none';
         document.getElementById('sidebar').classList.remove('open');
+
+        // ホーム画面の「みんなのノート」セクションも非表示にする
+        document.getElementById('publicBooksSection').style.display = 'none';
+
         this.currentNote = null;
         this.currentPage = 0;
         this.isEditing = false;
