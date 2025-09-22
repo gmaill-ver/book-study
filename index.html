@@ -90,7 +90,13 @@
                 <span id="authToggleText">アカウントをお持ちでない方は</span>
                 <a onclick="app.toggleAuthMode(event)" id="authToggleLink">新規登録</a>
             </div>
-            
+
+            <div id="passwordResetLink" style="text-align: center; margin-top: 1rem; display: none;">
+                <a onclick="app.showPasswordReset(event)" style="color: var(--primary-color); font-size: 0.9rem; cursor: pointer; text-decoration: underline;">
+                    パスワードを忘れた方はこちら
+                </a>
+            </div>
+
             <div style="text-align: center; margin-top: 1rem;">
                 <button class="btn btn-secondary" onclick="app.closeAuthModal()">キャンセル</button>
             </div>
@@ -132,7 +138,7 @@
             <div id="continueReading" style="display: none;"></div>
 
             <!-- アクションカード -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
+            <div class="action-cards">
                 <div class="book-card" onclick="app.createNewBook()" role="button" tabindex="0">
                     <div style="font-size: 2rem; text-align: center; margin-bottom: 1rem;">📝</div>
                     <h3 style="font-size: 1rem; text-align: center; margin-bottom: 0.5rem;">新規作成</h3>
@@ -423,6 +429,35 @@
             <button class="btn-filled" onclick="app.copyShareUrl()" style="width: 100%; margin-top: 1rem;">
                 URLをコピー
             </button>
+        </div>
+    </div>
+
+    <!-- パスワードリセットモーダル -->
+    <div id="passwordResetModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 1.5rem;">🔒 パスワードリセット</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                登録されたメールアドレスにパスワードリセット用のリンクを送信します。
+            </p>
+
+            <form id="passwordResetForm" onsubmit="app.handlePasswordReset(event)">
+                <div class="form-group">
+                    <label class="form-label">メールアドレス</label>
+                    <input
+                        type="email"
+                        id="resetEmailInput"
+                        class="form-input"
+                        required
+                        placeholder="example@email.com"
+                    >
+                    <div id="resetEmailError" class="form-error"></div>
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="submit" class="btn-filled">リセットメールを送信</button>
+                    <button type="button" class="btn-filled" onclick="app.closePasswordReset()" style="background: var(--text-secondary);">キャンセル</button>
+                </div>
+            </form>
         </div>
     </div>
 

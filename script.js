@@ -263,8 +263,15 @@ class StudyBookApp {
 
     // ===== 認証処理（メールアドレス） =====
     showAuthModal() {
+        this.isAuthMode = 'login';
         document.getElementById('authModal').classList.add('active');
         document.getElementById('emailInput').focus();
+
+        // パスワードリセットリンクをログイン時のみ表示
+        const passwordResetLink = document.getElementById('passwordResetLink');
+        if (passwordResetLink) {
+            passwordResetLink.style.display = 'block';
+        }
     }
 
     closeAuthModal() {
@@ -275,9 +282,10 @@ class StudyBookApp {
 
     toggleAuthMode(e) {
         if (e) e.preventDefault();
-        
+
         const passwordInput = document.getElementById('passwordInput');
-        
+        const passwordResetLink = document.getElementById('passwordResetLink');
+
         if (this.isAuthMode === 'login') {
             this.isAuthMode = 'register';
             document.getElementById('authFormTitle').textContent = '新規登録';
@@ -285,6 +293,7 @@ class StudyBookApp {
             document.getElementById('authToggleText').textContent = 'すでにアカウントをお持ちの方は';
             document.getElementById('authToggleLink').textContent = 'ログイン';
             passwordInput.setAttribute('autocomplete', 'new-password');
+            passwordResetLink.style.display = 'none'; // 新規登録時は非表示
         } else {
             this.isAuthMode = 'login';
             document.getElementById('authFormTitle').textContent = 'ログイン';
@@ -292,8 +301,9 @@ class StudyBookApp {
             document.getElementById('authToggleText').textContent = 'アカウントをお持ちでない方は';
             document.getElementById('authToggleLink').textContent = '新規登録';
             passwordInput.setAttribute('autocomplete', 'current-password');
+            passwordResetLink.style.display = 'block'; // ログイン時は表示
         }
-        
+
         this.clearAuthErrors();
     }
 
@@ -2434,13 +2444,18 @@ showSwipeHint() {
     }
 
     showKeyboardHelp() {
+        console.log('showKeyboardHelp called');
         const modal = document.getElementById('keyboardHelpModal');
+        console.log('Modal element:', modal);
         if (modal) {
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
+            console.log('Modal should be visible now');
 
             // フォーカスをモーダルに移動（アクセシビリティ）
             modal.focus();
+        } else {
+            console.error('keyboardHelpModal not found');
         }
     }
 
@@ -2449,6 +2464,75 @@ showSwipeHint() {
         if (modal) {
             modal.classList.remove('active');
             document.body.style.overflow = '';
+        }
+    }
+
+    // ===== パスワードリセット機能 =====
+    showPasswordReset(event) {
+        event.preventDefault();
+        this.closeAuthModal();
+
+        const modal = document.getElementById('passwordResetModal');
+        if (modal) {
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            // フィールドをクリア
+            document.getElementById('resetEmailInput').value = '';
+            document.getElementById('resetEmailError').textContent = '';
+        }
+    }
+
+    closePasswordReset() {
+        const modal = document.getElementById('passwordResetModal');
+        if (modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    }
+
+    async handlePasswordReset(event) {
+        event.preventDefault();
+
+        const email = document.getElementById('resetEmailInput').value.trim();
+        const errorEl = document.getElementById('resetEmailError');
+
+        // バリデーション
+        if (!email) {
+            errorEl.textContent = 'メールアドレスを入力してください';
+            return;
+        }
+
+        if (!this.validateEmail(email)) {
+            errorEl.textContent = '有効なメールアドレスを入力してください';
+            return;
+        }
+
+        try {
+            errorEl.textContent = '';
+
+            if (this.auth && this.firebaseInitialized) {
+                // Firebase Auth のパスワードリセット
+                await this.auth.sendPasswordResetEmail(email);
+
+                this.showToast('パスワードリセットメールを送信しました。メールをご確認ください。', 'success');
+                this.closePasswordReset();
+            } else {
+                // Firebase が利用できない場合のフォールバック
+                this.showToast('パスワードリセット機能は現在利用できません', 'error');
+            }
+        } catch (error) {
+            console.error('Password reset error:', error);
+
+            if (error.code === 'auth/user-not-found') {
+                errorEl.textContent = 'このメールアドレスは登録されていません';
+            } else if (error.code === 'auth/invalid-email') {
+                errorEl.textContent = '無効なメールアドレスです';
+            } else if (error.code === 'auth/too-many-requests') {
+                errorEl.textContent = 'リクエストが多すぎます。しばらく待ってから再試行してください';
+            } else {
+                errorEl.textContent = 'エラーが発生しました。再試行してください';
+            }
         }
     }
 

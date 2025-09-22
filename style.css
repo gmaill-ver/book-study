@@ -718,6 +718,49 @@ body {
     }
 }
 
+/* アクションカードのレイアウト */
+.action-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+/* スマホで検索バーを非表示 & アクションカード3列固定 */
+@media (max-width: 768px) {
+    .search-container {
+        display: none;
+    }
+
+    .header {
+        justify-content: space-between;
+    }
+
+    .action-cards {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.8rem;
+    }
+
+    .book-card {
+        padding: 0.8rem;
+        min-height: 120px;
+    }
+
+    .book-card h3 {
+        font-size: 0.8rem !important;
+        margin-bottom: 0.3rem !important;
+    }
+
+    .book-card p {
+        font-size: 0.7rem !important;
+    }
+
+    .book-card div[style*="font-size: 2rem"] {
+        font-size: 1.5rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+}
+
 /* ページナビゲーション - 固定表示 */
 .page-nav {
     display: flex;
