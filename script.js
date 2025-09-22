@@ -661,7 +661,7 @@ class StudyBookApp {
             );
 
             // モーダルが開いている場合の特別処理
-            if (document.getElementById('passwordPromptModal').style.display !== 'none') {
+            if (document.getElementById('passwordPromptModal').classList.contains('active')) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     this.submitPassword();
@@ -679,9 +679,9 @@ class StudyBookApp {
             // ESCキーでモーダルやサイドバーを閉じる
             if (e.key === 'Escape') {
                 e.preventDefault();
-                if (document.getElementById('shareModal').style.display !== 'none') {
+                if (document.getElementById('shareModal').classList.contains('active')) {
                     this.closeShareModal();
-                } else if (document.getElementById('visibilityModal').style.display !== 'none') {
+                } else if (document.getElementById('visibilityModal').classList.contains('active')) {
                     this.closeVisibilityModal();
                 } else if (document.getElementById('keyboardHelpModal') && document.getElementById('keyboardHelpModal').classList.contains('active')) {
                     this.closeKeyboardHelp();
