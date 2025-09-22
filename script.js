@@ -2949,8 +2949,338 @@ showSwipeHint() {
     }
 
     showPublicBooks() {
-        document.getElementById('publicBooksSection').style.display = 'block';
-        document.getElementById('publicBooksSection').scrollIntoView({ behavior: 'smooth' });
+        // みんなのノート専用ページに遷移
+        document.getElementById('homeView').style.display = 'none';
+        document.getElementById('viewerContainer').style.display = 'none';
+        document.getElementById('publicNotesView').style.display = 'block';
+
+        // データを初期化
+        this.initializePublicNotesPage();
+    }
+
+    // みんなのノートページの初期化
+    initializePublicNotesPage() {
+        // 公開ノートを全て取得
+        this.loadAllPublicNotes();
+
+        // タブを初期化（すべてのノートを表示）
+        this.switchPublicView('all');
+
+        // 検索機能を設定
+        this.setupPublicSearch();
+
+        // フィルター機能を設定
+        this.setupPublicFilters();
+    }
+
+    // 全ての公開ノートを読み込み
+    async loadAllPublicNotes() {
+        this.publicNotes = [];
+        this.currentPage = 1;
+        this.notesPerPage = 12;
+
+        try {
+            // Firestoreから公開ノートを取得
+            if (this.db && this.firebaseInitialized) {
+                const publicNotesRef = this.db.collection('publicNotes');
+                const snapshot = await publicNotesRef.get();
+
+                snapshot.forEach(doc => {
+                    const note = { id: doc.id, ...doc.data() };
+                    this.publicNotes.push(note);
+                });
+            }
+
+            // ローカルの公開ノートも追加
+            Array.from(this.notesMap.values()).forEach(note => {
+                if (note.isPublic || note.visibility?.type === 'public') {
+                    this.publicNotes.push(note);
+                }
+            });
+
+            // 重複を削除
+            const uniqueNotes = new Map();
+            this.publicNotes.forEach(note => {
+                const id = note.id.replace('public_', '');
+                if (!uniqueNotes.has(id) || note.views > (uniqueNotes.get(id).views || 0)) {
+                    uniqueNotes.set(id, note);
+                }
+            });
+
+            this.publicNotes = Array.from(uniqueNotes.values());
+            this.sortPublicNotes('newest');
+
+        } catch (error) {
+            console.error('Failed to load public notes:', error);
+            this.showToast('公開ノートの読み込みに失敗しました', 'error');
+        }
+    }
+
+    // 公開ノートのソート
+    sortPublicNotes(sortBy) {
+        switch (sortBy) {
+            case 'newest':
+                this.publicNotes.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+                break;
+            case 'popular':
+                this.publicNotes.sort((a, b) => (b.views || 0) - (a.views || 0));
+                break;
+            case 'views':
+                this.publicNotes.sort((a, b) => (b.views || 0) - (a.views || 0));
+                break;
+            case 'pages':
+                this.publicNotes.sort((a, b) => (b.pages?.length || 0) - (a.pages?.length || 0));
+                break;
+        }
+        this.updatePublicNotesDisplay();
+    }
+
+    // 表示切り替え（すべて/タグ別）
+    switchPublicView(view) {
+        // タブの状態を更新
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+        if (view === 'all') {
+            document.getElementById('allNotesTab').classList.add('active');
+            document.getElementById('allNotesView').style.display = 'block';
+            document.getElementById('taggedNotesView').style.display = 'none';
+            this.updatePublicNotesDisplay();
+        } else if (view === 'tags') {
+            document.getElementById('taggedNotesTab').classList.add('active');
+            document.getElementById('allNotesView').style.display = 'none';
+            document.getElementById('taggedNotesView').style.display = 'block';
+            this.loadPopularTags();
+        }
+    }
+
+    // 公開ノート表示を更新
+    updatePublicNotesDisplay() {
+        const container = document.getElementById('publicNotesList');
+
+        if (this.publicNotes.length === 0) {
+            container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 2rem;">公開されているノートはありません</p>';
+            return;
+        }
+
+        // フィルタリング
+        let filteredNotes = [...this.publicNotes];
+
+        const authorFilter = document.getElementById('authorFilter')?.value.toLowerCase();
+        if (authorFilter) {
+            filteredNotes = filteredNotes.filter(note =>
+                note.author?.toLowerCase().includes(authorFilter)
+            );
+        }
+
+        // ページネーション
+        const startIndex = (this.currentPage - 1) * this.notesPerPage;
+        const endIndex = startIndex + this.notesPerPage;
+        const paginatedNotes = filteredNotes.slice(startIndex, endIndex);
+
+        // ノートカードを表示
+        container.innerHTML = paginatedNotes.map(note => this.createPublicNoteCard(note)).join('');
+
+        // ページネーションを更新
+        this.updatePagination(filteredNotes.length);
+    }
+
+    // 公開ノートカードを作成
+    createPublicNoteCard(note) {
+        const tags = (note.tags || []).slice(0, 3).map(tag =>
+            `<span class="tag" onclick="event.stopPropagation(); app.filterByTag('${this.escapeHtml(tag)}')">${this.escapeHtml(tag)}</span>`
+        ).join('');
+
+        const views = note.views ? `👁️ ${note.views}` : '';
+        const pages = note.pages ? `📄 ${note.pages.length}P` : '';
+
+        return `
+            <div class="book-card" onclick="app.openPublicNote('${note.id}')">
+                <div style="font-size: 2rem; text-align: center; margin-bottom: 1rem;">📖</div>
+                <h3 style="font-size: 1rem; margin-bottom: 0.5rem; height: 3rem; overflow: hidden;">${this.escapeHtml(note.title)}</h3>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;">by ${this.escapeHtml(note.author)}</p>
+                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                    <span>${views}</span>
+                    <span>${pages}</span>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: auto;">
+                    ${tags}
+                </div>
+            </div>
+        `;
+    }
+
+    // ページネーション更新
+    updatePagination(totalNotes) {
+        const totalPages = Math.ceil(totalNotes / this.notesPerPage);
+        const pagination = document.getElementById('pagination');
+
+        if (totalPages <= 1) {
+            pagination.innerHTML = '';
+            return;
+        }
+
+        let paginationHTML = '';
+
+        // 前へボタン
+        paginationHTML += `<button ${this.currentPage === 1 ? 'disabled' : ''} onclick="app.goToPage(${this.currentPage - 1})">←</button>`;
+
+        // ページ番号
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= this.currentPage - 2 && i <= this.currentPage + 2)) {
+                paginationHTML += `<button ${i === this.currentPage ? 'class="active"' : ''} onclick="app.goToPage(${i})">${i}</button>`;
+            } else if (i === this.currentPage - 3 || i === this.currentPage + 3) {
+                paginationHTML += '<span>...</span>';
+            }
+        }
+
+        // 次へボタン
+        paginationHTML += `<button ${this.currentPage === totalPages ? 'disabled' : ''} onclick="app.goToPage(${this.currentPage + 1})">→</button>`;
+
+        pagination.innerHTML = paginationHTML;
+    }
+
+    // ページ移動
+    goToPage(page) {
+        this.currentPage = page;
+        this.updatePublicNotesDisplay();
+        document.getElementById('publicNotesList').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // 人気タグを読み込み
+    loadPopularTags() {
+        const tagCount = new Map();
+
+        // 全ての公開ノートからタグを収集
+        this.publicNotes.forEach(note => {
+            (note.tags || []).forEach(tag => {
+                tagCount.set(tag, (tagCount.get(tag) || 0) + 1);
+            });
+        });
+
+        // タグを使用回数順にソート
+        const sortedTags = Array.from(tagCount.entries())
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 20); // 上位20タグ
+
+        // タグを表示
+        const container = document.getElementById('popularTagsList');
+        container.innerHTML = sortedTags.map(([tag, count]) =>
+            `<span class="tag" onclick="app.filterByTag('${this.escapeHtml(tag)}')">${this.escapeHtml(tag)} (${count})</span>`
+        ).join('');
+
+        // タグ別ノート一覧をクリア
+        document.getElementById('taggedNotesList').innerHTML = '';
+        document.getElementById('selectedTagInfo').style.display = 'none';
+    }
+
+    // タグでフィルタリング
+    filterByTag(tag) {
+        // タグ別表示モードに切り替え
+        this.switchPublicView('tags');
+
+        // フィルタリングされたノートを取得
+        const filteredNotes = this.publicNotes.filter(note =>
+            (note.tags || []).includes(tag)
+        );
+
+        // 選択中のタグ情報を表示
+        document.getElementById('selectedTagName').textContent = tag;
+        document.getElementById('selectedTagInfo').style.display = 'block';
+
+        // ノート一覧を更新
+        const container = document.getElementById('taggedNotesList');
+        if (filteredNotes.length === 0) {
+            container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 2rem;">このタグのノートはありません</p>';
+        } else {
+            container.innerHTML = filteredNotes.map(note => this.createPublicNoteCard(note)).join('');
+        }
+
+        // タグを選択状態にする
+        document.querySelectorAll('#popularTagsList .tag').forEach(tagEl => {
+            tagEl.classList.remove('selected');
+            if (tagEl.textContent.startsWith(tag + ' ')) {
+                tagEl.classList.add('selected');
+            }
+        });
+    }
+
+    // タグフィルターをクリア
+    clearTagFilter() {
+        document.getElementById('selectedTagInfo').style.display = 'none';
+        document.getElementById('taggedNotesList').innerHTML = '';
+        document.querySelectorAll('#popularTagsList .tag').forEach(tagEl => {
+            tagEl.classList.remove('selected');
+        });
+    }
+
+    // 公開ノート検索機能を設定
+    setupPublicSearch() {
+        const searchInput = document.getElementById('publicSearchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', this.debounce(() => {
+                this.searchPublicNotes(searchInput.value);
+            }, 300));
+        }
+    }
+
+    // 公開ノートを検索
+    searchPublicNotes(query) {
+        if (!query.trim()) {
+            this.updatePublicNotesDisplay();
+            return;
+        }
+
+        const filteredNotes = this.publicNotes.filter(note => {
+            const searchText = `${note.title} ${note.author} ${(note.tags || []).join(' ')}`.toLowerCase();
+            return searchText.includes(query.toLowerCase());
+        });
+
+        // 検索結果を表示
+        const container = document.getElementById('publicNotesList');
+        if (filteredNotes.length === 0) {
+            container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 2rem;">検索結果が見つかりません</p>';
+        } else {
+            container.innerHTML = filteredNotes.map(note => this.createPublicNoteCard(note)).join('');
+        }
+
+        // ページネーションを非表示
+        document.getElementById('pagination').innerHTML = '';
+    }
+
+    // フィルター機能を設定
+    setupPublicFilters() {
+        // ソート変更
+        const sortSelect = document.getElementById('sortSelect');
+        if (sortSelect) {
+            sortSelect.addEventListener('change', (e) => {
+                this.sortPublicNotes(e.target.value);
+            });
+        }
+
+        // 作者フィルター
+        const authorFilter = document.getElementById('authorFilter');
+        if (authorFilter) {
+            authorFilter.addEventListener('input', this.debounce(() => {
+                this.currentPage = 1;
+                this.updatePublicNotesDisplay();
+            }, 300));
+        }
+    }
+
+    // フィルターをクリア
+    clearFilters() {
+        document.getElementById('sortSelect').value = 'newest';
+        document.getElementById('authorFilter').value = '';
+        document.getElementById('publicSearchInput').value = '';
+        this.currentPage = 1;
+        this.sortPublicNotes('newest');
+    }
+
+    // 公開ノートを開く
+    openPublicNote(noteId) {
+        // 公開ノートページから通常のビューアーに遷移
+        document.getElementById('publicNotesView').style.display = 'none';
+        this.openBook(noteId, false);
     }
 
     showPopularTags() {

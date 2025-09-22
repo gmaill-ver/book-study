@@ -371,6 +371,100 @@
         </main>
     </div>
 
+    <!-- みんなのノート専用ページ -->
+    <div id="publicNotesView" style="display: none;">
+        <header class="header">
+            <a href="#" class="logo" onclick="app.goHome()" aria-label="StudyBook ホーム">
+                <span>📚</span>
+                <span>StudyBook</span>
+            </a>
+
+            <div class="search-container">
+                <input
+                    type="search"
+                    id="publicSearchInput"
+                    class="search-input"
+                    placeholder="みんなのノートを検索..."
+                    aria-label="みんなのノートを検索"
+                    maxlength="100"
+                    autocomplete="off"
+                >
+                <span class="search-icon">🔍</span>
+                <div id="publicSearchResults" class="search-results"></div>
+            </div>
+
+            <div>
+                <button class="btn btn-secondary" onclick="app.goHome()" aria-label="ホーム" title="ホームに戻る">🏠</button>
+            </div>
+        </header>
+
+        <main style="max-width: 1200px; margin: 2rem auto; padding: 0 1rem;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <h1 style="color: var(--text-primary); font-size: 2rem; margin-bottom: 1rem;">📚 みんなのノート</h1>
+                <p style="color: var(--text-secondary); font-size: 1rem;">コミュニティで共有されている学習ノートを探索しよう</p>
+            </div>
+
+            <!-- 表示切り替えタブ -->
+            <div class="view-tabs" style="display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem;">
+                <button id="allNotesTab" class="tab-btn active" onclick="app.switchPublicView('all')">
+                    📋 すべてのノート
+                </button>
+                <button id="taggedNotesTab" class="tab-btn" onclick="app.switchPublicView('tags')">
+                    🏷️ タグ別表示
+                </button>
+            </div>
+
+            <!-- すべてのノート表示 -->
+            <div id="allNotesView" class="view-content">
+                <!-- ソート・フィルター -->
+                <div class="filter-controls" style="margin-bottom: 2rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                    <select id="sortSelect" class="form-input" style="width: auto;">
+                        <option value="newest">新着順</option>
+                        <option value="popular">人気順</option>
+                        <option value="views">閲覧数順</option>
+                        <option value="pages">ページ数順</option>
+                    </select>
+
+                    <input
+                        type="text"
+                        id="authorFilter"
+                        class="form-input"
+                        placeholder="作者で絞り込み..."
+                        style="width: 200px;"
+                    >
+
+                    <button class="btn btn-secondary" onclick="app.clearFilters()">🔄 リセット</button>
+                </div>
+
+                <!-- ノート一覧 -->
+                <div id="publicNotesList" class="books-grid" style="margin-bottom: 2rem;"></div>
+
+                <!-- ページネーション -->
+                <div id="pagination" class="pagination" style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 2rem;"></div>
+            </div>
+
+            <!-- タグ別表示 -->
+            <div id="taggedNotesView" class="view-content" style="display: none;">
+                <!-- 人気タグ一覧 -->
+                <div class="popular-tags" style="margin-bottom: 2rem;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 1rem;">🔥 人気のタグ</h3>
+                    <div id="popularTagsList" class="tags-container" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 2rem;"></div>
+                </div>
+
+                <!-- 選択中のタグ -->
+                <div id="selectedTagInfo" style="display: none; margin-bottom: 2rem;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 1rem;">
+                        <span id="selectedTagName"></span> のノート
+                    </h3>
+                    <button class="btn btn-secondary" onclick="app.clearTagFilter()">✕ タグを解除</button>
+                </div>
+
+                <!-- タグ別ノート一覧 -->
+                <div id="taggedNotesList" class="books-grid"></div>
+            </div>
+        </main>
+    </div>
+
     <!-- 公開設定モーダル -->
     <div id="visibilityModal" class="modal-overlay">
         <div class="modal-content">
