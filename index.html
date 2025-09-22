@@ -424,6 +424,106 @@
         </div>
     </div>
 
+    <!-- キーボードショートカットヘルプ -->
+    <div id="keyboardHelpModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <h3 style="margin-bottom: 1.5rem;">⌨️ キーボードショートカット</h3>
+
+            <div style="display: grid; gap: 1.5rem;">
+                <!-- ページ操作 -->
+                <div>
+                    <h4 style="color: var(--primary-color); margin-bottom: 0.5rem; font-size: 1rem;">📖 ページ操作</h4>
+                    <div class="shortcut-list">
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">← / h</span>
+                            <span class="shortcut-desc">前のページ</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">→ / l</span>
+                            <span class="shortcut-desc">次のページ</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">↑ / k</span>
+                            <span class="shortcut-desc">前のページ</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">↓ / j</span>
+                            <span class="shortcut-desc">次のページ</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">Home</span>
+                            <span class="shortcut-desc">最初のページ</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">End</span>
+                            <span class="shortcut-desc">最後のページ</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 編集・保存 -->
+                <div>
+                    <h4 style="color: var(--primary-color); margin-bottom: 0.5rem; font-size: 1rem;">✏️ 編集・保存</h4>
+                    <div class="shortcut-list">
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">e</span>
+                            <span class="shortcut-desc">編集モード切り替え</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">Ctrl + S</span>
+                            <span class="shortcut-desc">保存</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ナビゲーション -->
+                <div>
+                    <h4 style="color: var(--primary-color); margin-bottom: 0.5rem; font-size: 1rem;">🧭 ナビゲーション</h4>
+                    <div class="shortcut-list">
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">m</span>
+                            <span class="shortcut-desc">目次（サイドバー）切り替え</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">Esc</span>
+                            <span class="shortcut-desc">モーダル・サイドバーを閉じる</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">/</span>
+                            <span class="shortcut-desc">検索ボックスにフォーカス</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ホーム画面 -->
+                <div>
+                    <h4 style="color: var(--primary-color); margin-bottom: 0.5rem; font-size: 1rem;">🏠 ホーム画面</h4>
+                    <div class="shortcut-list">
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">n</span>
+                            <span class="shortcut-desc">新規ノート作成</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ヘルプ -->
+                <div>
+                    <h4 style="color: var(--primary-color); margin-bottom: 0.5rem; font-size: 1rem;">❓ ヘルプ</h4>
+                    <div class="shortcut-list">
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">?</span>
+                            <span class="shortcut-desc">このヘルプを表示</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-buttons" style="margin-top: 2rem;">
+                <button class="btn-filled" onclick="app.closeKeyboardHelp()">閉じる</button>
+            </div>
+        </div>
+    </div>
+
     <!-- トースト通知 -->
     <div id="toast" class="toast" role="alert" aria-live="polite"></div>
 

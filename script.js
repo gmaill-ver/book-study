@@ -612,6 +612,12 @@ class StudyBookApp {
         // スワイプ機能の設定
         this.setupSwipeHandlers();
 
+        // キーボード操作の設定
+        this.setupKeyboardHandlers();
+
+        // ドラッグ&ドロップ機能の設定
+        this.setupDragAndDrop();
+
         // モーダル外クリックで閉じる
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal-overlay')) {
@@ -623,17 +629,135 @@ class StudyBookApp {
             }
         });
 
+    }
+
+    // ===== キーボード操作機能 =====
+    setupKeyboardHandlers() {
         document.addEventListener('keydown', (e) => {
-            if (this.currentNote) {
-                if (e.key === 'ArrowLeft') this.previousPage();
-                if (e.key === 'ArrowRight') this.nextPage();
-                if (e.key === 'Escape') this.toggleSidebar();
+            // フォーカスが入力欄にある場合は操作を無効化
+            const activeElement = document.activeElement;
+            const isInputActive = activeElement && (
+                activeElement.tagName === 'INPUT' ||
+                activeElement.tagName === 'TEXTAREA' ||
+                activeElement.contentEditable === 'true'
+            );
+
+            // モーダルが開いている場合の特別処理
+            if (document.getElementById('passwordPromptModal').style.display !== 'none') {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.submitPassword();
+                }
+                return;
             }
 
-            if (e.key === 'Enter' && document.getElementById('passwordPromptModal').classList.contains('active')) {
-                this.submitPassword();
+            // ヘルプモーダルの表示/非表示
+            if (e.key === '?' && !isInputActive) {
+                e.preventDefault();
+                this.toggleKeyboardHelp();
+                return;
+            }
+
+            // ESCキーでモーダルやサイドバーを閉じる
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                if (document.getElementById('shareModal').style.display !== 'none') {
+                    this.closeShareModal();
+                } else if (document.getElementById('visibilityModal').style.display !== 'none') {
+                    this.closeVisibilityModal();
+                } else if (document.getElementById('keyboardHelpModal') && document.getElementById('keyboardHelpModal').style.display !== 'none') {
+                    this.closeKeyboardHelp();
+                } else {
+                    this.toggleSidebar();
+                }
+                return;
+            }
+
+            // ビューアーが開いている場合のページ操作
+            if (this.currentNote && !isInputActive) {
+                switch(e.key) {
+                    case 'ArrowLeft':
+                    case 'h':
+                        e.preventDefault();
+                        this.previousPage();
+                        break;
+                    case 'ArrowRight':
+                    case 'l':
+                        e.preventDefault();
+                        this.nextPage();
+                        break;
+                    case 'ArrowUp':
+                    case 'k':
+                        e.preventDefault();
+                        this.previousPage();
+                        break;
+                    case 'ArrowDown':
+                    case 'j':
+                        e.preventDefault();
+                        this.nextPage();
+                        break;
+                    case 'Home':
+                        e.preventDefault();
+                        this.goToPage(0);
+                        break;
+                    case 'End':
+                        e.preventDefault();
+                        this.goToPage(this.currentNote.pages.length - 1);
+                        break;
+                    case 'e':
+                        e.preventDefault();
+                        this.toggleEdit();
+                        break;
+                    case 's':
+                        if (e.ctrlKey || e.metaKey) {
+                            e.preventDefault();
+                            this.saveBook();
+                        }
+                        break;
+                    case 'm':
+                        e.preventDefault();
+                        this.toggleSidebar();
+                        break;
+                }
+            }
+
+            // ホーム画面での操作
+            if (!this.currentNote && !isInputActive) {
+                switch(e.key) {
+                    case 'n':
+                        e.preventDefault();
+                        this.createNewBook();
+                        break;
+                    case '/':
+                        e.preventDefault();
+                        document.getElementById('searchInput').focus();
+                        break;
+                }
             }
         });
+    }
+
+    // 特定のページに移動
+    goToPage(pageIndex) {
+        if (this.currentNote && pageIndex >= 0 && pageIndex < this.currentNote.pages.length) {
+            if (this.isEditing) {
+                this.saveCurrentPage();
+            }
+            this.currentPage = pageIndex;
+            this.updateViewer();
+            this.saveReadingProgress(this.currentNote.id, this.currentPage);
+        }
+    }
+
+    // 編集モードの切り替え
+    toggleEdit() {
+        if (this.currentNote && this.currentUser) {
+            if (this.isEditing) {
+                this.viewMode();
+            } else {
+                this.editMode();
+            }
+        }
     }
 
     // ===== スワイプ機能（ズーム対応版） =====
@@ -2116,6 +2240,149 @@ showSwipeHint() {
         };
 
         tempImg.src = src;
+    }
+
+    // ===== ドラッグ&ドロップ機能 =====
+    setupDragAndDrop() {
+        // テキストファイルのドラッグ&ドロップ対応
+        const viewerContainer = document.getElementById('viewerContainer');
+
+        // 既存の画像用ドロップゾーンも拡張
+        const imageDropZone = document.querySelector('[ondrop="app.handleDrop(event)"]');
+
+        if (viewerContainer) {
+            // ビューアー全体でのテキストファイルドロップ
+            viewerContainer.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                if (this.isEditing) {
+                    e.dataTransfer.dropEffect = 'copy';
+                    viewerContainer.style.backgroundColor = 'rgba(52, 152, 219, 0.1)';
+                }
+            });
+
+            viewerContainer.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                viewerContainer.style.backgroundColor = '';
+            });
+
+            viewerContainer.addEventListener('drop', (e) => {
+                e.preventDefault();
+                viewerContainer.style.backgroundColor = '';
+
+                if (!this.isEditing) {
+                    this.showToast('編集モードでのみドラッグ&ドロップが利用できます', 'info');
+                    return;
+                }
+
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    this.handleTextFileUpload(files);
+                }
+            });
+        }
+
+        // 画像ドロップゾーンの機能拡張
+        if (imageDropZone) {
+            imageDropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'copy';
+                imageDropZone.style.borderColor = 'var(--primary-color)';
+                imageDropZone.style.backgroundColor = 'rgba(52, 152, 219, 0.05)';
+            });
+
+            imageDropZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                imageDropZone.style.borderColor = 'var(--border-color)';
+                imageDropZone.style.backgroundColor = '';
+            });
+        }
+    }
+
+    // テキストファイルのアップロード処理
+    async handleTextFileUpload(files) {
+        for (let file of files) {
+            if (file.type.startsWith('text/') ||
+                file.name.endsWith('.md') ||
+                file.name.endsWith('.txt') ||
+                file.name.endsWith('.csv')) {
+
+                try {
+                    const text = await this.readFileAsText(file);
+                    this.insertTextIntoEditor(text, file.name);
+                    this.showToast(`${file.name} の内容を挿入しました`, 'success');
+                } catch (error) {
+                    this.showToast(`${file.name} の読み込みに失敗しました`, 'error');
+                }
+            } else if (file.type.startsWith('image/')) {
+                // 画像ファイルの場合は既存の処理を利用
+                this.handleImageUpload({ target: { files: [file] } });
+            } else {
+                this.showToast(`${file.name} はサポートされていないファイル形式です`, 'warning');
+            }
+        }
+    }
+
+    // ファイルをテキストとして読み込み
+    readFileAsText(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.onerror = () => reject(new Error('ファイルの読み込みに失敗しました'));
+            reader.readAsText(file, 'UTF-8');
+        });
+    }
+
+    // エディターにテキストを挿入
+    insertTextIntoEditor(text, fileName = '') {
+        const contentInput = document.getElementById('pageContentInput');
+        if (!contentInput || !this.isEditing) return;
+
+        const cursorPos = contentInput.selectionStart;
+        const currentValue = contentInput.value;
+
+        // ファイル名をヘッダーとして追加（マークダウン形式）
+        let insertText = text;
+        if (fileName) {
+            const fileHeader = `\n\n## ${fileName}\n\n`;
+            insertText = fileHeader + text + '\n\n';
+        }
+
+        // カーソル位置にテキストを挿入
+        const newValue = currentValue.slice(0, cursorPos) + insertText + currentValue.slice(cursorPos);
+        contentInput.value = newValue;
+
+        // カーソル位置を挿入したテキストの後に移動
+        const newCursorPos = cursorPos + insertText.length;
+        contentInput.setSelectionRange(newCursorPos, newCursorPos);
+        contentInput.focus();
+
+        // 変更を保存
+        this.currentNote.pages[this.currentPage].content = newValue;
+    }
+
+    // ===== キーボードヘルプ機能 =====
+    toggleKeyboardHelp() {
+        const modal = document.getElementById('keyboardHelpModal');
+        if (modal.style.display === 'none' || !modal.style.display) {
+            this.showKeyboardHelp();
+        } else {
+            this.closeKeyboardHelp();
+        }
+    }
+
+    showKeyboardHelp() {
+        const modal = document.getElementById('keyboardHelpModal');
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+
+        // フォーカスをモーダルに移動（アクセシビリティ）
+        modal.focus();
+    }
+
+    closeKeyboardHelp() {
+        const modal = document.getElementById('keyboardHelpModal');
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
     }
 
     // ===== ページ管理 =====

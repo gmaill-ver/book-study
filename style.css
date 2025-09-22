@@ -667,6 +667,57 @@ body {
     margin: 1rem auto;
 }
 
+/* キーボードショートカットヘルプ */
+.shortcut-list {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.shortcut-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    transition: var(--transition-base);
+}
+
+.shortcut-item:hover {
+    background: var(--bg-secondary);
+    border-color: var(--primary-color);
+}
+
+.shortcut-key {
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    color: var(--text-primary);
+    min-width: 80px;
+    text-align: center;
+}
+
+.shortcut-desc {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    margin-left: 1rem;
+}
+
+/* ダークモード対応 */
+@media (prefers-color-scheme: dark) {
+    .shortcut-key {
+        background: linear-gradient(135deg, #495057, #343a40);
+        border-color: #6c757d;
+        color: #f8f9fa;
+    }
+}
+
 /* ページナビゲーション */
 .page-nav {
     display: flex;
