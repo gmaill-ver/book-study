@@ -3292,9 +3292,13 @@ showSwipeHint() {
 
         // タグを表示
         const container = document.getElementById('popularTagsList');
-        container.innerHTML = sortedTags.map(([tag, count]) =>
-            `<span class="tag" onclick="app.filterByTag('${this.escapeHtml(tag)}')">${this.escapeHtml(tag)} (${count})</span>`
-        ).join('');
+        if (sortedTags.length === 0) {
+            container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 2rem;">まだタグが付けられたノートがありません。<br>ノートを作成してタグを追加してみてください。</p>';
+        } else {
+            container.innerHTML = sortedTags.map(([tag, count]) =>
+                `<span class="tag" onclick="app.filterByTag('${this.escapeHtml(tag)}')">${this.escapeHtml(tag)} (${count})</span>`
+            ).join('');
+        }
 
         // タグ別ノート一覧をクリア
         document.getElementById('taggedNotesList').innerHTML = '';
