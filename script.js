@@ -585,23 +585,87 @@ class StudyBookApp {
             return;
         }
         
-        shelfContainer.innerHTML = myNotes.map((note, index) => {
-            const hasPassword = note.password || note.visibility?.type === 'password';
-            const lockIcon = hasPassword ? '<div class="book-spine-lock">🔐</div>' : '';
-            const bookColor = note.bookColor || '#f8f8f8';
-            const borderColor = this.getBorderColorFromBackground(bookColor);
+        // 本棚のHTMLを生成（段数に応じて棚板も追加）
+        this.generateBookshelfWithShelves(myNotes, shelfContainer);
+    }
 
-            return `
-                <div class="book-spine"
-                     onclick="app.openBook('${note.id}', false)"
-                     title="${this.escapeHtml(note.title)}"
-                     style="background: ${bookColor}; border-color: ${borderColor};">
-                    ${lockIcon}
-                    <div class="book-spine-title">${this.escapeHtml(this.truncateTitle(note.title, 10))}</div>
-                    <div class="book-spine-meta">${note.pages.length}P</div>
+    // 段数に応じて本棚と棚板を生成
+    generateBookshelfWithShelves(notes, container) {
+        // 現在のウィンドウサイズに応じて1段あたりの本数を計算
+        const containerWidth = container.offsetWidth || 800;
+        const bookWidth = window.innerWidth <= 768 ? 30 : 40; // モバイルかデスクトップか
+        const booksPerRow = Math.floor(containerWidth / (bookWidth + 2)); // 2pxはgap
+
+        // 段数を計算
+        const totalRows = Math.ceil(notes.length / booksPerRow);
+
+        // 段ごとに本と棚板をペアにしてHTML生成
+        let allHTML = '';
+
+        for (let row = 0; row < totalRows; row++) {
+            const startIndex = row * booksPerRow;
+            const endIndex = Math.min(startIndex + booksPerRow, notes.length);
+            const rowNotes = notes.slice(startIndex, endIndex);
+
+            // この段の本のHTML
+            const rowBooksHTML = rowNotes.map((note, index) => {
+                const hasPassword = note.password || note.visibility?.type === 'password';
+                const lockIcon = hasPassword ? '<div class="book-spine-lock">🔐</div>' : '';
+                const bookColor = note.bookColor || '#f8f8f8';
+                const borderColor = this.getBorderColorFromBackground(bookColor);
+
+                return `
+                    <div class="book-spine"
+                         onclick="app.openBook('${note.id}', false)"
+                         title="${this.escapeHtml(note.title)}"
+                         style="background: ${bookColor}; border-color: ${borderColor};">
+                        ${lockIcon}
+                        <div class="book-spine-title">${this.escapeHtml(this.truncateTitle(note.title, 10))}</div>
+                        <div class="book-spine-meta">${note.pages.length}P</div>
+                    </div>
+                `;
+            }).join('');
+
+            // 段の区切りHTML（本+棚板）
+            allHTML += `
+                <div class="shelf-row" style="display: contents;">
+                    <div class="bookshelf-row" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(${bookWidth}px, 1fr)); gap: 0.5px; grid-column: 1/-1; margin-bottom: -5px; position: relative; z-index: 2;">
+                        ${rowBooksHTML}
+                    </div>
+                    <div class="shelf-board" style="grid-column: 1/-1;"></div>
                 </div>
             `;
-        }).join('');
+        }
+
+        // 本棚コンテナ全体を更新
+        const shelfUnitContainer = container.parentElement;
+        if (shelfUnitContainer && shelfUnitContainer.classList.contains('shelf-unit')) {
+            shelfUnitContainer.innerHTML = `
+                <div class="bookshelf-multi" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(${bookWidth}px, 1fr)); padding: 1.5rem 1.5rem 0 1.5rem; background: transparent;">
+                    ${allHTML}
+                </div>
+            `;
+        } else {
+            // フォールバック：既存の構造
+            const booksHTML = notes.map((note, index) => {
+                const hasPassword = note.password || note.visibility?.type === 'password';
+                const lockIcon = hasPassword ? '<div class="book-spine-lock">🔐</div>' : '';
+                const bookColor = note.bookColor || '#f8f8f8';
+                const borderColor = this.getBorderColorFromBackground(bookColor);
+
+                return `
+                    <div class="book-spine"
+                         onclick="app.openBook('${note.id}', false)"
+                         title="${this.escapeHtml(note.title)}"
+                         style="background: ${bookColor}; border-color: ${borderColor};">
+                        ${lockIcon}
+                        <div class="book-spine-title">${this.escapeHtml(this.truncateTitle(note.title, 10))}</div>
+                        <div class="book-spine-meta">${note.pages.length}P</div>
+                    </div>
+                `;
+            }).join('');
+            container.innerHTML = booksHTML;
+        }
     }
 
     // ===== イベントリスナー設定（スワイプ機能追加） =====
