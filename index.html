@@ -110,20 +110,6 @@
                 <span>📚</span>
                 <span>StudyBook</span>
             </a>
-            
-            <div class="search-container">
-                <input 
-                    type="search" 
-                    id="searchInput" 
-                    class="search-input" 
-                    placeholder="ノートを検索..."
-                    aria-label="ノートを検索"
-                    maxlength="100"
-                    autocomplete="off"
-                >
-                <span class="search-icon">🔍</span>
-                <div id="searchResults" class="search-results"></div>
-            </div>
 
             <div id="authSection">
                 <button class="btn btn-secondary" onclick="app.showKeyboardHelp()" aria-label="キーボードヘルプ" title="キーボードショートカット (?)">⌨️</button>
@@ -179,12 +165,6 @@
                     <div style="font-size: 2rem; text-align: center; margin-bottom: 1rem;">📚</div>
                     <h3 style="font-size: 1rem; text-align: center; margin-bottom: 0.5rem;">みんなのノート</h3>
                     <p style="color: var(--text-secondary); text-align: center; font-size: 0.9rem;">公開ノートを探す</p>
-                </div>
-
-                <div class="book-card" onclick="app.showPopularTags()" role="button" tabindex="0">
-                    <div style="font-size: 2rem; text-align: center; margin-bottom: 1rem;">🏷️</div>
-                    <h3 style="font-size: 1rem; text-align: center; margin-bottom: 0.5rem;">人気のタグ</h3>
-                    <p style="color: var(--text-secondary); text-align: center; font-size: 0.9rem;">タグから探す</p>
                 </div>
             </div>
 
@@ -682,10 +662,6 @@
                         <div class="shortcut-item">
                             <span class="shortcut-key">Esc</span>
                             <span class="shortcut-desc">モーダル・サイドバーを閉じる</span>
-                        </div>
-                        <div class="shortcut-item">
-                            <span class="shortcut-key">/</span>
-                            <span class="shortcut-desc">検索ボックスにフォーカス</span>
                         </div>
                     </div>
                 </div>

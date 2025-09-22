@@ -10,6 +10,8 @@ class StudyBookApp {
         this.notesMap = new Map();
         this.currentNote = null;
         this.currentPage = 0;
+        this.currentShelfPage = 1;
+        this.publicNotes = [];
         this.isEditing = false;
         this.isOnline = navigator.onLine;
         this.isAuthMode = 'login';
@@ -2953,20 +2955,23 @@ showSwipeHint() {
         this.updateUI();
     }
 
-    showPublicBooks() {
+    async showPublicBooks() {
         // みんなのノート専用ページに遷移
         document.getElementById('homeView').style.display = 'none';
         document.getElementById('viewerContainer').style.display = 'none';
         document.getElementById('publicNotesView').style.display = 'block';
 
         // データを初期化
-        this.initializePublicNotesPage();
+        await this.initializePublicNotesPage();
     }
 
     // みんなのノートページの初期化
-    initializePublicNotesPage() {
+    async initializePublicNotesPage() {
+        // ページネーション初期化
+        this.currentShelfPage = 1;
+
         // 公開ノートを全て取得
-        this.loadAllPublicNotes();
+        await this.loadAllPublicNotes();
 
         // タブを初期化（すべてのノートを表示）
         this.switchPublicView('all');
@@ -3163,7 +3168,7 @@ showSwipeHint() {
     updatePublicBookshelfDisplay() {
         const container = document.getElementById('publicBookshelf');
 
-        if (this.publicNotes.length === 0) {
+        if (!this.publicNotes || this.publicNotes.length === 0) {
             container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; grid-column: 1/-1; padding: 2rem;">公開されているノートはありません</p>';
             return;
         }
