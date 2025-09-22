@@ -394,7 +394,7 @@
             </div>
 
             <div>
-                <button class="btn btn-secondary" onclick="app.goHome()" aria-label="ホーム" title="ホームに戻る">🏠</button>
+                <!-- ホームボタンを削除 - ロゴクリックでホームに戻れるため -->
             </div>
         </header>
 
@@ -408,6 +408,9 @@
             <div class="view-tabs" style="display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem;">
                 <button id="allNotesTab" class="tab-btn active" onclick="app.switchPublicView('all')">
                     📋 すべてのノート
+                </button>
+                <button id="publicShelfTab" class="tab-btn" onclick="app.switchPublicView('shelf')">
+                    📚 本棚表示
                 </button>
                 <button id="taggedNotesTab" class="tab-btn" onclick="app.switchPublicView('tags')">
                     🏷️ タグ別表示
@@ -441,6 +444,40 @@
 
                 <!-- ページネーション -->
                 <div id="pagination" class="pagination" style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 2rem;"></div>
+            </div>
+
+            <!-- 本棚表示 -->
+            <div id="publicShelfView" class="view-content" style="display: none;">
+                <!-- 本棚表示のソート・フィルター -->
+                <div class="filter-controls" style="margin-bottom: 2rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                    <select id="shelfSortSelect" class="form-input" style="width: auto;">
+                        <option value="newest">新着順</option>
+                        <option value="popular">人気順</option>
+                        <option value="views">閲覧数順</option>
+                        <option value="pages">ページ数順</option>
+                    </select>
+
+                    <input
+                        type="text"
+                        id="shelfAuthorFilter"
+                        class="form-input"
+                        placeholder="作者で絞り込み..."
+                        style="width: 200px;"
+                    >
+
+                    <button class="btn btn-secondary" onclick="app.clearShelfFilters()">🔄 リセット</button>
+                </div>
+
+                <!-- 本棚コンテナ -->
+                <div class="bookshelf-container">
+                    <div class="shelf-unit">
+                        <div id="publicBookshelf" class="bookshelf"></div>
+                        <div class="shelf-board"></div>
+                    </div>
+                </div>
+
+                <!-- 本棚用ページネーション -->
+                <div id="shelfPagination" class="pagination" style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 2rem;"></div>
             </div>
 
             <!-- タグ別表示 -->

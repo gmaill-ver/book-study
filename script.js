@@ -2982,6 +2982,7 @@ showSwipeHint() {
     async loadAllPublicNotes() {
         this.publicNotes = [];
         this.currentPage = 1;
+        this.currentShelfPage = 1;
         this.notesPerPage = 12;
 
         try {
@@ -3040,19 +3041,26 @@ showSwipeHint() {
         this.updatePublicNotesDisplay();
     }
 
-    // 表示切り替え（すべて/タグ別）
+    // 表示切り替え（すべて/本棚/タグ別）
     switchPublicView(view) {
         // タブの状態を更新
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
 
+        // 全てのビューを非表示
+        document.getElementById('allNotesView').style.display = 'none';
+        document.getElementById('publicShelfView').style.display = 'none';
+        document.getElementById('taggedNotesView').style.display = 'none';
+
         if (view === 'all') {
             document.getElementById('allNotesTab').classList.add('active');
             document.getElementById('allNotesView').style.display = 'block';
-            document.getElementById('taggedNotesView').style.display = 'none';
             this.updatePublicNotesDisplay();
+        } else if (view === 'shelf') {
+            document.getElementById('publicShelfTab').classList.add('active');
+            document.getElementById('publicShelfView').style.display = 'block';
+            this.updatePublicBookshelfDisplay();
         } else if (view === 'tags') {
             document.getElementById('taggedNotesTab').classList.add('active');
-            document.getElementById('allNotesView').style.display = 'none';
             document.getElementById('taggedNotesView').style.display = 'block';
             this.loadPopularTags();
         }
@@ -3149,6 +3157,100 @@ showSwipeHint() {
         this.currentPage = page;
         this.updatePublicNotesDisplay();
         document.getElementById('publicNotesList').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // 公開本棚表示を更新
+    updatePublicBookshelfDisplay() {
+        const container = document.getElementById('publicBookshelf');
+
+        if (this.publicNotes.length === 0) {
+            container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; grid-column: 1/-1; padding: 2rem;">公開されているノートはありません</p>';
+            return;
+        }
+
+        // フィルタリング
+        let filteredNotes = [...this.publicNotes];
+
+        const authorFilter = document.getElementById('shelfAuthorFilter')?.value.toLowerCase();
+        if (authorFilter) {
+            filteredNotes = filteredNotes.filter(note =>
+                note.author?.toLowerCase().includes(authorFilter)
+            );
+        }
+
+        // ページネーション
+        const startIndex = (this.currentShelfPage - 1) * this.notesPerPage;
+        const endIndex = startIndex + this.notesPerPage;
+        const paginatedNotes = filteredNotes.slice(startIndex, endIndex);
+
+        // 本棚表示用の本スパインを生成
+        container.innerHTML = paginatedNotes.map((note, index) => {
+            const hasPassword = note.password || note.visibility?.type === 'password';
+            const lockIcon = hasPassword ? '<div class="book-spine-lock">🔐</div>' : '';
+            const bookColor = note.bookColor || this.getRandomBookColor(index);
+            const borderColor = this.getBorderColorFromBackground(bookColor);
+
+            return `
+                <div class="book-spine"
+                     onclick="app.openPublicNote('${note.id}')"
+                     title="${this.escapeHtml(note.title)} by ${this.escapeHtml(note.author)}"
+                     style="background: ${bookColor}; border-color: ${borderColor};">
+                    ${lockIcon}
+                    <div class="book-spine-title">${this.escapeHtml(this.truncateTitle(note.title, 10))}</div>
+                    <div class="book-spine-meta">${note.pages?.length || 0}P</div>
+                </div>
+            `;
+        }).join('');
+
+        // 本棚用ページネーションを更新
+        this.updateShelfPagination(filteredNotes.length);
+    }
+
+    // 本棚用ページネーション更新
+    updateShelfPagination(totalNotes) {
+        const totalPages = Math.ceil(totalNotes / this.notesPerPage);
+        const pagination = document.getElementById('shelfPagination');
+
+        if (totalPages <= 1) {
+            pagination.innerHTML = '';
+            return;
+        }
+
+        let paginationHTML = '';
+
+        // 前へボタン
+        paginationHTML += `<button ${this.currentShelfPage === 1 ? 'disabled' : ''} onclick="app.goToShelfPage(${this.currentShelfPage - 1})">←</button>`;
+
+        // ページ番号
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= this.currentShelfPage - 2 && i <= this.currentShelfPage + 2)) {
+                paginationHTML += `<button ${i === this.currentShelfPage ? 'class="active"' : ''} onclick="app.goToShelfPage(${i})">${i}</button>`;
+            } else if (i === this.currentShelfPage - 3 || i === this.currentShelfPage + 3) {
+                paginationHTML += '<span>...</span>';
+            }
+        }
+
+        // 次へボタン
+        paginationHTML += `<button ${this.currentShelfPage === totalPages ? 'disabled' : ''} onclick="app.goToShelfPage(${this.currentShelfPage + 1})">→</button>`;
+
+        pagination.innerHTML = paginationHTML;
+    }
+
+    // 本棚ページ移動
+    goToShelfPage(page) {
+        this.currentShelfPage = page;
+        this.updatePublicBookshelfDisplay();
+        document.getElementById('publicBookshelf').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // ランダムな本の色を生成
+    getRandomBookColor(index) {
+        const colors = [
+            '#f8f8f8', '#f0f0f0', '#e8e8e8', '#e0f2f1', '#fff3e0',
+            '#fce4ec', '#e8f5e8', '#e3f2fd', '#f3e5f5', '#fff8e1',
+            '#fafafa', '#f5f5f5'
+        ];
+        return colors[index % colors.length];
     }
 
     // 人気タグを読み込み
@@ -3270,6 +3372,24 @@ showSwipeHint() {
                 this.updatePublicNotesDisplay();
             }, 300));
         }
+
+        // 本棚表示のソート変更
+        const shelfSortSelect = document.getElementById('shelfSortSelect');
+        if (shelfSortSelect) {
+            shelfSortSelect.addEventListener('change', (e) => {
+                this.sortPublicNotes(e.target.value);
+                this.updatePublicBookshelfDisplay();
+            });
+        }
+
+        // 本棚表示の作者フィルター
+        const shelfAuthorFilter = document.getElementById('shelfAuthorFilter');
+        if (shelfAuthorFilter) {
+            shelfAuthorFilter.addEventListener('input', this.debounce(() => {
+                this.currentShelfPage = 1;
+                this.updatePublicBookshelfDisplay();
+            }, 300));
+        }
     }
 
     // フィルターをクリア
@@ -3279,6 +3399,15 @@ showSwipeHint() {
         document.getElementById('publicSearchInput').value = '';
         this.currentPage = 1;
         this.sortPublicNotes('newest');
+    }
+
+    // 本棚表示のフィルターをクリア
+    clearShelfFilters() {
+        document.getElementById('shelfSortSelect').value = 'newest';
+        document.getElementById('shelfAuthorFilter').value = '';
+        this.currentShelfPage = 1;
+        this.sortPublicNotes('newest');
+        this.updatePublicBookshelfDisplay();
     }
 
     // 公開ノートを開く
