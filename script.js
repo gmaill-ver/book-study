@@ -1531,7 +1531,13 @@ showSwipeHint() {
                 
                 document.getElementById('pageBody').innerHTML = DOMPurify.sanitize(htmlContent);
             } else {
-                document.getElementById('pageBody').textContent = page.content || '';
+                // Markdownライブラリが利用できない場合でも、改行や空白を保持して表示
+                const pageBodyEl = document.getElementById('pageBody');
+                pageBodyEl.innerHTML = '';
+                const preEl = document.createElement('pre');
+                preEl.style.cssText = 'white-space: pre-wrap; word-wrap: break-word; font-family: inherit; margin: 0; line-height: 1.8;';
+                preEl.textContent = page.content || '';
+                pageBodyEl.appendChild(preEl);
             }
         }
     }
