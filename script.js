@@ -1266,6 +1266,21 @@ showSwipeHint() {
     closePasswordPrompt() {
         document.getElementById('passwordPromptModal').classList.remove('active');
         this.pendingPasswordNote = null;
+
+        // パスワードプロンプトをキャンセルした場合は、適切な画面に戻る
+        const isPublicNotesVisible = document.getElementById('publicNotesView').style.display !== 'none';
+        const isViewerVisible = document.getElementById('viewerContainer').style.display !== 'none';
+
+        if (isViewerVisible) {
+            // ビューアーが表示されていた場合はホームに戻る
+            this.goHome();
+        } else if (isPublicNotesVisible) {
+            // みんなのノート画面が表示されていた場合はそのまま
+            return;
+        } else {
+            // その他の場合はホームに戻る
+            this.goHome();
+        }
     }
 
     // ===== ノート検索 =====
@@ -1569,6 +1584,7 @@ showSwipeHint() {
         if (!editMode) {
             const hasAccess = await this.checkPasswordProtection(note);
             if (!hasAccess) {
+                // パスワードチェックに失敗した場合は、既に closePasswordPrompt で適切な画面に戻る
                 return;
             }
         }
