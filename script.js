@@ -2985,6 +2985,7 @@ showSwipeHint() {
 
     // 全ての公開ノートを読み込み
     async loadAllPublicNotes() {
+        console.log('=== loadAllPublicNotes Start ===');
         this.publicNotes = [];
         this.currentPage = 1;
         this.currentShelfPage = 1;
@@ -2992,19 +2993,25 @@ showSwipeHint() {
 
         try {
             // Firestoreから公開ノートを取得
+            console.log('Firebase check:', { db: !!this.db, firebaseInitialized: this.firebaseInitialized });
             if (this.db && this.firebaseInitialized) {
                 const publicNotesRef = this.db.collection('publicNotes');
                 const snapshot = await publicNotesRef.get();
+                console.log('Firestore snapshot size:', snapshot.size);
 
                 snapshot.forEach(doc => {
                     const note = { id: doc.id, ...doc.data() };
+                    console.log('Found Firestore note:', note);
                     this.publicNotes.push(note);
                 });
             }
 
             // ローカルの公開ノートも追加
+            console.log('notesMap size:', this.notesMap.size);
             Array.from(this.notesMap.values()).forEach(note => {
+                console.log('Checking local note:', note.title, 'isPublic:', note.isPublic, 'visibility:', note.visibility);
                 if (note.isPublic || note.visibility?.type === 'public') {
+                    console.log('Adding local public note:', note.title);
                     this.publicNotes.push(note);
                 }
             });
@@ -3019,12 +3026,15 @@ showSwipeHint() {
             });
 
             this.publicNotes = Array.from(uniqueNotes.values());
+            console.log('Final publicNotes after deduplication:', this.publicNotes);
+            console.log('Final publicNotes count:', this.publicNotes.length);
             this.sortPublicNotes('newest');
 
         } catch (error) {
             console.error('Failed to load public notes:', error);
             this.showToast('公開ノートの読み込みに失敗しました', 'error');
         }
+        console.log('=== loadAllPublicNotes End ===');
     }
 
     // 公開ノートのソート
@@ -3168,7 +3178,14 @@ showSwipeHint() {
     updatePublicBookshelfDisplay() {
         const container = document.getElementById('publicBookshelf');
 
+        console.log('=== updatePublicBookshelfDisplay Debug ===');
+        console.log('publicNotes:', this.publicNotes);
+        console.log('publicNotes length:', this.publicNotes?.length);
+        console.log('currentShelfPage:', this.currentShelfPage);
+        console.log('container:', container);
+
         if (!this.publicNotes || this.publicNotes.length === 0) {
+            console.log('No public notes found');
             container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; grid-column: 1/-1; padding: 2rem;">公開されているノートはありません</p>';
             return;
         }
