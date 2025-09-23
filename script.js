@@ -4081,19 +4081,31 @@ showSwipeHint() {
 
     // スマホ編集拡大表示モード
     setupMobileEditMode() {
-        // モバイルデバイスかつ画面幅が768px以下の場合のみ
+        // モバイルデバイスかつ画面幅が768px以下で、かつテキストエリアにフォーカスされた場合のみ
         if (window.innerWidth <= 768) {
             const editMode = document.getElementById('editMode');
             const body = document.body;
 
-            if (editMode) {
-                editMode.classList.add('mobile-edit-expanded');
+            if (editMode && this.isEditing) {
+                // 軽微な最適化のみ適用（full拡大表示は避ける）
                 body.classList.add('mobile-editing');
 
                 // ページナビゲーションを非表示
                 const pageNav = document.querySelector('.page-nav');
                 if (pageNav) {
                     pageNav.style.display = 'none';
+                }
+
+                // テキストエリアフォーカス時のみ拡大表示
+                const textarea = document.getElementById('pageContentInput');
+                if (textarea) {
+                    textarea.addEventListener('focus', () => {
+                        editMode.classList.add('mobile-edit-expanded');
+                    });
+
+                    textarea.addEventListener('blur', () => {
+                        editMode.classList.remove('mobile-edit-expanded');
+                    });
                 }
             }
         }

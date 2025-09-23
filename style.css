@@ -1204,6 +1204,14 @@ body {
         padding: 0.5rem;
     }
 
+    /* スマホでのボタンタッチ領域を拡大 */
+    .viewer-header .btn {
+        min-width: 44px !important;
+        min-height: 44px !important;
+        padding: 0.5rem !important;
+        margin: 0 0.1rem !important;
+    }
+
     .bookshelf {
         grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
         gap: 1px;
@@ -1346,8 +1354,9 @@ body {
     }
 
     body.mobile-editing .viewer-header .btn {
-        min-width: 32px !important;
-        min-height: 32px !important;
-        font-size: 1rem !important;
+        min-width: 44px !important; /* タッチ領域を拡大 */
+        min-height: 44px !important; /* タッチ領域を拡大 */
+        font-size: 1.1rem !important;
+        padding: 0.5rem !important; /* パディングを追加 */
     }
 }
