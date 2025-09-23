@@ -4,8 +4,8 @@
   "description": "学習ノート共有プラットフォーム",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#667eea",
-  "theme_color": "#667eea",
+  "background_color": "#ffffff",
+  "theme_color": "#333333",
   "icons": [
     {
       "src": "/icon-192.png",
