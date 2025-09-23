@@ -1889,7 +1889,7 @@ showSwipeHint() {
             }
 
             // Markdown処理（動的読み込み対応）
-            await this.renderMarkdownContent(page.content || '');
+            this.renderMarkdownContent(page.content || '');
         }
     }
 
