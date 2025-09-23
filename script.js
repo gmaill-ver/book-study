@@ -1215,17 +1215,34 @@ showSwipeHint() {
 
     handlePublicNotesSnapshot(snapshot) {
         let hasChanges = false;
-        
+
         snapshot.docChanges().forEach((change) => {
-            const noteData = { id: change.doc.id, ...change.doc.data() };
-            
-            if (noteData.authorId !== this.currentUser?.uid) {
-                if (change.type === 'added' || change.type === 'modified') {
-                    this.notesMap.set('public_' + change.doc.id, noteData);
-                    hasChanges = true;
-                } else if (change.type === 'removed') {
-                    this.notesMap.delete('public_' + change.doc.id);
-                    hasChanges = true;
+            const noteData = {
+                id: 'public_' + change.doc.id,
+                ...change.doc.data()
+            };
+
+            // 自分のノートも含めて全ての公開ノートを更新（名称変更反映のため）
+            if (change.type === 'added' || change.type === 'modified') {
+                this.notesMap.set(noteData.id, noteData);
+                hasChanges = true;
+
+                // 現在表示中のノートが更新された場合
+                if (this.currentNote && this.currentNote.id === noteData.id) {
+                    // 編集中でない場合のみ更新（編集内容を保護）
+                    if (!this.isEditing) {
+                        this.currentNote = noteData;
+                        this.updateViewer();
+                    }
+                }
+            } else if (change.type === 'removed') {
+                this.notesMap.delete(noteData.id);
+                hasChanges = true;
+
+                // 現在表示中のノートが削除された場合
+                if (this.currentNote && this.currentNote.id === noteData.id) {
+                    this.goHome();
+                    this.showToast('このノートは削除されました', 'info');
                 }
             }
         });
@@ -1233,6 +1250,12 @@ showSwipeHint() {
         if (hasChanges) {
             this.updateSearchIndex();
             this.updateUI();
+
+            // 公開ノートページが表示されている場合は表示を更新
+            if (document.getElementById('publicNotesView').style.display !== 'none') {
+                this.updatePublicNotesDisplay();
+                this.updatePublicBookshelfDisplay();
+            }
         }
     }
 
