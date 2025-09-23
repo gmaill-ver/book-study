@@ -147,20 +147,6 @@
                 </div>
             </section>
 
-            <!-- アクションカード -->
-            <div class="action-cards">
-                <div class="book-card" onclick="app.createNewBook()" role="button" tabindex="0">
-                    <div style="font-size: 2rem; text-align: center; margin-bottom: 1rem;">📝</div>
-                    <h3 style="font-size: 1rem; text-align: center; margin-bottom: 0.5rem;">新規作成</h3>
-                    <p style="color: var(--text-secondary); text-align: center; font-size: 0.9rem;">学習ノートを作成</p>
-                </div>
-
-                <div class="book-card" onclick="app.showPublicBooks()" role="button" tabindex="0">
-                    <div style="font-size: 2rem; text-align: center; margin-bottom: 1rem;">📚</div>
-                    <h3 style="font-size: 1rem; text-align: center; margin-bottom: 0.5rem;">みんなのノート</h3>
-                    <p style="color: var(--text-secondary); text-align: center; font-size: 0.9rem;">公開ノートを探す</p>
-                </div>
-            </div>
 
             <!-- みんなのノート -->
             <section id="publicBooksSection" style="display: none; margin-top: 3rem;">
@@ -182,17 +168,17 @@
                     <span style="font-size: 1.2rem;">📝</span>
                     <span style="font-size: 0.7rem;">新規作成</span>
                 </button>
-                <button onclick="app.showPublicBooks()" style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.5rem; background: none; color: var(--text-secondary); cursor: pointer; flex: 1; border: none; border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color); position: relative;">
-                    <span style="font-size: 1.2rem;">📚</span>
-                    <span style="font-size: 0.7rem;">みんなのノート</span>
-                </button>
-                <button id="homeShelfBtn" onclick="app.setViewMode('shelf')" style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.5rem; background: #f5f5f5; color: var(--text-primary); cursor: pointer; flex: 1; border: none; border-right: 1px solid var(--border-color); position: relative;">
+                <button id="homeShelfBtn" onclick="app.setViewMode('shelf')" style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.5rem; background: #f5f5f5; color: var(--text-primary); cursor: pointer; flex: 1; border: none; border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color); position: relative;">
                     <span style="font-size: 1.2rem;">📖</span>
                     <span style="font-size: 0.7rem;">本棚</span>
                 </button>
-                <button id="homeGridBtn" onclick="app.setViewMode('grid')" style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.5rem; background: none; color: var(--text-secondary); cursor: pointer; flex: 1; border: none; position: relative;">
-                    <span style="font-size: 1.2rem;">📋</span>
-                    <span style="font-size: 0.7rem;">グリッド</span>
+                <button id="homeGridBtn" onclick="app.setViewMode('grid')" style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.5rem; background: none; color: var(--text-secondary); cursor: pointer; flex: 1; border: none; border-right: 1px solid var(--border-color); position: relative;">
+                    <span style="font-size: 1.2rem;">✏️</span>
+                    <span style="font-size: 0.7rem;">編集</span>
+                </button>
+                <button onclick="app.showPublicBooks()" style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.5rem; background: none; color: var(--text-secondary); cursor: pointer; flex: 1; border: none; position: relative;">
+                    <span style="font-size: 1.2rem;">📚</span>
+                    <span style="font-size: 0.7rem;">みんなのノート</span>
                 </button>
             </div>
         </div>
@@ -329,9 +315,9 @@
                             </button>
                         </div>
                         
-                        <textarea 
-                            id="pageContentInput" 
-                            style="width: 100%; min-height: 300px; padding: 1rem; font-size: 0.9rem; border: 1px solid var(--border-color); border-radius: 6px; resize: vertical; font-family: 'SF Mono', Monaco, monospace; background: var(--bg-color); transition: var(--transition-base);"
+                        <textarea
+                            id="pageContentInput"
+                            style="width: 100%; min-height: 300px; padding: 1rem; font-size: 0.9rem; border: 1px solid var(--border-color); border-radius: 6px; resize: vertical; font-family: 'SF Mono', Monaco, monospace; background: var(--bg-color); transition: var(--transition-base); overflow-y: auto;"
                             placeholder="Markdownで内容を入力
 
 # 見出し1

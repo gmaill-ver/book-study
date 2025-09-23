@@ -1711,6 +1711,9 @@ showSwipeHint() {
             document.getElementById('viewMode').style.display = 'none';
             document.getElementById('editMode').style.display = 'block';
 
+            // 編集エリアのスクロール制御を設定
+            this.setupTextareaScrolling();
+
             const bookTitleSection = document.getElementById('bookTitleSection');
             if (this.currentPage === 0) {
                 bookTitleSection.style.display = 'block';
@@ -3769,6 +3772,75 @@ showSwipeHint() {
 
         if (!hasOpenModal) {
             this.enableBodyScroll();
+        }
+    }
+
+    // 編集エリアのスクロール制御
+    setupEditScrolling() {
+        document.addEventListener('DOMContentLoaded', () => {
+            const textarea = document.getElementById('pageContentInput');
+            if (textarea) {
+                // テキストエリア内でのスクロールイベントを停止伝播させない
+                textarea.addEventListener('wheel', (e) => {
+                    e.stopPropagation();
+                });
+
+                // タッチイベントでのスクロール制御
+                textarea.addEventListener('touchstart', (e) => {
+                    e.stopPropagation();
+                });
+
+                textarea.addEventListener('touchmove', (e) => {
+                    e.stopPropagation();
+                });
+            }
+        });
+    }
+
+    // テキストエリア専用のスクロール制御
+    setupTextareaScrolling() {
+        const textarea = document.getElementById('pageContentInput');
+        if (textarea && !textarea.hasAttribute('data-scroll-setup')) {
+            // 重複設定を防ぐ
+            textarea.setAttribute('data-scroll-setup', 'true');
+
+            // マウスホイールイベント
+            textarea.addEventListener('wheel', (e) => {
+                e.stopPropagation();
+
+                // テキストエリアのスクロール範囲内かチェック
+                const scrollTop = textarea.scrollTop;
+                const scrollHeight = textarea.scrollHeight;
+                const clientHeight = textarea.clientHeight;
+
+                if ((e.deltaY < 0 && scrollTop > 0) ||
+                    (e.deltaY > 0 && scrollTop < scrollHeight - clientHeight)) {
+                    // テキストエリア内でスクロール可能な場合のみイベント伝播を止める
+                    e.preventDefault();
+                }
+            });
+
+            // タッチイベント
+            let startY = 0;
+            textarea.addEventListener('touchstart', (e) => {
+                startY = e.touches[0].clientY;
+                e.stopPropagation();
+            });
+
+            textarea.addEventListener('touchmove', (e) => {
+                const currentY = e.touches[0].clientY;
+                const deltaY = startY - currentY;
+
+                const scrollTop = textarea.scrollTop;
+                const scrollHeight = textarea.scrollHeight;
+                const clientHeight = textarea.clientHeight;
+
+                if ((deltaY < 0 && scrollTop > 0) ||
+                    (deltaY > 0 && scrollTop < scrollHeight - clientHeight)) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                }
+            });
         }
     }
 
