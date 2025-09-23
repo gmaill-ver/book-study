@@ -578,11 +578,7 @@ class StudyBookApp {
 
         const myNotes = Array.from(this.notesMap.values())
             .filter(n => n.authorId === this.currentUser.uid && !n.id.startsWith('public_'))
-            .sort((a, b) => {
-                const titleA = (a.title || '').toLowerCase();
-                const titleB = (b.title || '').toLowerCase();
-                return titleA.localeCompare(titleB, 'ja', { numeric: true });
-            });
+            .sort((a, b) => this.compareJapanese(a, b));
         
         const shelfContainer = document.getElementById('myBookshelf');
         
@@ -3081,11 +3077,7 @@ showSwipeHint() {
                 this.publicNotes.sort((a, b) => (b.pages?.length || 0) - (a.pages?.length || 0));
                 break;
             case 'alphabetical':
-                this.publicNotes.sort((a, b) => {
-                    const titleA = (a.title || '').toLowerCase();
-                    const titleB = (b.title || '').toLowerCase();
-                    return titleA.localeCompare(titleB, 'ja', { numeric: true });
-                });
+                this.publicNotes.sort((a, b) => this.compareJapanese(a, b));
                 break;
         }
         this.updatePublicNotesDisplay();
@@ -3222,11 +3214,7 @@ showSwipeHint() {
         let filteredNotes = [...this.publicNotes];
 
         // 五十音順にソート
-        filteredNotes.sort((a, b) => {
-            const titleA = (a.title || '').toLowerCase();
-            const titleB = (b.title || '').toLowerCase();
-            return titleA.localeCompare(titleB, 'ja', { numeric: true });
-        });
+        filteredNotes.sort((a, b) => this.compareJapanese(a, b));
 
         const authorFilter = document.getElementById('shelfAuthorFilter')?.value.toLowerCase();
         if (authorFilter) {
@@ -3520,6 +3508,40 @@ showSwipeHint() {
         if (!title) return '';
         if (title.length <= maxLength) return title;
         return title.substring(0, maxLength) + '...';
+    }
+
+    // 日本語優先の五十音順ソート
+    compareJapanese(a, b) {
+        const titleA = (a.title || '').trim();
+        const titleB = (b.title || '').trim();
+
+        // 両方が日本語文字で始まる場合
+        if (this.startsWithJapanese(titleA) && this.startsWithJapanese(titleB)) {
+            return titleA.localeCompare(titleB, 'ja', {
+                numeric: true,
+                sensitivity: 'base',
+                kana: 'ignore' // ひらがな・カタカナを区別しない
+            });
+        }
+
+        // 一方が日本語、もう一方がアルファベット/数字の場合
+        if (this.startsWithJapanese(titleA) && !this.startsWithJapanese(titleB)) {
+            return -1; // 日本語を先に
+        }
+        if (!this.startsWithJapanese(titleA) && this.startsWithJapanese(titleB)) {
+            return 1; // 日本語を先に
+        }
+
+        // 両方がアルファベット/数字の場合
+        return titleA.localeCompare(titleB, 'ja', { numeric: true });
+    }
+
+    // 日本語文字（ひらがな・カタカナ・漢字）で始まるかチェック
+    startsWithJapanese(str) {
+        if (!str) return false;
+        const firstChar = str.charAt(0);
+        // ひらがな、カタカナ、漢字の範囲をチェック
+        return /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(firstChar);
     }
 
     debounce(func, wait) {
