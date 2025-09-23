@@ -3163,7 +3163,6 @@ showSwipeHint() {
 
         return `
             <div class="book-card" onclick="app.openPublicNote('${note.id}')">
-                <div style="font-size: 2rem; text-align: center; margin-bottom: 1rem;">📖</div>
                 <h3 style="font-size: 1rem; margin-bottom: 0.5rem; height: 3rem; overflow: hidden;">${this.escapeHtml(note.title)}</h3>
                 <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;">by ${this.escapeHtml(note.author)}</p>
                 <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">

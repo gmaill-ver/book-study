@@ -386,16 +386,16 @@
 
             <!-- フッタータブナビゲーション -->
             <div class="footer-tabs" style="position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-color); border-top: 1px solid var(--border-color); z-index: 1000; padding: 0.5rem 0; box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);">
-                <div style="display: flex; justify-content: center; gap: 0; max-width: 400px; margin: 0 auto;">
-                    <button id="allNotesTab" class="footer-tab-btn active" onclick="app.switchPublicView('all')" style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.5rem 1rem; background: #f5f5f5; border: 1px solid var(--border-color); border-right: none; color: var(--text-primary); cursor: pointer; border-radius: 4px 0 0 4px;">
+                <div style="display: flex; width: 100%; max-width: 400px; margin: 0 auto;">
+                    <button id="allNotesTab" class="footer-tab-btn active" onclick="app.switchPublicView('all')" style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.5rem; background: #f5f5f5; color: var(--text-primary); cursor: pointer; flex: 1; border: none; position: relative;">
                         <span style="font-size: 1.2rem;">📋</span>
                         <span style="font-size: 0.7rem;">すべて</span>
                     </button>
-                    <button id="publicShelfTab" class="footer-tab-btn" onclick="app.switchPublicView('shelf')" style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.5rem 1rem; background: none; border: 1px solid var(--border-color); border-right: none; color: var(--text-secondary); cursor: pointer;">
+                    <button id="publicShelfTab" class="footer-tab-btn" onclick="app.switchPublicView('shelf')" style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.5rem; background: none; color: var(--text-secondary); cursor: pointer; flex: 1; border: none; border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color); position: relative;">
                         <span style="font-size: 1.2rem;">📚</span>
                         <span style="font-size: 0.7rem;">本棚</span>
                     </button>
-                    <button id="taggedNotesTab" class="footer-tab-btn" onclick="app.switchPublicView('tags')" style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.5rem 1rem; background: none; border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; border-radius: 0 4px 4px 0;">
+                    <button id="taggedNotesTab" class="footer-tab-btn" onclick="app.switchPublicView('tags')" style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.5rem; background: none; color: var(--text-secondary); cursor: pointer; flex: 1; border: none; position: relative;">
                         <span style="font-size: 1.2rem;">🏷️</span>
                         <span style="font-size: 0.7rem;">タグ</span>
                     </button>
