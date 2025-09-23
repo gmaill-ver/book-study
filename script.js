@@ -1706,6 +1706,12 @@ showSwipeHint() {
                     colorSection.style.display = 'block';
                     this.initializeColorPicker();
                 }
+
+                // 1ページ目ではタグ入力を表示
+                const tagSection = document.getElementById('pageTagsSection');
+                if (tagSection) {
+                    tagSection.style.display = 'block';
+                }
             } else {
                 bookTitleSection.style.display = 'none';
 
@@ -1713,6 +1719,12 @@ showSwipeHint() {
                 const colorSection = document.getElementById('bookColorSection');
                 if (colorSection) {
                     colorSection.style.display = 'none';
+                }
+
+                // 1ページ目以外ではタグ入力を非表示
+                const tagSection = document.getElementById('pageTagsSection');
+                if (tagSection) {
+                    tagSection.style.display = 'none';
                 }
             }
 
@@ -3058,6 +3070,13 @@ showSwipeHint() {
             case 'pages':
                 this.publicNotes.sort((a, b) => (b.pages?.length || 0) - (a.pages?.length || 0));
                 break;
+            case 'alphabetical':
+                this.publicNotes.sort((a, b) => {
+                    const titleA = (a.title || '').toLowerCase();
+                    const titleB = (b.title || '').toLowerCase();
+                    return titleA.localeCompare(titleB, 'ja', { numeric: true });
+                });
+                break;
         }
         this.updatePublicNotesDisplay();
     }
@@ -3189,8 +3208,15 @@ showSwipeHint() {
             return;
         }
 
-        // フィルタリング
+        // フィルタリングと五十音順ソート
         let filteredNotes = [...this.publicNotes];
+
+        // 五十音順にソート
+        filteredNotes.sort((a, b) => {
+            const titleA = (a.title || '').toLowerCase();
+            const titleB = (b.title || '').toLowerCase();
+            return titleA.localeCompare(titleB, 'ja', { numeric: true });
+        });
 
         const authorFilter = document.getElementById('shelfAuthorFilter')?.value.toLowerCase();
         if (authorFilter) {
@@ -3291,7 +3317,7 @@ showSwipeHint() {
             .slice(0, 20); // 上位20タグ
 
         // タグを表示
-        const container = document.getElementById('popularTagsList');
+        const container = document.getElementById('publicPopularTagsList');
         if (sortedTags.length === 0) {
             container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 2rem;">まだタグが付けられたノートがありません。<br>ノートを作成してタグを追加してみてください。</p>';
         } else {
@@ -3328,7 +3354,7 @@ showSwipeHint() {
         }
 
         // タグを選択状態にする
-        document.querySelectorAll('#popularTagsList .tag').forEach(tagEl => {
+        document.querySelectorAll('#publicPopularTagsList .tag').forEach(tagEl => {
             tagEl.classList.remove('selected');
             if (tagEl.textContent.startsWith(tag + ' ')) {
                 tagEl.classList.add('selected');
@@ -3340,7 +3366,7 @@ showSwipeHint() {
     clearTagFilter() {
         document.getElementById('selectedTagInfo').style.display = 'none';
         document.getElementById('taggedNotesList').innerHTML = '';
-        document.querySelectorAll('#popularTagsList .tag').forEach(tagEl => {
+        document.querySelectorAll('#publicPopularTagsList .tag').forEach(tagEl => {
             tagEl.classList.remove('selected');
         });
     }
