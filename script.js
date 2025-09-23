@@ -563,19 +563,29 @@ class StudyBookApp {
     // ===== 本棚UI =====
     setViewMode(mode) {
         this.viewMode = mode;
-        
-        if (mode === 'shelf') {
-            document.getElementById('shelfViewBtn').classList.add('active');
-            document.getElementById('gridViewBtn').classList.remove('active');
-            document.getElementById('bookshelfView').style.display = 'block';
-            document.getElementById('gridView').style.display = 'none';
-            this.updateBookshelf();
-        } else {
-            document.getElementById('shelfViewBtn').classList.remove('active');
-            document.getElementById('gridViewBtn').classList.add('active');
-            document.getElementById('bookshelfView').style.display = 'none';
-            document.getElementById('gridView').style.display = 'block';
-            this.updateMyBooks();
+
+        // ホーム画面のフッターボタン更新
+        const homeShelfBtn = document.getElementById('homeShelfBtn');
+        const homeGridBtn = document.getElementById('homeGridBtn');
+
+        if (homeShelfBtn && homeGridBtn) {
+            if (mode === 'shelf') {
+                homeShelfBtn.style.background = '#f5f5f5';
+                homeShelfBtn.style.color = 'var(--text-primary)';
+                homeGridBtn.style.background = 'none';
+                homeGridBtn.style.color = 'var(--text-secondary)';
+                document.getElementById('bookshelfView').style.display = 'block';
+                document.getElementById('gridView').style.display = 'none';
+                this.updateBookshelf();
+            } else {
+                homeShelfBtn.style.background = 'none';
+                homeShelfBtn.style.color = 'var(--text-secondary)';
+                homeGridBtn.style.background = '#f5f5f5';
+                homeGridBtn.style.color = 'var(--text-primary)';
+                document.getElementById('bookshelfView').style.display = 'none';
+                document.getElementById('gridView').style.display = 'block';
+                this.updateMyBooks();
+            }
         }
     }
 
@@ -2590,7 +2600,7 @@ showSwipeHint() {
         console.log('Modal element:', modal);
         if (modal) {
             modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
+            this.disableBodyScroll();
             console.log('Modal should be visible now');
 
             // フォーカスをモーダルに移動（アクセシビリティ）
@@ -2604,7 +2614,7 @@ showSwipeHint() {
         const modal = document.getElementById('keyboardHelpModal');
         if (modal) {
             modal.classList.remove('active');
-            document.body.style.overflow = '';
+            this.checkAllModals();
         }
     }
 
@@ -2732,7 +2742,7 @@ showSwipeHint() {
         const modal = document.getElementById('passwordResetModal');
         if (modal) {
             modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
+            this.disableBodyScroll();
 
             // フィールドをクリア
             document.getElementById('resetEmailInput').value = '';
@@ -2744,7 +2754,7 @@ showSwipeHint() {
         const modal = document.getElementById('passwordResetModal');
         if (modal) {
             modal.classList.remove('active');
-            document.body.style.overflow = '';
+            this.checkAllModals();
         }
     }
 
@@ -3724,6 +3734,42 @@ showSwipeHint() {
     handleError(error, userMessage) {
         console.error(error);
         this.showToast(userMessage || 'エラーが発生しました', 'error');
+    }
+
+    // ===== スクロール管理 =====
+    disableBodyScroll() {
+        if (!document.body.hasAttribute('data-scroll-disabled')) {
+            document.body.style.overflow = 'hidden';
+            document.body.setAttribute('data-scroll-disabled', 'true');
+        }
+    }
+
+    enableBodyScroll() {
+        if (document.body.hasAttribute('data-scroll-disabled')) {
+            document.body.style.overflow = '';
+            document.body.removeAttribute('data-scroll-disabled');
+        }
+    }
+
+    // すべてのモーダルが閉じられているかチェック
+    checkAllModals() {
+        const modals = [
+            'authModal',
+            'keyboardHelpModal',
+            'passwordResetModal',
+            'visibilityModal',
+            'shareModal',
+            'passwordPromptModal'
+        ];
+
+        const hasOpenModal = modals.some(modalId => {
+            const modal = document.getElementById(modalId);
+            return modal && (modal.style.display === 'flex' || modal.classList.contains('active'));
+        });
+
+        if (!hasOpenModal) {
+            this.enableBodyScroll();
+        }
     }
 
     handleGlobalError(event) {

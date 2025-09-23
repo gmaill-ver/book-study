@@ -298,24 +298,30 @@ body {
     color: #333;
     font-size: 0.75rem;
     font-weight: 600;
-    max-height: 140px;
+    max-height: 120px;
     max-width: 1.2em;
     overflow: hidden;
-    text-align: center;
+    text-align: start;
     white-space: nowrap;
     text-overflow: ellipsis;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
-    margin: auto;
+    margin: 8px auto 0 auto;
+    padding-top: 4px;
 }
 
 .book-spine-meta {
     position: absolute;
-    bottom: 8px;
-    writing-mode: vertical-rl;
-    font-size: 0.6rem;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    writing-mode: horizontal-tb;
+    font-size: 0.55rem;
     color: #666;
+    text-align: center;
+    white-space: nowrap;
+    width: 100%;
 }
 
 .book-spine-lock {
