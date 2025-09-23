@@ -731,11 +731,17 @@ body {
     padding: 2rem;
     max-width: 900px;
     margin: 0 auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: manipulation;
 }
 
 .page-content-wrapper {
     padding: 1.5rem 2rem;
     transform-origin: center top;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: manipulation;
 }
 
 /* 画像表示の修正 - 枠内に収まるように */
@@ -748,6 +754,9 @@ body {
     overflow-wrap: break-word;
     max-width: 100%;
     box-sizing: border-box;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: manipulation;
 }
 
 .markdown-body img {
@@ -1088,6 +1097,10 @@ body {
     display: none;
     background: var(--bg-color);
     min-height: 100vh;
+    height: 100vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: manipulation;
     padding-bottom: 80px; /* ページネーション用の余白 */
 }
 
@@ -1250,41 +1263,47 @@ body {
         padding: 1rem;
     }
 
-    /* モバイルでのタッチ操作改善 - ズーム禁止 */
+    /* モバイルでのタッチ操作改善 - スクロール許可 */
     .viewer-container {
-        /* ズーム操作を禁止し、pan操作のみ許可 */
-        touch-action: pan-x pan-y;
-        /* ズーム関連のCSSを無効化 */
-        -ms-touch-action: pan-x pan-y;
-        -webkit-user-scalable: no;
-        user-scalable: no;
+        /* 全てのタッチ操作を許可 - スクロール含む */
+        touch-action: manipulation;
+        /* ズーム関連のCSSを有効化 */
+        -ms-touch-action: manipulation;
+        -webkit-user-scalable: yes;
+        user-scalable: yes;
     }
 
     /* ページコンテンツエリアでのタッチ操作を細かく制御 */
     #pageContent {
         min-height: 50vh;
-        /* スワイプ操作のみ許可、ズーム禁止 */
-        touch-action: pan-x pan-y;
+        /* 全てのタッチ操作を許可 - スクロール含む */
+        touch-action: manipulation;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
-    /* 読み取り専用のページコンテンツではズーム禁止 */
+    /* 読み取り専用のページコンテンツでスクロール許可 */
     #viewMode {
-        /* ズーム操作を禁止 */
-        touch-action: pan-x pan-y;
+        /* 全てのタッチ操作を許可 */
+        touch-action: manipulation;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
-    /* 編集モードでは入力フィールドの操作性を重視、ズーム禁止 */
+    /* 編集モードでは入力フィールドの操作性を重視、スクロール許可 */
     #editMode {
-        touch-action: pan-x pan-y;
+        touch-action: manipulation;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
-    /* テキストエリアや入力フィールドでの改善されたタッチ操作 - ズーム禁止 */
+    /* テキストエリアや入力フィールドでの改善されたタッチ操作 - スクロール許可 */
     #editMode textarea,
     #editMode input {
-        touch-action: pan-y; /* 縦スクロールのみ許可、ズーム禁止 */
+        touch-action: manipulation; /* 全てのタッチ操作を許可 */
         -webkit-overflow-scrolling: touch; /* iOS Safari用のスムーズスクロール */
-        -webkit-user-scalable: no;
-        user-scalable: no;
+        -webkit-user-scalable: yes;
+        user-scalable: yes;
     }
 
     /* 特にページコンテンツ入力エリアの最適化 */
@@ -1294,7 +1313,7 @@ body {
         -webkit-transform: translateZ(0);
 
         /* タッチ操作の改善 */
-        touch-action: pan-y;
+        touch-action: manipulation;
         -webkit-overflow-scrolling: touch;
 
         /* フォーカス時のズーム防止（iOS） */
@@ -1324,9 +1343,10 @@ body {
             transform: translate3d(0, 0, 0);
         }
 
-        /* iOS でのフォーカス時のズーム防止 */
+        /* iOS でのフォーカス時のズーム制御 */
         input, textarea, select {
             font-size: 16px !important;
+            touch-action: manipulation;
         }
     }
 
