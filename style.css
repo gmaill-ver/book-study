@@ -306,12 +306,16 @@ body {
     text-overflow: ellipsis;
     display: flex;
     align-items: flex-start;
-    justify-content: center;
+    justify-content: flex-start;
     margin: 0 auto;
-    padding-top: 4px;
+    padding-top: 6px;
     padding-left: 2px;
     padding-right: 2px;
-    line-height: 1.2;
+    line-height: 1.1;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
 .book-spine-meta {
@@ -1212,11 +1216,17 @@ body {
     /* スマホでのタイトル表示最適化 */
     .book-spine-title {
         margin: 0 auto;
-        padding-top: 2px;
+        padding-top: 4px;
         padding-bottom: 2px;
         max-height: 130px;
-        line-height: 1.1;
+        line-height: 1.0;
         font-size: 0.7rem;
+        justify-content: flex-start;
+        align-items: flex-start;
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
     }
 
     .page-content {
