@@ -111,9 +111,6 @@ class StudyBookApp {
     // ===== 初期化処理 =====
     async init() {
         try {
-            // 1. 即座にローカルUIを表示（高速化）
-            this.showLocalUIImmediately();
-
             document.getElementById('loadingText').textContent = '初期化中...';
 
             // イベントリスナー設定（即座に）
@@ -123,29 +120,6 @@ class StudyBookApp {
             this.loadLocalData();
             this.updateUI();
 
-            // バックグラウンドでFirebase初期化を開始
-            this.initFirebaseInBackground();
-
-        } catch (error) {
-            console.error('初期化エラー:', error);
-            this.showToast('初期化に失敗しました。ローカル機能のみ利用可能です。', 'warning');
-
-            // エラー時でもローカル機能は使用可能
-            document.getElementById('loadingScreen').classList.add('hidden');
-        }
-    }
-
-    // 即座にローカルUIを表示
-    showLocalUIImmediately() {
-        // ローディング画面を短縮して即座にUIを表示
-        setTimeout(() => {
-            document.getElementById('loadingScreen').classList.add('hidden');
-        }, 300); // 500ms → 300ms に短縮
-    }
-
-    // バックグラウンドでFirebase初期化（非同期・非ブロッキング）
-    async initFirebaseInBackground() {
-        try {
             // Firebase SDK の読み込み
             await this.waitForFirebaseSDK();
 
@@ -161,16 +135,28 @@ class StudyBookApp {
             this.dataLoadingComplete = true;
             this.handlePendingSharedNote();
 
-            // スワイプヒントを表示（モバイルのみ）
-            if (window.innerWidth <= 768 && this.currentNote) {
-                this.showSwipeHint();
-            }
+            // ローディング完了
+            document.getElementById('loadingText').textContent = '完了';
+
+            setTimeout(() => {
+                document.getElementById('loadingScreen').classList.add('hidden');
+                // スワイプヒントを表示（モバイルのみ）
+                if (window.innerWidth <= 768 && this.currentNote) {
+                    this.showSwipeHint();
+                }
+            }, 300);
 
         } catch (error) {
-            console.error('Firebase初期化エラー:', error);
-            // Firebase接続失敗でもローカル機能は継続使用
+            console.error('初期化エラー:', error);
+            this.showToast('初期化に失敗しました。ローカル機能のみ利用可能です。', 'warning');
+
+            // エラー時でもローカル機能は使用可能
+            setTimeout(() => {
+                document.getElementById('loadingScreen').classList.add('hidden');
+            }, 500);
         }
     }
+
 
     // 外部ライブラリの動的読み込み
     async loadLibrary(url, globalVariable) {
