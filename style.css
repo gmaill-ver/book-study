@@ -744,6 +744,10 @@ body {
     padding: 0 1rem;
     white-space: pre-wrap;
     word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .markdown-body img {
@@ -753,6 +757,7 @@ body {
     margin: 1rem auto;
     border-radius: 6px;
     box-shadow: var(--shadow-sm);
+    box-sizing: border-box;
 }
 
 /* エディターの画像プレビュー */
@@ -1245,35 +1250,41 @@ body {
         padding: 1rem;
     }
 
-    /* モバイルでのタッチ操作改善 */
+    /* モバイルでのタッチ操作改善 - ズーム禁止 */
     .viewer-container {
-        /* ズーム操作を許可するため、touch-actionの制限を解除 */
-        touch-action: manipulation;
+        /* ズーム操作を禁止し、pan操作のみ許可 */
+        touch-action: pan-x pan-y;
+        /* ズーム関連のCSSを無効化 */
+        -ms-touch-action: pan-x pan-y;
+        -webkit-user-scalable: no;
+        user-scalable: no;
     }
 
     /* ページコンテンツエリアでのタッチ操作を細かく制御 */
     #pageContent {
         min-height: 50vh;
-        /* スワイプ操作とズーム操作の両立 */
-        touch-action: pan-x pan-y pinch-zoom;
+        /* スワイプ操作のみ許可、ズーム禁止 */
+        touch-action: pan-x pan-y;
     }
 
-    /* 読み取り専用のページコンテンツではズームを優先 */
+    /* 読み取り専用のページコンテンツではズーム禁止 */
     #viewMode {
-        /* ズーム操作を最優先 */
-        touch-action: manipulation;
+        /* ズーム操作を禁止 */
+        touch-action: pan-x pan-y;
     }
 
-    /* 編集モードでは入力フィールドの操作性を重視 */
+    /* 編集モードでは入力フィールドの操作性を重視、ズーム禁止 */
     #editMode {
-        touch-action: pan-x pan-y pinch-zoom;
+        touch-action: pan-x pan-y;
     }
 
-    /* テキストエリアや入力フィールドでの改善されたタッチ操作 */
+    /* テキストエリアや入力フィールドでの改善されたタッチ操作 - ズーム禁止 */
     #editMode textarea,
     #editMode input {
-        touch-action: pan-y; /* 縦スクロールのみ許可 */
+        touch-action: pan-y; /* 縦スクロールのみ許可、ズーム禁止 */
         -webkit-overflow-scrolling: touch; /* iOS Safari用のスムーズスクロール */
+        -webkit-user-scalable: no;
+        user-scalable: no;
     }
 
     /* 特にページコンテンツ入力エリアの最適化 */
@@ -1295,6 +1306,14 @@ body {
 
         /* パフォーマンス向上 */
         will-change: scroll-position;
+
+        /* テキスト改行の最適化 */
+        word-wrap: break-word;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        white-space: pre-wrap;
+        max-width: 100%;
+        box-sizing: border-box;
     }
 
     /* iOS Safari での特別な対応 */

@@ -984,8 +984,8 @@ setupSwipeHandlers() {
                 }
             }
 
-            // スワイプ中の場合は既定のスクロール動作を防止
-            if (this.isSwiping) {
+            // スワイプ中の場合のみ既定のスクロール動作を防止（縦スクロールは許可）
+            if (this.isSwiping && this.swipeStarted) {
                 e.preventDefault();
             }
         }, { passive: false });
