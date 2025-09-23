@@ -3085,8 +3085,11 @@ showSwipeHint() {
 
     // 表示切り替え（すべて/本棚/タグ別）
     switchPublicView(view) {
-        // タブの状態を更新
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        // フッタータブの状態を更新
+        document.querySelectorAll('.footer-tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+            btn.style.color = 'var(--text-secondary)';
+        });
 
         // 全てのビューを非表示
         document.getElementById('allNotesView').style.display = 'none';
@@ -3094,15 +3097,21 @@ showSwipeHint() {
         document.getElementById('taggedNotesView').style.display = 'none';
 
         if (view === 'all') {
-            document.getElementById('allNotesTab').classList.add('active');
+            const allTab = document.getElementById('allNotesTab');
+            allTab.classList.add('active');
+            allTab.style.color = 'var(--text-primary)';
             document.getElementById('allNotesView').style.display = 'block';
             this.updatePublicNotesDisplay();
         } else if (view === 'shelf') {
-            document.getElementById('publicShelfTab').classList.add('active');
+            const shelfTab = document.getElementById('publicShelfTab');
+            shelfTab.classList.add('active');
+            shelfTab.style.color = 'var(--text-primary)';
             document.getElementById('publicShelfView').style.display = 'block';
             this.updatePublicBookshelfDisplay();
         } else if (view === 'tags') {
-            document.getElementById('taggedNotesTab').classList.add('active');
+            const tagTab = document.getElementById('taggedNotesTab');
+            tagTab.classList.add('active');
+            tagTab.style.color = 'var(--text-primary)';
             document.getElementById('taggedNotesView').style.display = 'block';
             this.loadPopularTags();
         }
