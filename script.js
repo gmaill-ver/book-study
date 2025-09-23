@@ -2867,7 +2867,7 @@ showSwipeHint() {
                     👤 ${this.escapeHtml(note.author)}
                 </div>
                 <div style="color: var(--text-secondary); margin-bottom: 0.25rem; font-size: 0.85rem;">
-                    📝 ${note.pages.length}ページ • 👁️ ${note.views || 0}回
+                    📝 ${note.pages.length}ページ • 📊 ${note.views || 0}回
                 </div>
                 <div class="tags-container">${tags}</div>
                 <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
@@ -3145,7 +3145,7 @@ showSwipeHint() {
             `<span class="tag" onclick="event.stopPropagation(); app.filterByTag('${this.escapeHtml(tag)}')">${this.escapeHtml(tag)}</span>`
         ).join('');
 
-        const views = note.views ? `👁️ ${note.views}` : '';
+        const views = note.views ? `📊 ${note.views}` : '';
         const pages = note.pages ? `📄 ${note.pages.length}P` : '';
 
         return `
