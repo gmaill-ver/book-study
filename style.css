@@ -304,6 +304,10 @@ body {
     text-align: center;
     white-space: nowrap;
     text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: auto;
 }
 
 .book-spine-meta {
