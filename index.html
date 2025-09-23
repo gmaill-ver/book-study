@@ -386,16 +386,16 @@
 
             <!-- フッタータブナビゲーション -->
             <div class="footer-tabs" style="position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-color); border-top: 1px solid var(--border-color); z-index: 1000; padding: 0.5rem 0; box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);">
-                <div style="display: flex; justify-content: center; gap: 2rem; max-width: 400px; margin: 0 auto;">
-                    <button id="allNotesTab" class="footer-tab-btn active" onclick="app.switchPublicView('all')" style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.5rem 1rem; background: none; border: none; color: var(--text-primary); cursor: pointer;">
+                <div style="display: flex; justify-content: center; gap: 0; max-width: 400px; margin: 0 auto;">
+                    <button id="allNotesTab" class="footer-tab-btn active" onclick="app.switchPublicView('all')" style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.5rem 1rem; background: #f5f5f5; border: 1px solid var(--border-color); border-right: none; color: var(--text-primary); cursor: pointer; border-radius: 4px 0 0 4px;">
                         <span style="font-size: 1.2rem;">📋</span>
                         <span style="font-size: 0.7rem;">すべて</span>
                     </button>
-                    <button id="publicShelfTab" class="footer-tab-btn" onclick="app.switchPublicView('shelf')" style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.5rem 1rem; background: none; border: none; color: var(--text-secondary); cursor: pointer;">
+                    <button id="publicShelfTab" class="footer-tab-btn" onclick="app.switchPublicView('shelf')" style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.5rem 1rem; background: none; border: 1px solid var(--border-color); border-right: none; color: var(--text-secondary); cursor: pointer;">
                         <span style="font-size: 1.2rem;">📚</span>
                         <span style="font-size: 0.7rem;">本棚</span>
                     </button>
-                    <button id="taggedNotesTab" class="footer-tab-btn" onclick="app.switchPublicView('tags')" style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.5rem 1rem; background: none; border: none; color: var(--text-secondary); cursor: pointer;">
+                    <button id="taggedNotesTab" class="footer-tab-btn" onclick="app.switchPublicView('tags')" style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.5rem 1rem; background: none; border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; border-radius: 0 4px 4px 0;">
                         <span style="font-size: 1.2rem;">🏷️</span>
                         <span style="font-size: 0.7rem;">タグ</span>
                     </button>
@@ -405,16 +405,13 @@
             <!-- すべてのノート表示 -->
             <div id="allNotesView" class="view-content">
                 <!-- ソート・フィルター -->
-                <div class="filter-controls" style="margin-bottom: 2rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-                    <div style="display: flex; gap: 0.5rem; align-items: center;">
-                        <select id="sortSelect" class="form-input" style="width: auto;">
-                            <option value="newest">新着順</option>
-                            <option value="popular">人気順</option>
-                            <option value="views">閲覧数順</option>
-                            <option value="pages">ページ数順</option>
-                        </select>
-                        <button class="btn btn-secondary" onclick="app.clearFilters()" title="リセット" style="padding: 0.5rem;">🔄</button>
-                    </div>
+                <div class="filter-controls" style="margin-bottom: 2rem; display: flex; gap: 0.5rem; align-items: center;">
+                    <select id="sortSelect" class="form-input" style="width: auto;">
+                        <option value="newest">新着順</option>
+                        <option value="popular">人気順</option>
+                        <option value="views">閲覧数順</option>
+                        <option value="pages">ページ数順</option>
+                    </select>
 
                     <input
                         type="text"
@@ -423,6 +420,8 @@
                         placeholder="作者で絞り込み..."
                         style="width: 200px;"
                     >
+
+                    <button class="btn btn-secondary" onclick="app.clearFilters()" title="リセット" style="padding: 0.5rem;">🔄</button>
                 </div>
 
                 <!-- ノート一覧 -->
@@ -435,16 +434,13 @@
             <!-- 本棚表示 -->
             <div id="publicShelfView" class="view-content" style="display: none;">
                 <!-- 本棚表示のソート・フィルター -->
-                <div class="filter-controls" style="margin-bottom: 2rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-                    <div style="display: flex; gap: 0.5rem; align-items: center;">
-                        <select id="shelfSortSelect" class="form-input" style="width: auto;">
-                            <option value="newest">新着順</option>
-                            <option value="popular">人気順</option>
-                            <option value="views">閲覧数順</option>
-                            <option value="pages">ページ数順</option>
-                        </select>
-                        <button class="btn btn-secondary" onclick="app.clearShelfFilters()" title="リセット" style="padding: 0.5rem;">🔄</button>
-                    </div>
+                <div class="filter-controls" style="margin-bottom: 2rem; display: flex; gap: 0.5rem; align-items: center;">
+                    <select id="shelfSortSelect" class="form-input" style="width: auto;">
+                        <option value="newest">新着順</option>
+                        <option value="popular">人気順</option>
+                        <option value="views">閲覧数順</option>
+                        <option value="pages">ページ数順</option>
+                    </select>
 
                     <input
                         type="text"
@@ -453,6 +449,8 @@
                         placeholder="作者で絞り込み..."
                         style="width: 200px;"
                     >
+
+                    <button class="btn btn-secondary" onclick="app.clearShelfFilters()" title="リセット" style="padding: 0.5rem;">🔄</button>
                 </div>
 
                 <!-- 本棚コンテナ -->

@@ -3089,6 +3089,7 @@ showSwipeHint() {
         document.querySelectorAll('.footer-tab-btn').forEach(btn => {
             btn.classList.remove('active');
             btn.style.color = 'var(--text-secondary)';
+            btn.style.background = 'none';
         });
 
         // 全てのビューを非表示
@@ -3100,18 +3101,21 @@ showSwipeHint() {
             const allTab = document.getElementById('allNotesTab');
             allTab.classList.add('active');
             allTab.style.color = 'var(--text-primary)';
+            allTab.style.background = '#f5f5f5';
             document.getElementById('allNotesView').style.display = 'block';
             this.updatePublicNotesDisplay();
         } else if (view === 'shelf') {
             const shelfTab = document.getElementById('publicShelfTab');
             shelfTab.classList.add('active');
             shelfTab.style.color = 'var(--text-primary)';
+            shelfTab.style.background = '#f5f5f5';
             document.getElementById('publicShelfView').style.display = 'block';
             this.updatePublicBookshelfDisplay();
         } else if (view === 'tags') {
             const tagTab = document.getElementById('taggedNotesTab');
             tagTab.classList.add('active');
             tagTab.style.color = 'var(--text-primary)';
+            tagTab.style.background = '#f5f5f5';
             document.getElementById('taggedNotesView').style.display = 'block';
             this.loadPopularTags();
         }
