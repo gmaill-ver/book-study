@@ -1189,7 +1189,7 @@ body {
     
     .bookshelf {
         grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
-        gap: 5px;
+        gap: 1px;
     }
     
     .book-spine {
