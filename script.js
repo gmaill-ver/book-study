@@ -3806,40 +3806,27 @@ showSwipeHint() {
 
             // マウスホイールイベント
             textarea.addEventListener('wheel', (e) => {
+                // テキストエリア内でのスクロールを許可
                 e.stopPropagation();
-
-                // テキストエリアのスクロール範囲内かチェック
-                const scrollTop = textarea.scrollTop;
-                const scrollHeight = textarea.scrollHeight;
-                const clientHeight = textarea.clientHeight;
-
-                if ((e.deltaY < 0 && scrollTop > 0) ||
-                    (e.deltaY > 0 && scrollTop < scrollHeight - clientHeight)) {
-                    // テキストエリア内でスクロール可能な場合のみイベント伝播を止める
-                    e.preventDefault();
-                }
             });
 
-            // タッチイベント
-            let startY = 0;
+            // タッチイベント（モバイル用）
             textarea.addEventListener('touchstart', (e) => {
-                startY = e.touches[0].clientY;
+                // テキストエリア内でのタッチを許可
                 e.stopPropagation();
             });
 
             textarea.addEventListener('touchmove', (e) => {
-                const currentY = e.touches[0].clientY;
-                const deltaY = startY - currentY;
+                // テキストエリア内でのスクロールを許可
+                e.stopPropagation();
+            });
 
-                const scrollTop = textarea.scrollTop;
-                const scrollHeight = textarea.scrollHeight;
-                const clientHeight = textarea.clientHeight;
-
-                if ((deltaY < 0 && scrollTop > 0) ||
-                    (deltaY > 0 && scrollTop < scrollHeight - clientHeight)) {
-                    e.stopPropagation();
-                    e.preventDefault();
-                }
+            // フォーカス時の処理
+            textarea.addEventListener('focus', () => {
+                // iOS Safariでのスクロール問題を回避
+                setTimeout(() => {
+                    textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
             });
         }
     }
