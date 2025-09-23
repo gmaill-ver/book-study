@@ -1189,60 +1189,107 @@ body {
         max-width: 150px;
         margin: 0 0.5rem;
     }
-    
+
     .books-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 1rem;
     }
-    
+
     .header {
         padding: 0.5rem;
     }
-    
+
     .bookshelf {
         grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
         gap: 1px;
     }
-    
+
     .book-spine {
         height: 150px;
     }
-    
+
     .page-content {
         padding: 1rem;
     }
-    
+
     .page-content-wrapper {
         padding: 1rem;
     }
-    
-    /* モバイルでのスワイプとズームの両立 */
+
+    /* モバイルでのタッチ操作改善 */
     .viewer-container {
-        /* touch-action: pan-y; ← この行を削除 */
         /* ズーム操作を許可するため、touch-actionの制限を解除 */
+        touch-action: manipulation;
     }
-    
+
     /* ページコンテンツエリアでのタッチ操作を細かく制御 */
     #pageContent {
         min-height: 50vh;
         /* スワイプ操作とズーム操作の両立 */
         touch-action: pan-x pan-y pinch-zoom;
     }
-    
+
     /* 読み取り専用のページコンテンツではズームを優先 */
     #viewMode {
         /* ズーム操作を最優先 */
         touch-action: manipulation;
     }
-    
+
     /* 編集モードでは入力フィールドの操作性を重視 */
     #editMode {
         touch-action: pan-x pan-y pinch-zoom;
     }
-    
-    /* テキストエリアや入力フィールドでは通常のタッチ操作 */
+
+    /* テキストエリアや入力フィールドでの改善されたタッチ操作 */
     #editMode textarea,
     #editMode input {
-        touch-action: manipulation;
+        touch-action: pan-y; /* 縦スクロールのみ許可 */
+        -webkit-overflow-scrolling: touch; /* iOS Safari用のスムーズスクロール */
+    }
+
+    /* 特にページコンテンツ入力エリアの最適化 */
+    #pageContentInput {
+        /* iOS Safari での viewport の問題を回避 */
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+
+        /* タッチ操作の改善 */
+        touch-action: pan-y;
+        -webkit-overflow-scrolling: touch;
+
+        /* フォーカス時のズーム防止（iOS） */
+        font-size: 16px; /* 16px以上でズームを防ぐ */
+
+        /* スクロールバーの表示 */
+        overflow-y: auto;
+        -webkit-appearance: none;
+
+        /* パフォーマンス向上 */
+        will-change: scroll-position;
+    }
+
+    /* iOS Safari での特別な対応 */
+    @supports (-webkit-touch-callout: none) {
+        #pageContentInput {
+            /* iOS専用の最適化 */
+            -webkit-transform: translate3d(0, 0, 0);
+            transform: translate3d(0, 0, 0);
+        }
+
+        /* iOS でのフォーカス時のズーム防止 */
+        input, textarea, select {
+            font-size: 16px !important;
+        }
+    }
+
+    /* モバイルキーボード表示時の調整 */
+    .viewer-container.keyboard-visible {
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    /* iOS Safari の安全領域対応 */
+    .page-content-wrapper {
+        padding-bottom: env(safe-area-inset-bottom, 1rem);
     }
 }

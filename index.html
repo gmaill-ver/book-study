@@ -317,7 +317,7 @@
                         
                         <textarea
                             id="pageContentInput"
-                            style="width: 100%; min-height: 300px; max-height: 400px; padding: 1rem; font-size: 0.9rem; border: 1px solid var(--border-color); border-radius: 6px; resize: vertical; font-family: 'SF Mono', Monaco, monospace; background: var(--bg-color); transition: var(--transition-base); overflow-y: auto; -webkit-overflow-scrolling: touch;"
+                            style="width: 100%; min-height: 300px; max-height: 400px; padding: 1rem; font-size: 16px; border: 1px solid var(--border-color); border-radius: 6px; resize: vertical; font-family: 'SF Mono', Monaco, monospace; background: var(--bg-color); transition: var(--transition-base); overflow-y: auto; -webkit-overflow-scrolling: touch;"
                             placeholder="Markdownで内容を入力
 
 # 見出し1
@@ -393,11 +393,11 @@
                         <span style="font-size: 1.2rem;">📘</span>
                         <span style="font-size: 0.7rem;">マイブック</span>
                     </button>
-                    <button id="publicShelfTab" class="footer-tab-btn" onclick="app.switchPublicView('shelf')" style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.5rem; background: none; color: var(--text-secondary); cursor: pointer; flex: 1; border: none; border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color); position: relative;">
+                    <button id="publicShelfTab" class="footer-tab-btn active" onclick="app.switchPublicView('shelf')" style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.5rem; background: #f5f5f5; color: var(--text-primary); cursor: pointer; flex: 1; border: none; border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color); position: relative;">
                         <span style="font-size: 1.2rem;">📚</span>
                         <span style="font-size: 0.7rem;">本棚</span>
                     </button>
-                    <button id="allNotesTab" class="footer-tab-btn active" onclick="app.switchPublicView('all')" style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.5rem; background: #f5f5f5; color: var(--text-primary); cursor: pointer; flex: 1; border: none; border-right: 1px solid var(--border-color); position: relative;">
+                    <button id="allNotesTab" class="footer-tab-btn" onclick="app.switchPublicView('all')" style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.5rem; background: none; color: var(--text-secondary); cursor: pointer; flex: 1; border: none; border-right: 1px solid var(--border-color); position: relative;">
                         <span style="font-size: 1.2rem;">📋</span>
                         <span style="font-size: 0.7rem;">全て</span>
                     </button>

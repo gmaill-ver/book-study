@@ -3142,8 +3142,8 @@ showSwipeHint() {
         // 公開ノートを全て取得
         await this.loadAllPublicNotes();
 
-        // タブを初期化（すべてのノートを表示）
-        this.switchPublicView('all');
+        // タブを初期化（本棚表示）
+        this.switchPublicView('shelf');
 
         // 検索機能を設定
         this.setupPublicSearch();
@@ -3810,23 +3810,77 @@ showSwipeHint() {
                 e.stopPropagation();
             });
 
-            // タッチイベント（モバイル用）
+            // モバイル用の改善されたタッチイベント処理
+            let isScrolling = false;
+            let touchStartY = 0;
+            let scrollTop = 0;
+
             textarea.addEventListener('touchstart', (e) => {
-                // テキストエリア内でのタッチを許可
                 e.stopPropagation();
-            });
+                touchStartY = e.touches[0].clientY;
+                scrollTop = textarea.scrollTop;
+                isScrolling = false;
+            }, { passive: true });
 
             textarea.addEventListener('touchmove', (e) => {
-                // テキストエリア内でのスクロールを許可
                 e.stopPropagation();
-            });
 
-            // フォーカス時の処理
+                const touchY = e.touches[0].clientY;
+                const deltaY = touchStartY - touchY;
+
+                // スクロール方向の判定
+                if (Math.abs(deltaY) > 5) {
+                    isScrolling = true;
+
+                    // テキストエリア内でのスクロールを手動制御
+                    const newScrollTop = scrollTop + deltaY;
+                    const maxScroll = textarea.scrollHeight - textarea.clientHeight;
+
+                    if (newScrollTop >= 0 && newScrollTop <= maxScroll) {
+                        textarea.scrollTop = newScrollTop;
+                        e.preventDefault(); // デフォルトのスクロールを防ぐ
+                    }
+                }
+            }, { passive: false });
+
+            textarea.addEventListener('touchend', (e) => {
+                e.stopPropagation();
+                isScrolling = false;
+            }, { passive: true });
+
+            // フォーカス時の処理（iOS Safari対応改善）
             textarea.addEventListener('focus', () => {
                 // iOS Safariでのスクロール問題を回避
-                setTimeout(() => {
-                    textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 300);
+                if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+                    // iOSデバイスの場合
+                    setTimeout(() => {
+                        textarea.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center',
+                            inline: 'nearest'
+                        });
+                        // viewportの調整
+                        window.scrollTo({
+                            top: textarea.offsetTop - (window.innerHeight / 3),
+                            behavior: 'smooth'
+                        });
+                    }, 100);
+                } else {
+                    // その他のモバイルデバイス
+                    setTimeout(() => {
+                        textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 200);
+                }
+            });
+
+            // ブラー時の処理
+            textarea.addEventListener('blur', () => {
+                // モバイルキーボードが閉じた後のレイアウト調整
+                if (window.innerHeight < 500) {
+                    setTimeout(() => {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }, 300);
+                }
             });
         }
     }
