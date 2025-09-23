@@ -575,10 +575,14 @@ class StudyBookApp {
 
     updateBookshelf() {
         if (!this.currentUser) return;
-        
+
         const myNotes = Array.from(this.notesMap.values())
             .filter(n => n.authorId === this.currentUser.uid && !n.id.startsWith('public_'))
-            .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+            .sort((a, b) => {
+                const titleA = (a.title || '').toLowerCase();
+                const titleB = (b.title || '').toLowerCase();
+                return titleA.localeCompare(titleB, 'ja', { numeric: true });
+            });
         
         const shelfContainer = document.getElementById('myBookshelf');
         
@@ -1947,6 +1951,11 @@ showSwipeHint() {
             return;
         }
 
+        // 現在の入力内容を保存
+        if (this.isEditing) {
+            this.saveCurrentPage();
+        }
+
         const currentType = this.getCurrentVisibilityType();
         document.querySelector(`input[name="visibility"][value="${currentType}"]`).checked = true;
         
@@ -2016,7 +2025,8 @@ showSwipeHint() {
             this.notesMap.set(this.currentNote.id, this.currentNote);
             this.saveLocalData();
             
-            this.updateViewer();
+            // 可視性アイコンのみ更新（入力内容を保持するためupdateViewer()は呼ばない）
+            document.getElementById('visibilityBtn').innerHTML = this.getVisibilityIcon();
             this.updateUI();
             
             this.closeVisibilityModal();
@@ -3047,7 +3057,7 @@ showSwipeHint() {
             });
 
             this.publicNotes = Array.from(uniqueNotes.values());
-            this.sortPublicNotes('newest');
+            this.sortPublicNotes('alphabetical');
 
         } catch (error) {
             console.error('Failed to load public notes:', error);
@@ -3234,7 +3244,7 @@ showSwipeHint() {
         container.innerHTML = paginatedNotes.map((note, index) => {
             const hasPassword = note.password || note.visibility?.type === 'password';
             const lockIcon = hasPassword ? '<div class="book-spine-lock">🔐</div>' : '';
-            const bookColor = note.bookColor || this.getRandomBookColor(index);
+            const bookColor = note.bookColor || '#f8f8f8'; // デフォルトの白色
             const borderColor = this.getBorderColorFromBackground(bookColor);
 
             return `
