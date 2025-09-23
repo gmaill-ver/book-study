@@ -200,7 +200,10 @@ class StudyBookApp {
             this.auth = firebase.auth();
             this.db = firebase.firestore();
             this.storage = firebase.storage();
-            
+
+            // 認証の言語を日本語に設定
+            this.auth.languageCode = 'ja';
+
             this.firebaseInitialized = true;
             console.log('Firebase services initialized');
 
@@ -227,6 +230,9 @@ class StudyBookApp {
             // 認証状態の監視
             this.auth.onAuthStateChanged(this.handleAuthStateChange.bind(this));
             console.log('Auth state listener attached');
+
+            // パスワードリセット完了の確認
+            this.checkPasswordResetCompletion();
 
             // 接続テスト（非同期）
             setTimeout(() => {
@@ -447,7 +453,7 @@ class StudyBookApp {
                 this.showAuthError('emailError', 'ユーザーが見つかりません');
                 break;
             case 'auth/wrong-password':
-                this.showAuthError('passwordError', 'パスワードが間違っています');
+                this.showAuthError('passwordError', 'パスワードが正しくありません');
                 break;
             case 'auth/email-already-in-use':
                 this.showAuthError('emailError', 'このメールアドレスは既に使用されています');
@@ -2599,6 +2605,122 @@ showSwipeHint() {
         if (modal) {
             modal.classList.remove('active');
             document.body.style.overflow = '';
+        }
+    }
+
+    // ===== パスワードリセット完了確認 =====
+    checkPasswordResetCompletion() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const mode = urlParams.get('mode');
+        const oobCode = urlParams.get('oobCode');
+
+        if (mode === 'resetPassword' && oobCode) {
+            // パスワードリセット用のモーダルを表示
+            this.showPasswordResetConfirm(oobCode);
+        }
+    }
+
+    showPasswordResetConfirm(oobCode) {
+        // 新しいパスワード入力モーダルを表示
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h3>新しいパスワードを設定</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">新しいパスワードを入力してください。</p>
+
+                <form id="newPasswordForm">
+                    <div class="form-group">
+                        <label class="form-label">新しいパスワード</label>
+                        <input
+                            type="password"
+                            id="newPasswordInput"
+                            class="form-input"
+                            required
+                            placeholder="6文字以上"
+                            minlength="6"
+                        >
+                        <div id="newPasswordError" class="form-error"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">パスワード確認</label>
+                        <input
+                            type="password"
+                            id="confirmPasswordInput"
+                            class="form-input"
+                            required
+                            placeholder="もう一度入力してください"
+                        >
+                        <div id="confirmPasswordError" class="form-error"></div>
+                    </div>
+
+                    <div class="modal-buttons">
+                        <button type="submit" class="btn-filled">パスワードを設定</button>
+                    </div>
+                </form>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // フォーム送信処理
+        modal.querySelector('#newPasswordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await this.handleNewPasswordSubmit(oobCode, modal);
+        });
+
+        modal.style.display = 'flex';
+    }
+
+    async handleNewPasswordSubmit(oobCode, modal) {
+        const newPassword = document.getElementById('newPasswordInput').value;
+        const confirmPassword = document.getElementById('confirmPasswordInput').value;
+        const newPasswordError = document.getElementById('newPasswordError');
+        const confirmPasswordError = document.getElementById('confirmPasswordError');
+
+        // エラーをクリア
+        newPasswordError.textContent = '';
+        confirmPasswordError.textContent = '';
+
+        // バリデーション
+        if (newPassword.length < 6) {
+            newPasswordError.textContent = 'パスワードは6文字以上で入力してください';
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            confirmPasswordError.textContent = 'パスワードが一致しません';
+            return;
+        }
+
+        try {
+            // パスワードをリセット
+            await this.auth.confirmPasswordReset(oobCode, newPassword);
+
+            // モーダルを閉じる
+            document.body.removeChild(modal);
+
+            // URLパラメータをクリア
+            window.history.replaceState({}, document.title, window.location.pathname);
+
+            // 成功メッセージとログインモーダルを表示
+            this.showToast('パスワードが正常に設定されました。新しいパスワードでログインしてください。', 'success');
+
+            setTimeout(() => {
+                this.showAuthModal();
+            }, 1000);
+
+        } catch (error) {
+            console.error('Password reset error:', error);
+
+            if (error.code === 'auth/invalid-action-code') {
+                newPasswordError.textContent = 'リセットリンクが無効または期限切れです';
+            } else if (error.code === 'auth/weak-password') {
+                newPasswordError.textContent = 'パスワードが弱すぎます';
+            } else {
+                newPasswordError.textContent = 'パスワードの設定に失敗しました。再試行してください';
+            }
         }
     }
 
