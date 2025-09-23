@@ -59,6 +59,9 @@ class StudyBookApp {
         this.touchStartTime = 0;
         this.isSwiping = false;
 
+        // 慣性スクロール用
+        this.inertiaAnimationId = null;
+
         // PWA & オフライン対応
         this.setupOfflineHandling();
 
@@ -1711,6 +1714,9 @@ showSwipeHint() {
             document.getElementById('viewMode').style.display = 'none';
             document.getElementById('editMode').style.display = 'block';
 
+            // スマホ編集時の拡大表示モード
+            this.setupMobileEditMode();
+
             // 編集エリアのスクロール制御を設定
             this.setupTextareaScrolling();
 
@@ -1762,6 +1768,9 @@ showSwipeHint() {
         } else {
             document.getElementById('viewMode').style.display = 'block';
             document.getElementById('editMode').style.display = 'none';
+
+            // スマホ編集拡大表示モードを解除
+            this.exitMobileEditMode();
 
             document.getElementById('pageTitle').textContent = page.title || 'ページ' + (this.currentPage + 1);
 
@@ -3810,27 +3819,48 @@ showSwipeHint() {
                 e.stopPropagation();
             });
 
-            // モバイル用の改善されたタッチイベント処理
+            // モバイル用の改善されたタッチイベント処理（慣性スクロール付き）
             let isScrolling = false;
             let touchStartY = 0;
+            let touchStartTime = 0;
+            let lastTouchY = 0;
+            let lastTouchTime = 0;
+            let velocityY = 0;
             let scrollTop = 0;
 
             textarea.addEventListener('touchstart', (e) => {
                 e.stopPropagation();
                 touchStartY = e.touches[0].clientY;
+                touchStartTime = Date.now();
+                lastTouchY = touchStartY;
+                lastTouchTime = touchStartTime;
                 scrollTop = textarea.scrollTop;
+                velocityY = 0;
                 isScrolling = false;
+
+                // 現在の慣性スクロールがあればストップ
+                if (this.inertiaAnimationId) {
+                    cancelAnimationFrame(this.inertiaAnimationId);
+                    this.inertiaAnimationId = null;
+                }
             }, { passive: true });
 
             textarea.addEventListener('touchmove', (e) => {
                 e.stopPropagation();
 
                 const touchY = e.touches[0].clientY;
+                const currentTime = Date.now();
                 const deltaY = touchStartY - touchY;
+                const timeDelta = currentTime - lastTouchTime;
 
                 // スクロール方向の判定
                 if (Math.abs(deltaY) > 5) {
                     isScrolling = true;
+
+                    // 速度計算（慣性スクロール用）
+                    if (timeDelta > 0) {
+                        velocityY = (lastTouchY - touchY) / timeDelta;
+                    }
 
                     // テキストエリア内でのスクロールを手動制御
                     const newScrollTop = scrollTop + deltaY;
@@ -3840,11 +3870,20 @@ showSwipeHint() {
                         textarea.scrollTop = newScrollTop;
                         e.preventDefault(); // デフォルトのスクロールを防ぐ
                     }
+
+                    lastTouchY = touchY;
+                    lastTouchTime = currentTime;
                 }
             }, { passive: false });
 
             textarea.addEventListener('touchend', (e) => {
                 e.stopPropagation();
+
+                // 慣性スクロールを開始
+                if (isScrolling && Math.abs(velocityY) > 0.1) {
+                    this.startInertiaScroll(textarea, velocityY);
+                }
+
                 isScrolling = false;
             }, { passive: true });
 
@@ -3883,6 +3922,71 @@ showSwipeHint() {
                 }
             });
         }
+    }
+
+    // スマホ編集拡大表示モード
+    setupMobileEditMode() {
+        // モバイルデバイスかつ画面幅が768px以下の場合のみ
+        if (window.innerWidth <= 768) {
+            const editMode = document.getElementById('editMode');
+            const body = document.body;
+
+            if (editMode) {
+                editMode.classList.add('mobile-edit-expanded');
+                body.classList.add('mobile-editing');
+
+                // ページナビゲーションを非表示
+                const pageNav = document.querySelector('.page-nav');
+                if (pageNav) {
+                    pageNav.style.display = 'none';
+                }
+            }
+        }
+    }
+
+    exitMobileEditMode() {
+        const editMode = document.getElementById('editMode');
+        const body = document.body;
+
+        if (editMode) {
+            editMode.classList.remove('mobile-edit-expanded');
+            body.classList.remove('mobile-editing');
+
+            // ページナビゲーションを再表示
+            const pageNav = document.querySelector('.page-nav');
+            if (pageNav) {
+                pageNav.style.display = 'flex';
+            }
+        }
+    }
+
+    // 慣性スクロール実装
+    startInertiaScroll(element, velocity) {
+        const friction = 0.95; // 摩擦係数（大きいほど滑らか）
+        const minVelocity = 0.1; // 最小速度（これ以下でストップ）
+
+        const animate = () => {
+            if (Math.abs(velocity) < minVelocity) {
+                this.inertiaAnimationId = null;
+                return;
+            }
+
+            const currentScrollTop = element.scrollTop;
+            const newScrollTop = currentScrollTop + velocity * 10; // スケール調整
+            const maxScroll = element.scrollHeight - element.clientHeight;
+
+            // 境界チェック
+            if (newScrollTop >= 0 && newScrollTop <= maxScroll) {
+                element.scrollTop = newScrollTop;
+                velocity *= friction; // 摩擦を適用
+                this.inertiaAnimationId = requestAnimationFrame(animate);
+            } else {
+                // 境界に達したら慣性スクロールを停止
+                this.inertiaAnimationId = null;
+            }
+        };
+
+        this.inertiaAnimationId = requestAnimationFrame(animate);
     }
 
     handleGlobalError(event) {

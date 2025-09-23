@@ -307,10 +307,11 @@ body {
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    margin: 4px auto 0 auto;
-    padding-top: 8px;
+    margin: 0 auto;
+    padding-top: 4px;
     padding-left: 2px;
     padding-right: 2px;
+    line-height: 1.2;
 }
 
 .book-spine-meta {
@@ -1208,6 +1209,16 @@ body {
         height: 150px;
     }
 
+    /* スマホでのタイトル表示最適化 */
+    .book-spine-title {
+        margin: 0 auto;
+        padding-top: 2px;
+        padding-bottom: 2px;
+        max-height: 130px;
+        line-height: 1.1;
+        font-size: 0.7rem;
+    }
+
     .page-content {
         padding: 1rem;
     }
@@ -1291,5 +1302,42 @@ body {
     /* iOS Safari の安全領域対応 */
     .page-content-wrapper {
         padding-bottom: env(safe-area-inset-bottom, 1rem);
+    }
+
+    /* スマホ編集時の拡大表示モード */
+    .mobile-edit-expanded {
+        position: fixed !important;
+        top: 56px !important; /* ヘッダーの高さ */
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        z-index: 999 !important;
+        background: var(--bg-color) !important;
+        padding: 1rem !important;
+        overflow-y: auto !important;
+    }
+
+    .mobile-edit-expanded #pageContentInput {
+        min-height: calc(100vh - 200px) !important;
+        max-height: none !important;
+        font-size: 16px !important;
+        resize: none !important;
+    }
+
+    /* 拡大表示時にサイドバーとページナビを隠す */
+    body.mobile-editing .sidebar,
+    body.mobile-editing .page-nav {
+        display: none !important;
+    }
+
+    /* 拡大表示時のビューアーヘッダーのボタン最適化 */
+    body.mobile-editing .viewer-header {
+        padding: 0.25rem 0.5rem !important;
+    }
+
+    body.mobile-editing .viewer-header .btn {
+        min-width: 32px !important;
+        min-height: 32px !important;
+        font-size: 1rem !important;
     }
 }
