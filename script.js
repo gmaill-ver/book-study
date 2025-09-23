@@ -111,6 +111,9 @@ class StudyBookApp {
     // ===== 初期化処理 =====
     async init() {
         try {
+            // 1. 即座にローカルUIを表示（高速化）
+            this.showLocalUIImmediately();
+
             document.getElementById('loadingText').textContent = '初期化中...';
 
             // イベントリスナー設定（即座に）
@@ -120,9 +123,32 @@ class StudyBookApp {
             this.loadLocalData();
             this.updateUI();
 
+            // バックグラウンドでFirebase初期化を開始
+            this.initFirebaseInBackground();
+
+        } catch (error) {
+            console.error('初期化エラー:', error);
+            this.showToast('初期化に失敗しました。ローカル機能のみ利用可能です。', 'warning');
+
+            // エラー時でもローカル機能は使用可能
+            document.getElementById('loadingScreen').classList.add('hidden');
+        }
+    }
+
+    // 即座にローカルUIを表示
+    showLocalUIImmediately() {
+        // ローディング画面を短縮して即座にUIを表示
+        setTimeout(() => {
+            document.getElementById('loadingScreen').classList.add('hidden');
+        }, 300); // 500ms → 300ms に短縮
+    }
+
+    // バックグラウンドでFirebase初期化（非同期・非ブロッキング）
+    async initFirebaseInBackground() {
+        try {
             // Firebase SDK の読み込み
             await this.waitForFirebaseSDK();
-            
+
             // Firebase初期化
             if (typeof firebase !== 'undefined') {
                 await this.initFirebase();
@@ -135,23 +161,111 @@ class StudyBookApp {
             this.dataLoadingComplete = true;
             this.handlePendingSharedNote();
 
-            // ローディング完了
-            document.getElementById('loadingText').textContent = '完了';
-            
-            setTimeout(() => {
-                document.getElementById('loadingScreen').classList.add('hidden');
-                // スワイプヒントを表示（モバイルのみ）
-                if (window.innerWidth <= 768 && this.currentNote) {
-                    this.showSwipeHint();
-                }
-            }, 300);
+            // スワイプヒントを表示（モバイルのみ）
+            if (window.innerWidth <= 768 && this.currentNote) {
+                this.showSwipeHint();
+            }
 
         } catch (error) {
-            this.handleError(error, 'アプリの初期化に失敗しました');
-            
-            setTimeout(() => {
-                document.getElementById('loadingScreen').classList.add('hidden');
-            }, 500);
+            console.error('Firebase初期化エラー:', error);
+            // Firebase接続失敗でもローカル機能は継続使用
+        }
+    }
+
+    // 外部ライブラリの動的読み込み
+    async loadLibrary(url, globalVariable) {
+        return new Promise((resolve, reject) => {
+            // 既に読み込まれている場合はスキップ
+            if (typeof window[globalVariable] !== 'undefined') {
+                resolve(window[globalVariable]);
+                return;
+            }
+
+            const script = document.createElement('script');
+            script.src = url;
+            script.onload = () => resolve(window[globalVariable]);
+            script.onerror = () => reject(new Error(`Failed to load ${url}`));
+            document.head.appendChild(script);
+        });
+    }
+
+    // Marked.js（Markdown処理）の動的読み込み
+    async ensureMarkedLoaded() {
+        if (typeof marked === 'undefined') {
+            try {
+                await this.loadLibrary('https://cdn.jsdelivr.net/npm/marked/marked.min.js', 'marked');
+            } catch (error) {
+                console.error('Marked.js の読み込みに失敗:', error);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // DOMPurify（サニタイズ）の動的読み込み
+    async ensureDOMPurifyLoaded() {
+        if (typeof DOMPurify === 'undefined') {
+            try {
+                await this.loadLibrary('https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js', 'DOMPurify');
+            } catch (error) {
+                console.error('DOMPurify の読み込みに失敗:', error);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Fuse.js（検索エンジン）の動的読み込み
+    async ensureFuseLoaded() {
+        if (typeof Fuse === 'undefined') {
+            try {
+                await this.loadLibrary('https://cdn.jsdelivr.net/npm/fuse.js@6.6.2', 'Fuse');
+            } catch (error) {
+                console.error('Fuse.js の読み込みに失敗:', error);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Markdownコンテンツのレンダリング（動的読み込み対応）
+    async renderMarkdownContent(content) {
+        const pageBodyEl = document.getElementById('pageBody');
+
+        try {
+            // ライブラリを並行して読み込み
+            const [markedLoaded, domPurifyLoaded] = await Promise.all([
+                this.ensureMarkedLoaded(),
+                this.ensureDOMPurifyLoaded()
+            ]);
+
+            if (markedLoaded && domPurifyLoaded) {
+                let cleanContent = DOMPurify.sanitize(content);
+
+                // Markdownパースの前に改行を保持するための処理
+                cleanContent = cleanContent.replace(/\n\s*\n/g, '\n\n');
+                cleanContent = cleanContent.replace(/([^\n])\n([^\n])/g, '$1  \n$2');
+
+                let htmlContent = marked.parse(cleanContent);
+
+                // すべての画像タグにスタイルを追加
+                htmlContent = htmlContent.replace(
+                    /<img([^>]*)>/gi,
+                    '<img$1 style="max-width: 100%; height: auto; display: block; margin: 1rem auto; border-radius: 6px;">'
+                );
+
+                pageBodyEl.innerHTML = DOMPurify.sanitize(htmlContent);
+            } else {
+                throw new Error('Markdown libraries failed to load');
+            }
+        } catch (error) {
+            console.error('Markdown処理エラー:', error);
+            // フォールバック：プレーンテキスト表示
+            pageBodyEl.innerHTML = '';
+            const preEl = document.createElement('pre');
+            preEl.style.cssText = 'white-space: pre-wrap; word-wrap: break-word; font-family: inherit; margin: 0; line-height: 1.4;';
+            preEl.textContent = content;
+            pageBodyEl.appendChild(preEl);
         }
     }
 
@@ -1469,10 +1583,13 @@ showSwipeHint() {
     }
 
     // ===== 検索機能 =====
-    updateSearchIndex() {
+    async updateSearchIndex() {
         const notes = Array.from(this.notesMap.values());
-        
-        if (typeof Fuse !== 'undefined' && notes.length > 0) {
+
+        // Fuse.jsを動的読み込み
+        const fuseLoaded = await this.ensureFuseLoaded();
+
+        if (fuseLoaded && notes.length > 0) {
             this.fuseInstance = new Fuse(notes, {
                 keys: [
                     { name: 'title', weight: 0.3 },
@@ -1785,34 +1902,8 @@ showSwipeHint() {
                 document.getElementById('pageImage').style.display = 'none';
             }
 
-            // Markdown処理（画像サイズ制限付き）
-            if (typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
-                let cleanContent = DOMPurify.sanitize(page.content || '');
-
-                // Markdownパースの前に改行を保持するための処理
-                // 空行（連続した改行）の処理をシンプルに
-                cleanContent = cleanContent.replace(/\n\s*\n/g, '\n\n');
-                // 単一の改行も保持（Markdownで処理されない場合のため）
-                cleanContent = cleanContent.replace(/([^\n])\n([^\n])/g, '$1  \n$2');
-
-                let htmlContent = marked.parse(cleanContent);
-                
-                // すべての画像タグにスタイルを追加
-                htmlContent = htmlContent.replace(
-                    /<img([^>]*)>/gi,
-                    '<img$1 style="max-width: 100%; height: auto; display: block; margin: 1rem auto; border-radius: 6px;">'
-                );
-                
-                document.getElementById('pageBody').innerHTML = DOMPurify.sanitize(htmlContent);
-            } else {
-                // Markdownライブラリが利用できない場合でも、改行や空白を保持して表示
-                const pageBodyEl = document.getElementById('pageBody');
-                pageBodyEl.innerHTML = '';
-                const preEl = document.createElement('pre');
-                preEl.style.cssText = 'white-space: pre-wrap; word-wrap: break-word; font-family: inherit; margin: 0; line-height: 1.8;';
-                preEl.textContent = page.content || '';
-                pageBodyEl.appendChild(preEl);
-            }
+            // Markdown処理（動的読み込み対応）
+            await this.renderMarkdownContent(page.content || '');
         }
     }
 
@@ -3161,17 +3252,43 @@ showSwipeHint() {
         this.setupPublicFilters();
     }
 
-    // 全ての公開ノートを読み込み
+    // 公開ノートの段階的読み込み（高速化）
     async loadAllPublicNotes() {
         this.publicNotes = [];
         this.currentPage = 1;
         this.currentShelfPage = 1;
         this.notesPerPage = 12;
+        this.isLoadingPublicNotes = false;
+        this.hasMorePublicNotes = true;
 
         try {
-            // Firestoreから公開ノートを取得
+            // まず初期ロード（少数のノート）
+            await this.loadInitialPublicNotes();
+
+            // バックグラウンドで残りを読み込み
+            this.loadRemainingPublicNotesInBackground();
+
+        } catch (error) {
+            console.error('Failed to load public notes:', error);
+            this.showToast('公開ノートの読み込みに失敗しました', 'error');
+        }
+    }
+
+    // 初期の公開ノートを読み込み（高速表示用）
+    async loadInitialPublicNotes() {
+        try {
+            // ローカルから既存の公開ノートを即座に表示
+            Array.from(this.notesMap.values()).forEach(note => {
+                if (note.isPublic || note.visibility?.type === 'public') {
+                    this.publicNotes.push(note);
+                }
+            });
+
+            // 最初の12件をFirestoreから取得
             if (this.db && this.firebaseInitialized) {
-                const publicNotesRef = this.db.collection('publicNotes');
+                const publicNotesRef = this.db.collection('publicNotes')
+                    .orderBy('updatedAt', 'desc')
+                    .limit(12);
                 const snapshot = await publicNotesRef.get();
 
                 snapshot.forEach(doc => {
@@ -3180,29 +3297,58 @@ showSwipeHint() {
                 });
             }
 
-            // ローカルの公開ノートも追加
-            Array.from(this.notesMap.values()).forEach(note => {
-                if (note.isPublic || note.visibility?.type === 'public') {
-                    this.publicNotes.push(note);
-                }
-            });
-
-            // 重複を削除
-            const uniqueNotes = new Map();
-            this.publicNotes.forEach(note => {
-                const id = note.id.replace('public_', '');
-                if (!uniqueNotes.has(id) || note.views > (uniqueNotes.get(id).views || 0)) {
-                    uniqueNotes.set(id, note);
-                }
-            });
-
-            this.publicNotes = Array.from(uniqueNotes.values());
+            // 重複を削除して即座に表示
+            this.deduplicatePublicNotes();
             this.sortPublicNotes('alphabetical');
 
         } catch (error) {
-            console.error('Failed to load public notes:', error);
-            this.showToast('公開ノートの読み込みに失敗しました', 'error');
+            console.error('初期公開ノート読み込みエラー:', error);
         }
+    }
+
+    // バックグラウンドで残りの公開ノートを読み込み
+    async loadRemainingPublicNotesInBackground() {
+        try {
+            if (!this.db || !this.firebaseInitialized) return;
+
+            // 少し遅延させてから残りを読み込み（UIをブロックしない）
+            setTimeout(async () => {
+                const publicNotesRef = this.db.collection('publicNotes')
+                    .orderBy('updatedAt', 'desc');
+                const snapshot = await publicNotesRef.get();
+
+                const newNotes = [];
+                snapshot.forEach(doc => {
+                    const note = { id: doc.id, ...doc.data() };
+                    newNotes.push(note);
+                });
+
+                // 新しいノートを追加
+                this.publicNotes = [...this.publicNotes, ...newNotes];
+                this.deduplicatePublicNotes();
+                this.sortPublicNotes('alphabetical');
+
+                // 表示更新
+                this.updatePublicNotesDisplay();
+                this.updatePublicBookshelfDisplay();
+
+            }, 1000); // 1秒遅延
+
+        } catch (error) {
+            console.error('バックグラウンド読み込みエラー:', error);
+        }
+    }
+
+    // 重複排除ヘルパー関数
+    deduplicatePublicNotes() {
+        const uniqueNotes = new Map();
+        this.publicNotes.forEach(note => {
+            const id = note.id.replace('public_', '');
+            if (!uniqueNotes.has(id) || note.views > (uniqueNotes.get(id).views || 0)) {
+                uniqueNotes.set(id, note);
+            }
+        });
+        this.publicNotes = Array.from(uniqueNotes.values());
     }
 
     // 公開ノートのソート
