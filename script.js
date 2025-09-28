@@ -874,17 +874,6 @@ class StudyBookApp {
         });
     }
 
-    // 特定のページに移動
-    goToPage(pageIndex) {
-        if (this.currentNote && pageIndex >= 0 && pageIndex < this.currentNote.pages.length) {
-            if (this.isEditing) {
-                this.saveCurrentPage();
-            }
-            this.currentPage = pageIndex;
-            this.updateViewer();
-            this.saveReadingProgress(this.currentNote.id, this.currentPage);
-        }
-    }
 
     // 編集モードの切り替え
     toggleEdit() {
@@ -1964,13 +1953,18 @@ showSwipeHint() {
     }
 
     goToPage(pageIndex) {
-        if (this.isEditing) {
-            this.saveCurrentPage();
+        if (this.currentNote && pageIndex >= 0 && pageIndex < this.currentNote.pages.length) {
+            if (this.isEditing) {
+                this.saveCurrentPage();
+            }
+            this.currentPage = pageIndex;
+            this.updateViewer();
+            this.saveReadingProgress(this.currentNote.id, pageIndex);
+            // モバイルの場合のみサイドバーを閉じる
+            if (window.innerWidth < 768) {
+                this.toggleSidebar();
+            }
         }
-        this.currentPage = pageIndex;
-        this.updateViewer();
-        this.saveReadingProgress(this.currentNote.id, pageIndex);
-        this.toggleSidebar();
     }
 
     // ===== 保存処理 =====
@@ -3154,7 +3148,9 @@ showSwipeHint() {
                 const activeClass = actualPageIndex === this.currentPage ? 'active' : '';
                 
                 return `
-                    <div class="toc-page ${activeClass}" onclick="app.goToPage(${actualPageIndex})">
+                    <div class="toc-page ${activeClass}"
+                         onclick="app.goToPage(${actualPageIndex})"
+                         style="cursor: pointer;">
                         <span>${this.escapeHtml(page.title || 'ページ' + (actualPageIndex + 1))}</span>
                         ${this.isEditing && this.currentNote.pages.length > 1 ? `
                             <button class="btn btn-danger" onclick="app.deletePage(${actualPageIndex}, event)" style="padding: 0.2rem 0.4rem; font-size: 0.7rem; margin-left: 0.5rem;" title="削除">
@@ -3209,7 +3205,13 @@ showSwipeHint() {
     // ===== その他の機能 =====
     toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
-        sidebar.classList.toggle('open');
+        if (sidebar) {
+            sidebar.classList.toggle('open');
+            // 開いた時に目次を更新（編集モードでも）
+            if (sidebar.classList.contains('open')) {
+                this.updateTOC();
+            }
+        }
     }
 
     goHome() {
@@ -3488,25 +3490,25 @@ showSwipeHint() {
         let paginationHTML = '';
 
         // 前へボタン
-        paginationHTML += `<button ${this.currentPage === 1 ? 'disabled' : ''} onclick="app.goToPage(${this.currentPage - 1})">←</button>`;
+        paginationHTML += `<button ${this.currentPage === 1 ? 'disabled' : ''} onclick="app.goToPublicNotesPage(${this.currentPage - 1})">←</button>`;
 
         // ページ番号
         for (let i = 1; i <= totalPages; i++) {
             if (i === 1 || i === totalPages || (i >= this.currentPage - 2 && i <= this.currentPage + 2)) {
-                paginationHTML += `<button ${i === this.currentPage ? 'class="active"' : ''} onclick="app.goToPage(${i})">${i}</button>`;
+                paginationHTML += `<button ${i === this.currentPage ? 'class="active"' : ''} onclick="app.goToPublicNotesPage(${i})">${i}</button>`;
             } else if (i === this.currentPage - 3 || i === this.currentPage + 3) {
                 paginationHTML += '<span>...</span>';
             }
         }
 
         // 次へボタン
-        paginationHTML += `<button ${this.currentPage === totalPages ? 'disabled' : ''} onclick="app.goToPage(${this.currentPage + 1})">→</button>`;
+        paginationHTML += `<button ${this.currentPage === totalPages ? 'disabled' : ''} onclick="app.goToPublicNotesPage(${this.currentPage + 1})">→</button>`;
 
         pagination.innerHTML = paginationHTML;
     }
 
-    // ページ移動
-    goToPage(page) {
+    // ページ移動（公開ノート用）
+    goToPublicNotesPage(page) {
         this.currentPage = page;
         this.updatePublicNotesDisplay();
         document.getElementById('publicNotesList').scrollIntoView({ behavior: 'smooth' });
