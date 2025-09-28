@@ -755,6 +755,9 @@ class StudyBookApp {
         // 色選択機能の設定
         this.setupColorPicker();
 
+        // サイドバー外クリックで閉じる機能
+        this.setupSidebarClickOutside();
+
         // モーダル外クリックで閉じる
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal-overlay')) {
@@ -2569,6 +2572,28 @@ showSwipeHint() {
 
                 // 本の色を即座に更新（編集中の場合）
                 this.updateBookColor(e.target.dataset.color);
+            }
+        });
+    }
+
+    // ===== サイドバー外クリック検出 =====
+    setupSidebarClickOutside() {
+        document.addEventListener('click', (e) => {
+            const sidebar = document.getElementById('sidebar');
+            const sidebarToggleBtn = e.target.closest('[onclick*="toggleSidebar"]');
+
+            // サイドバーが開いている状態でのみ処理
+            if (sidebar && sidebar.classList.contains('open')) {
+                // サイドバー内のクリック、または目次ボタンのクリックは無視
+                if (sidebar.contains(e.target) || sidebarToggleBtn) {
+                    return;
+                }
+
+                // メインコンテンツエリア（編集エリア・ノートエリア）のクリックで閉じる
+                const mainContent = e.target.closest('#pageContent, #viewMode, #editMode, main');
+                if (mainContent) {
+                    this.toggleSidebar();
+                }
             }
         });
     }
