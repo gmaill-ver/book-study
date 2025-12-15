@@ -1875,8 +1875,10 @@ showSwipeHint() {
         const page = this.currentNote.pages[this.currentPage];
 
         if (this.isEditing) {
-            document.getElementById('viewMode').style.display = 'none';
-            document.getElementById('editMode').style.display = 'block';
+            const viewMode = document.getElementById('viewMode');
+            const editMode = document.getElementById('editMode');
+            if (viewMode) viewMode.style.display = 'none';
+            if (editMode) editMode.style.display = 'block';
 
             // スマホ編集時の拡大表示モード
             this.setupMobileEditMode();
@@ -1885,9 +1887,12 @@ showSwipeHint() {
             this.setupTextareaScrolling();
 
             const bookTitleSection = document.getElementById('bookTitleSection');
-            if (this.currentPage === 0) {
+            if (this.currentPage === 0 && bookTitleSection) {
                 bookTitleSection.style.display = 'block';
-                document.getElementById('bookTitleInput').value = this.currentNote.title || '';
+                const bookTitleInput = document.getElementById('bookTitleInput');
+                if (bookTitleInput) {
+                    bookTitleInput.value = this.currentNote.title || '';
+                }
 
                 // 色選択セクションを表示
                 const colorSection = document.getElementById('bookColorSection');
@@ -1901,7 +1906,7 @@ showSwipeHint() {
                 if (tagSection) {
                     tagSection.style.display = 'block';
                 }
-            } else {
+            } else if (bookTitleSection) {
                 bookTitleSection.style.display = 'none';
 
                 // 1ページ目以外では色選択を非表示
@@ -1917,36 +1922,57 @@ showSwipeHint() {
                 }
             }
 
-            document.getElementById('pageTitleInput').value = page.title || '';
-            document.getElementById('pageContentInput').value = page.content || '';
-            document.getElementById('pageTagsInput').value = (page.tags || []).join(', ');
+            const pageTitleInput = document.getElementById('pageTitleInput');
+            if (pageTitleInput) {
+                pageTitleInput.value = page.title || '';
+            }
 
-            if (page.image) {
-                document.getElementById('imagePreview').innerHTML = `
-                    <img src="${this.escapeHtml(page.image)}" style="max-width: 100%; height: auto; display: block; margin: 0 auto; border-radius: 6px;">
-                    <button class="btn btn-danger" onclick="app.removeImage()" style="margin-top: 0.5rem;">削除</button>
-                `;
-            } else {
-                document.getElementById('imagePreview').innerHTML = '';
+            const pageContentInput = document.getElementById('pageContentInput');
+            if (pageContentInput) {
+                pageContentInput.value = page.content || '';
+            }
+
+            const pageTagsInput = document.getElementById('pageTagsInput');
+            if (pageTagsInput) {
+                pageTagsInput.value = (page.tags || []).join(', ');
+            }
+
+            const imagePreview = document.getElementById('imagePreview');
+            if (imagePreview) {
+                if (page.image) {
+                    imagePreview.innerHTML = `
+                        <img src="${this.escapeHtml(page.image)}" style="max-width: 100%; height: auto; display: block; margin: 0 auto; border-radius: 6px;">
+                        <button class="btn btn-danger" onclick="app.removeImage()" style="margin-top: 0.5rem;">削除</button>
+                    `;
+                } else {
+                    imagePreview.innerHTML = '';
+                }
             }
         } else {
-            document.getElementById('viewMode').style.display = 'block';
-            document.getElementById('editMode').style.display = 'none';
+            const viewMode = document.getElementById('viewMode');
+            const editMode = document.getElementById('editMode');
+            if (viewMode) viewMode.style.display = 'block';
+            if (editMode) editMode.style.display = 'none';
 
             // スマホ編集拡大表示モードを解除
             this.exitMobileEditMode();
 
-            document.getElementById('pageTitle').textContent = page.title || 'ページ' + (this.currentPage + 1);
+            const pageTitle = document.getElementById('pageTitle');
+            if (pageTitle) {
+                pageTitle.textContent = page.title || 'ページ' + (this.currentPage + 1);
+            }
 
-            if (page.image) {
-                const pageImage = document.getElementById('pageImage');
-                this.setupLazyImage(pageImage, page.image, `${page.title}の画像`);
-                pageImage.style.display = 'block';
-                // 画像サイズ制限を強制
-                pageImage.style.maxWidth = '100%';
-                pageImage.style.height = 'auto';
-            } else {
-                document.getElementById('pageImage').style.display = 'none';
+            const pageImage = document.getElementById('pageImage');
+            if (pageImage) {
+                if (page.image) {
+                    this.setupLazyImage(pageImage, page.image, `${page.title}の画像`);
+                    pageImage.style.display = 'block';
+                    // 画像サイズ制限を強制
+                    pageImage.style.maxWidth = '100%';
+                    pageImage.style.height = 'auto';
+                } else {
+                    pageImage.style.display = 'none';
+                }
             }
 
             // Markdown処理（動的読み込み対応）
