@@ -936,8 +936,14 @@ setupSwipeHandlers() {
     const setupSwipeForElement = (element) => {
         // タッチ開始
         element.addEventListener('touchstart', (e) => {
-            // 編集モードの場合は完全に無効化
-            if (this.isEditing) {
+            // 編集モード中でも、入力フィールド外ではスワイプを許可
+            const target = e.target;
+            if (this.isEditing && (
+                target.tagName === 'TEXTAREA' ||
+                target.tagName === 'INPUT' ||
+                target.closest('textarea') ||
+                target.closest('input')
+            )) {
                 this.isSwiping = false;
                 return;
             }
@@ -950,7 +956,6 @@ setupSwipeHandlers() {
             }
 
             // クリック可能な要素上では無効化
-            const target = e.target;
             if (target.tagName === 'BUTTON' ||
                 target.tagName === 'A' ||
                 target.onclick ||
@@ -970,7 +975,18 @@ setupSwipeHandlers() {
 
         // タッチ移動
         element.addEventListener('touchmove', (e) => {
-            if (!this.currentNote || this.isMultiTouch || this.isEditing) return;
+            if (!this.currentNote || this.isMultiTouch) return;
+
+            // 編集モード中の入力フィールド内では無効化
+            const target = e.target;
+            if (this.isEditing && (
+                target.tagName === 'TEXTAREA' ||
+                target.tagName === 'INPUT' ||
+                target.closest('textarea') ||
+                target.closest('input')
+            )) {
+                return;
+            }
 
             // マルチタッチ（ズーム操作）の場合は無効化
             if (e.touches.length > 1) {
@@ -1017,7 +1033,7 @@ setupSwipeHandlers() {
                 element.style.transition = 'transform 0.2s ease';
             }
 
-            if (!this.currentNote || !this.isSwiping || this.isMultiTouch || this.isEditing) {
+            if (!this.currentNote || !this.isSwiping || this.isMultiTouch) {
                 this.isSwiping = false;
                 this.isMultiTouch = false;
                 return;
@@ -1054,8 +1070,9 @@ setupSwipeHandlers() {
         }, { passive: true });
     };
 
-    // 閲覧モードのみにスワイプを設定
+    // 閲覧モードと編集モードの両方にスワイプを設定
     setupSwipeForElement(viewMode);
+    setupSwipeForElement(editMode);
 
     // デバッグモード：スワイプエリアを可視化
     if (window.location.hash === '#debug') {
@@ -3302,8 +3319,12 @@ showSwipeHint() {
     // ===== その他の機能 =====
     toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
         if (sidebar) {
             sidebar.classList.toggle('open');
+            if (overlay) {
+                overlay.classList.toggle('active');
+            }
             // 開いた時に目次を更新（編集モードでも）
             if (sidebar.classList.contains('open')) {
                 this.updateTOC();
@@ -3322,6 +3343,12 @@ showSwipeHint() {
         document.getElementById('viewerContainer').style.display = 'none';
         document.getElementById('publicNotesView').style.display = 'none';
         document.getElementById('sidebar').classList.remove('open');
+
+        // サイドバーオーバーレイも閉じる
+        const overlay = document.getElementById('sidebarOverlay');
+        if (overlay) {
+            overlay.classList.remove('active');
+        }
 
         // ホーム画面の「みんなのノート」セクションも非表示にする
         document.getElementById('publicBooksSection').style.display = 'none';
