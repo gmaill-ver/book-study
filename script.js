@@ -889,6 +889,21 @@ class StudyBookApp {
         }
     }
 
+    // 編集モードに切り替え
+    editMode() {
+        this.isEditing = true;
+        this.updateViewer();
+    }
+
+    // 閲覧モードに切り替え
+    viewMode() {
+        if (this.isEditing) {
+            this.saveCurrentPage();
+        }
+        this.isEditing = false;
+        this.updateViewer();
+    }
+
     // ===== スワイプ機能（改善版：限定領域＋ズーム分離） =====
 setupSwipeHandlers() {
     // ページコンテンツ内でのみスワイプを有効にする（より限定的に）
