@@ -893,6 +893,12 @@ class StudyBookApp {
     editMode() {
         this.isEditing = true;
         this.updateViewer();
+        const editBtn = document.getElementById('editToggleBtn');
+        if (editBtn) {
+            editBtn.textContent = '👁️';
+            editBtn.title = '閲覧モード (e)';
+            editBtn.className = 'btn btn-primary';
+        }
     }
 
     // 閲覧モードに切り替え
@@ -902,6 +908,12 @@ class StudyBookApp {
         }
         this.isEditing = false;
         this.updateViewer();
+        const editBtn = document.getElementById('editToggleBtn');
+        if (editBtn) {
+            editBtn.textContent = '✏️';
+            editBtn.title = '編集 (e)';
+            editBtn.className = 'btn btn-secondary';
+        }
     }
 
     // ===== スワイプ機能（改善版：限定領域＋ズーム分離） =====
@@ -1791,11 +1803,11 @@ showSwipeHint() {
         if (!this.currentNote) return;
 
         const isOwner = this.currentUser && this.currentNote.authorId === this.currentUser.uid;
-        document.getElementById('saveBtn').style.display = this.isEditing ? 'inline-flex' : 'none';
+        document.getElementById('editToggleBtn').style.display = isOwner ? 'inline-flex' : 'none';
         document.getElementById('addPageBtn').style.display = this.isEditing ? 'inline-flex' : 'none';
         document.getElementById('deleteBookBtn').style.display = isOwner ? 'inline-flex' : 'none';
         document.getElementById('pageInfo').textContent = `${this.currentPage + 1} / ${this.currentNote.pages.length}`;
-        
+
         const visibilityIcon = this.getVisibilityIcon();
         document.getElementById('visibilityBtn').textContent = visibilityIcon;
         document.getElementById('visibilityBtn').title = this.getVisibilityTitle();

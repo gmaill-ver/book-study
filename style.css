@@ -1222,12 +1222,36 @@ body {
         padding: 0.5rem;
     }
 
-    /* スマホでのボタンタッチ領域を拡大 */
+    /* スマホでのボタン最適化 */
+    .viewer-header {
+        padding: 0.25rem 0.25rem !important;
+    }
+
+    .viewer-header .header-group {
+        gap: 0.15rem !important;
+    }
+
     .viewer-header .btn {
-        min-width: 44px !important;
-        min-height: 44px !important;
-        padding: 0.5rem !important;
-        margin: 0 0.1rem !important;
+        min-width: 36px !important;
+        min-height: 36px !important;
+        padding: 0.35rem !important;
+        margin: 0 !important;
+        font-size: 0.95rem !important;
+    }
+
+    .page-info {
+        font-size: 0.7rem !important;
+        margin: 0 0.25rem !important;
+    }
+
+    /* サイドバーのモバイル対応を強化 */
+    .sidebar {
+        z-index: 999 !important;
+        width: 250px !important;
+    }
+
+    .sidebar.open {
+        transform: translateX(0) !important;
     }
 
     .bookshelf {
