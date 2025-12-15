@@ -191,6 +191,8 @@
             <div class="header-group">
                 <button class="btn btn-secondary" onclick="app.toggleSidebar()" aria-label="メニュー" title="目次">☰</button>
                 <button class="btn btn-secondary" onclick="app.goHome()" aria-label="ホーム" title="ホーム">🏠</button>
+                <button id="addPageBtn" class="btn btn-primary" onclick="app.addPage()" style="display: none;" aria-label="ページ追加" title="ページ追加">➕</button>
+                <button id="deleteBookBtn" class="btn btn-danger" onclick="app.deleteBook()" style="display: none;" aria-label="ノート削除" title="ノート削除">🗑️</button>
             </div>
 
             <span id="pageInfo" class="page-info">1 / 1</span>
@@ -344,12 +346,7 @@
                 <button class="btn btn-secondary" onclick="app.previousPage()" id="prevBtn" aria-label="前のページ" title="前のページ">
                     ←
                 </button>
-                <div style="display: flex; gap: 0.25rem; align-items: center;">
-                    <button id="editToggleBtn" class="btn btn-secondary" onclick="app.toggleEdit()" style="display: none;" aria-label="編集" title="編集切替">✏️</button>
-                    <button id="addPageBtn" class="btn btn-primary" onclick="app.addPage()" style="display: none;" aria-label="ページ追加" title="ページ追加">➕</button>
-                    <div id="pageDots" class="page-dots"></div>
-                    <button id="deleteBookBtn" class="btn btn-danger" onclick="app.deleteBook()" style="display: none;" aria-label="ノート削除" title="ノート削除">🗑️</button>
-                </div>
+                <div id="pageDots" class="page-dots"></div>
                 <button class="btn btn-secondary" onclick="app.nextPage()" id="nextBtn" aria-label="次のページ" title="次のページ">
                     →
                 </button>

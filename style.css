@@ -653,7 +653,7 @@ body {
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.5);
-    z-index: 998;
+    z-index: 9998;
     display: none;
     opacity: 0;
     transition: opacity 0.3s ease;
@@ -667,17 +667,18 @@ body {
 /* サイドバー（目次） */
 .sidebar {
     position: fixed;
-    top: 56px;
+    top: 0;
     left: 0;
     width: 280px;
-    height: calc(100vh - 56px);
+    height: 100vh;
     background: var(--bg-secondary);
     box-shadow: var(--shadow-md);
     transform: translateX(-100%);
     transition: transform 0.3s ease;
-    z-index: 999;
+    z-index: 9999;
     overflow-y: auto;
     border-right: 1px solid var(--border-color);
+    padding-top: 56px;
 }
 
 .sidebar.open {
@@ -909,9 +910,9 @@ body {
 /* ページナビゲーション - 固定表示 */
 .page-nav {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    gap: 0.5rem;
+    gap: 1rem;
     padding: 0.75rem 1rem;
     background: var(--bg-secondary);
     border-top: 1px solid var(--border-color);
@@ -1273,8 +1274,8 @@ body {
 
     /* サイドバーのモバイル対応を強化 */
     .sidebar {
-        z-index: 999 !important;
-        width: 250px !important;
+        z-index: 9999 !important;
+        width: 280px !important;
     }
 
     .sidebar.open {

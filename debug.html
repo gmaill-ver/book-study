@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Toggle Sidebar</title>
+    <style>
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 300px;
+            height: 100vh;
+            background: #f0f0f0;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            border: 2px solid red;
+        }
+        .sidebar.open {
+            transform: translateX(0);
+        }
+        button {
+            padding: 10px;
+            margin: 10px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Sidebar Toggle Test</h1>
+    <button onclick="toggleSidebar()">Toggle Sidebar (☰)</button>
+
+    <div id="sidebar" class="sidebar">
+        <h2>Sidebar Content</h2>
+        <p>This is the sidebar</p>
+        <button onclick="toggleSidebar()">Close (✕)</button>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            console.log('toggleSidebar called');
+            console.log('sidebar element:', sidebar);
+            console.log('current classes:', sidebar.className);
+            sidebar.classList.toggle('open');
+            console.log('after toggle classes:', sidebar.className);
+        }
+    </script>
+</body>
+</html>
