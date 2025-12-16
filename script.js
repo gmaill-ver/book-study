@@ -669,22 +669,17 @@ class StudyBookApp {
 
         // ホーム画面のフッターボタン更新
         const homeShelfBtn = document.getElementById('homeShelfBtn');
-        const homeGridBtn = document.getElementById('homeGridBtn');
 
-        if (homeShelfBtn && homeGridBtn) {
+        if (homeShelfBtn) {
             if (mode === 'shelf') {
                 homeShelfBtn.style.background = '#f5f5f5';
                 homeShelfBtn.style.color = 'var(--text-primary)';
-                homeGridBtn.style.background = 'none';
-                homeGridBtn.style.color = 'var(--text-secondary)';
                 document.getElementById('bookshelfView').style.display = 'block';
                 document.getElementById('gridView').style.display = 'none';
                 this.updateBookshelf();
             } else {
                 homeShelfBtn.style.background = 'none';
                 homeShelfBtn.style.color = 'var(--text-secondary)';
-                homeGridBtn.style.background = '#f5f5f5';
-                homeGridBtn.style.color = 'var(--text-primary)';
                 document.getElementById('bookshelfView').style.display = 'none';
                 document.getElementById('gridView').style.display = 'block';
                 this.updateMyBooks();
@@ -3147,9 +3142,11 @@ showSwipeHint() {
         const authSection = document.getElementById('authSection');
         if (this.currentUser) {
             authSection.innerHTML = `
+                <button class="btn btn-secondary" onclick="app.setViewMode('grid')" aria-label="編集モード" title="編集モード">✏️</button>
+                <button class="btn btn-secondary" onclick="app.showKeyboardHelp()" aria-label="キーボードヘルプ" title="キーボードショートカット (?)">⌨️</button>
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    ${this.currentUser.photoURL ? 
-                        `<img src="${this.escapeHtml(this.currentUser.photoURL)}" style="width: 28px; height: 28px; border-radius: 50%;" alt="プロフィール">` : 
+                    ${this.currentUser.photoURL ?
+                        `<img src="${this.escapeHtml(this.currentUser.photoURL)}" style="width: 28px; height: 28px; border-radius: 50%;" alt="プロフィール">` :
                         `<div style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary-color); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8rem; font-weight: 500;">${this.currentUser.displayName.charAt(0).toUpperCase()}</div>`
                     }
                     <span style="color: var(--text-primary); font-size: 0.9rem; font-weight: 500;">${this.escapeHtml(this.currentUser.displayName)}</span>
@@ -3159,7 +3156,10 @@ showSwipeHint() {
             document.getElementById('myBooksSection').style.display = 'block';
         } else {
             authSection.innerHTML = `
-                <button class="btn btn-primary" onclick="app.showAuthModal()" title="ログイン">👤</button>
+                <button class="btn btn-secondary" onclick="app.showKeyboardHelp()" aria-label="キーボードヘルプ" title="キーボードショートカット (?)">⌨️</button>
+                <button class="btn btn-primary" onclick="app.showAuthModal()" aria-label="ログイン" title="ログイン">
+                    👤
+                </button>
             `;
             document.getElementById('myBooksSection').style.display = 'none';
         }
