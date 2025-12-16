@@ -1252,31 +1252,32 @@ body {
 
     /* スマホでのボタン最適化 */
     .viewer-header {
-        padding: 0.2rem 0.15rem !important;
+        padding: 0.3rem 0.25rem !important;
         flex-wrap: nowrap !important;
+        gap: 0.25rem !important;
     }
 
     .viewer-header .header-group {
-        gap: 0.1rem !important;
+        gap: 0.2rem !important;
         flex-shrink: 0 !important;
     }
 
     .viewer-header .btn {
-        min-width: 30px !important;
-        min-height: 30px !important;
-        width: 30px !important;
-        height: 30px !important;
-        padding: 0.25rem !important;
+        min-width: 40px !important;
+        min-height: 40px !important;
+        width: 40px !important;
+        height: 40px !important;
+        padding: 0.5rem !important;
         margin: 0 !important;
-        font-size: 0.8rem !important;
+        font-size: 1rem !important;
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
     }
 
     .page-info {
-        font-size: 0.65rem !important;
-        margin: 0 0.15rem !important;
+        font-size: 0.75rem !important;
+        margin: 0 0.25rem !important;
         white-space: nowrap !important;
         flex-shrink: 0 !important;
     }
@@ -1464,5 +1465,31 @@ body {
         min-height: 44px !important; /* タッチ領域を拡大 */
         font-size: 1.1rem !important;
         padding: 0.5rem !important; /* パディングを追加 */
+    }
+}
+
+/* PC用（タブレット・デスクトップ）の最適化 */
+@media (min-width: 769px) {
+    .viewer-header .btn {
+        min-width: 36px;
+        min-height: 36px;
+        width: 36px;
+        height: 36px;
+        padding: 0.5rem;
+        font-size: 1rem;
+    }
+
+    .viewer-header {
+        padding: 0.5rem;
+        gap: 0.5rem;
+    }
+
+    .viewer-header .header-group {
+        gap: 0.5rem;
+    }
+
+    .page-info {
+        font-size: 0.9rem;
+        margin: 0 1rem;
     }
 }
