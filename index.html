@@ -21,7 +21,7 @@
     <title>StudyBook - 学習ノート共有プラットフォーム</title>
     
     <!-- 外部CSS -->
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=20251216-2">
 </head>
 <body>
     <!-- 接続状態インジケーター -->
@@ -727,6 +727,23 @@
     <script src="config.js"></script>
 
     <!-- メインスクリプト -->
-    <script src="script.js"></script>
+    <script src="script.js?v=20251216-2"></script>
+
+    <!-- Service Worker登録 -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('SW registered:', registration);
+                        // 1時間ごとに更新チェック
+                        setInterval(() => {
+                            registration.update();
+                        }, 3600000);
+                    })
+                    .catch(err => console.log('SW registration failed:', err));
+            });
+        }
+    </script>
 </body>
 </html>
