@@ -1449,8 +1449,7 @@ body {
         resize: none !important;
     }
 
-    /* 拡大表示時にサイドバーとページナビを隠す */
-    body.mobile-editing .sidebar,
+    /* 拡大表示時にページナビを隠す（サイドバーは表示可能にする） */
     body.mobile-editing .page-nav {
         display: none !important;
     }
