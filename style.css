@@ -1283,11 +1283,11 @@ body {
 
     /* サイドバーのモバイル対応を強化 */
     .sidebar-overlay {
-        z-index: 998 !important;
+        z-index: 9998 !important;
     }
 
     .sidebar {
-        z-index: 999 !important;
+        z-index: 9999 !important;
         width: 75% !important;
         max-width: 280px !important;
         top: 0 !important;
