@@ -875,6 +875,7 @@ class StudyBookApp {
 
     // 編集モードの切り替え
     toggleEdit() {
+        console.log('toggleEdit called, isEditing:', this.isEditing);
         if (this.currentNote && this.currentUser) {
             if (this.isEditing) {
                 this.viewMode();
@@ -886,33 +887,36 @@ class StudyBookApp {
 
     // 編集モードに切り替え
     editMode() {
+        console.log('editMode called');
         this.isEditing = true;
-        this.updateViewer();
         const editBtn = document.getElementById('editToggleBtn');
         if (editBtn) {
             editBtn.textContent = '👁️';
             editBtn.title = '閲覧モード (e)';
             editBtn.className = 'btn btn-primary';
         }
+        this.updateViewer();
     }
 
     // 閲覧モードに切り替え
     viewMode() {
+        console.log('viewMode called');
         if (this.isEditing) {
-            if (confirm('保存しますか？')) {
+            const shouldSave = confirm('保存しますか？');
+            if (shouldSave) {
                 this.saveCurrentPage();
                 this.saveBook();
                 this.showToast('保存しました', 'success');
             }
         }
         this.isEditing = false;
-        this.updateViewer();
         const editBtn = document.getElementById('editToggleBtn');
         if (editBtn) {
             editBtn.textContent = '✏️';
             editBtn.title = '編集 (e)';
             editBtn.className = 'btn btn-secondary';
         }
+        this.updateViewer();
     }
 
     // ===== スワイプ機能（改善版：限定領域＋ズーム分離） =====
