@@ -1743,6 +1743,32 @@ showSwipeHint() {
         this.openBook(newNote.id, true);
     }
 
+    // 最後に編集したノートを開く
+    editLastBook() {
+        if (!this.currentUser) {
+            this.showToast('ログインが必要です', 'warning');
+            this.showAuthModal();
+            return;
+        }
+
+        // 自分のノートを更新日時順でソート
+        const myNotes = Array.from(this.notesMap.values())
+            .filter(note => note.authorId === this.currentUser.uid)
+            .sort((a, b) => {
+                const dateA = new Date(a.updatedAt || a.createdAt);
+                const dateB = new Date(b.updatedAt || b.createdAt);
+                return dateB - dateA;
+            });
+
+        if (myNotes.length === 0) {
+            this.showToast('編集できるノートがありません', 'warning');
+            return;
+        }
+
+        // 最新のノートを編集モードで開く
+        this.openBook(myNotes[0].id, true);
+    }
+
     // ===== ノートを開く =====
     async openBook(noteId, editMode = false) {
         const note = this.findNoteById(noteId);
