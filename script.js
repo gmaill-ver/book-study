@@ -4222,12 +4222,6 @@ showSwipeHint() {
                 // 軽微な最適化のみ適用（full拡大表示は避ける）
                 body.classList.add('mobile-editing');
 
-                // ページナビゲーションを非表示
-                const pageNav = document.querySelector('.page-nav');
-                if (pageNav) {
-                    pageNav.style.display = 'none';
-                }
-
                 // テキストエリアフォーカス時のみ拡大表示
                 const textarea = document.getElementById('pageContentInput');
                 if (textarea) {
@@ -4250,12 +4244,6 @@ showSwipeHint() {
         if (editMode) {
             editMode.classList.remove('mobile-edit-expanded');
             body.classList.remove('mobile-editing');
-
-            // ページナビゲーションを再表示
-            const pageNav = document.querySelector('.page-nav');
-            if (pageNav) {
-                pageNav.style.display = 'flex';
-            }
         }
     }
 
