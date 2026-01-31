@@ -1894,9 +1894,10 @@ showSwipeHint() {
             addPageBtn.style.display = (isOwner && this.isEditing) ? 'inline-flex' : 'none';
         }
 
-        const deleteBookBtn = document.getElementById('deleteBookBtn');
-        if (deleteBookBtn) {
-            deleteBookBtn.style.display = isOwner ? 'inline-flex' : 'none';
+        // 設定モーダル内の削除ボタン表示制御
+        const settingsDeleteBtn = document.getElementById('settingsDeleteBtn');
+        if (settingsDeleteBtn) {
+            settingsDeleteBtn.style.display = isOwner ? 'flex' : 'none';
         }
 
         const pageInfo = document.getElementById('pageInfo');
@@ -1904,11 +1905,11 @@ showSwipeHint() {
             pageInfo.textContent = `${this.currentPage + 1} / ${this.currentNote.pages.length}`;
         }
 
+        // 設定モーダル内の公開設定アイコン更新
         const visibilityIcon = this.getVisibilityIcon();
-        const visibilityBtn = document.getElementById('visibilityBtn');
-        if (visibilityBtn) {
-            visibilityBtn.textContent = visibilityIcon;
-            visibilityBtn.title = this.getVisibilityTitle();
+        const settingsVisibilityIcon = document.getElementById('settingsVisibilityIcon');
+        if (settingsVisibilityIcon) {
+            settingsVisibilityIcon.textContent = visibilityIcon;
         }
 
         this.updateTOC();
@@ -2317,6 +2318,30 @@ showSwipeHint() {
 
     closeVisibilityModal() {
         document.getElementById('visibilityModal').classList.remove('active');
+    }
+
+    // ===== 設定モーダル =====
+    showSettingsModal() {
+        if (!this.currentNote) return;
+
+        // 削除ボタンの表示/非表示
+        const isOwner = this.currentUser && this.currentNote.authorId === this.currentUser.uid;
+        const settingsDeleteBtn = document.getElementById('settingsDeleteBtn');
+        if (settingsDeleteBtn) {
+            settingsDeleteBtn.style.display = isOwner ? 'flex' : 'none';
+        }
+
+        // 公開設定アイコンを更新
+        const settingsVisibilityIcon = document.getElementById('settingsVisibilityIcon');
+        if (settingsVisibilityIcon) {
+            settingsVisibilityIcon.textContent = this.getVisibilityIcon();
+        }
+
+        document.getElementById('settingsModal').classList.add('active');
+    }
+
+    closeSettingsModal() {
+        document.getElementById('settingsModal').classList.remove('active');
     }
 
     // ===== シェア機能 =====
@@ -3210,7 +3235,6 @@ showSwipeHint() {
         const authSection = document.getElementById('authSection');
         if (this.currentUser) {
             authSection.innerHTML = `
-                <button class="btn btn-secondary hide-on-mobile" onclick="app.showKeyboardHelp()" aria-label="キーボードヘルプ" title="キーボードショートカット (?)">⌨️</button>
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                     ${this.currentUser.photoURL ?
                         `<img src="${this.escapeHtml(this.currentUser.photoURL)}" style="width: 28px; height: 28px; border-radius: 50%;" alt="プロフィール">` :
@@ -3223,7 +3247,6 @@ showSwipeHint() {
             document.getElementById('myBooksSection').style.display = 'block';
         } else {
             authSection.innerHTML = `
-                <button class="btn btn-secondary hide-on-mobile" onclick="app.showKeyboardHelp()" aria-label="キーボードヘルプ" title="キーボードショートカット (?)">⌨️</button>
                 <button class="btn btn-primary" onclick="app.showAuthModal()" aria-label="ログイン" title="ログイン">
                     👤
                 </button>
