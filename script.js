@@ -3031,6 +3031,8 @@ showSwipeHint() {
 
         this.currentPage = this.currentNote.pages.length - 1;
         this.updateViewer();
+        this.updateTOC(); // 明示的に目次を更新
+        this.updatePageNavigation(); // ページナビも更新
         this.showToast('新しいページを追加しました', 'success');
     }
 
