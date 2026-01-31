@@ -3168,8 +3168,7 @@ showSwipeHint() {
         const authSection = document.getElementById('authSection');
         if (this.currentUser) {
             authSection.innerHTML = `
-                <button class="btn btn-secondary" onclick="app.setViewMode('grid')" aria-label="編集モード" title="編集モード">✏️</button>
-                <button class="btn btn-secondary" onclick="app.showKeyboardHelp()" aria-label="キーボードヘルプ" title="キーボードショートカット (?)">⌨️</button>
+                <button class="btn btn-secondary hide-on-mobile" onclick="app.showKeyboardHelp()" aria-label="キーボードヘルプ" title="キーボードショートカット (?)">⌨️</button>
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                     ${this.currentUser.photoURL ?
                         `<img src="${this.escapeHtml(this.currentUser.photoURL)}" style="width: 28px; height: 28px; border-radius: 50%;" alt="プロフィール">` :
@@ -3182,7 +3181,7 @@ showSwipeHint() {
             document.getElementById('myBooksSection').style.display = 'block';
         } else {
             authSection.innerHTML = `
-                <button class="btn btn-secondary" onclick="app.showKeyboardHelp()" aria-label="キーボードヘルプ" title="キーボードショートカット (?)">⌨️</button>
+                <button class="btn btn-secondary hide-on-mobile" onclick="app.showKeyboardHelp()" aria-label="キーボードヘルプ" title="キーボードショートカット (?)">⌨️</button>
                 <button class="btn btn-primary" onclick="app.showAuthModal()" aria-label="ログイン" title="ログイン">
                     👤
                 </button>
