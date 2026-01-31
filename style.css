@@ -585,6 +585,15 @@ body {
     background: var(--bg-color);
 }
 
+/* ➕ボタンは編集モードの時のみ表示（CSSで強制） */
+#addPageBtn {
+    display: none !important;
+}
+
+body.is-editing #addPageBtn {
+    display: inline-flex !important;
+}
+
 /* ボタン */
 .btn {
     padding: 0.5rem;

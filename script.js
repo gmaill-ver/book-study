@@ -889,17 +889,12 @@ class StudyBookApp {
     // 編集モードに切り替え
     editMode() {
         this.isEditing = true;
+        document.body.classList.add('is-editing');
         const editBtn = document.getElementById('editToggleBtn');
         if (editBtn) {
             editBtn.textContent = '👁️';
             editBtn.title = '閲覧モード (e)';
             editBtn.className = 'btn btn-primary';
-        }
-        // ➕ボタンを表示
-        const addPageBtn = document.getElementById('addPageBtn');
-        if (addPageBtn) {
-            const isOwner = this.currentUser && this.currentNote?.authorId === this.currentUser.uid;
-            addPageBtn.style.display = isOwner ? 'inline-flex' : 'none';
         }
         this.updateViewer();
     }
@@ -915,16 +910,12 @@ class StudyBookApp {
             }
         }
         this.isEditing = false;
+        document.body.classList.remove('is-editing');
         const editBtn = document.getElementById('editToggleBtn');
         if (editBtn) {
             editBtn.textContent = '✏️';
             editBtn.title = '編集 (e)';
             editBtn.className = 'btn btn-secondary';
-        }
-        // ➕ボタンを非表示
-        const addPageBtn = document.getElementById('addPageBtn');
-        if (addPageBtn) {
-            addPageBtn.style.display = 'none';
         }
         this.updateViewer();
     }
@@ -1812,6 +1803,13 @@ showSwipeHint() {
         this.currentNote = note;
         this.currentPage = 0;
         this.isEditing = editMode;
+
+        // 編集モードのクラスを設定
+        if (editMode) {
+            document.body.classList.add('is-editing');
+        } else {
+            document.body.classList.remove('is-editing');
+        }
 
         // ボタンのアイコンを設定
         const editBtn = document.getElementById('editToggleBtn');
@@ -3452,6 +3450,7 @@ showSwipeHint() {
         this.currentNote = null;
         this.currentPage = 0;
         this.isEditing = false;
+        document.body.classList.remove('is-editing');
         this.updateUI();
     }
 
