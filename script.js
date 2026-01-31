@@ -1803,6 +1803,20 @@ showSwipeHint() {
         this.currentPage = 0;
         this.isEditing = editMode;
 
+        // ボタンのアイコンを設定
+        const editBtn = document.getElementById('editToggleBtn');
+        if (editBtn) {
+            if (editMode) {
+                editBtn.textContent = '👁️';
+                editBtn.title = '閲覧モード (e)';
+                editBtn.className = 'btn btn-primary';
+            } else {
+                editBtn.textContent = '✏️';
+                editBtn.title = '編集 (e)';
+                editBtn.className = 'btn btn-secondary';
+            }
+        }
+
         document.getElementById('homeView').style.display = 'none';
         document.getElementById('viewerContainer').style.display = 'block';
 
