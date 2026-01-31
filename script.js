@@ -4100,6 +4100,15 @@ showSwipeHint() {
             // 重複設定を防ぐ
             textarea.setAttribute('data-scroll-setup', 'true');
 
+            // テキストエリア自動拡張
+            const autoResize = () => {
+                textarea.style.height = 'auto';
+                textarea.style.height = textarea.scrollHeight + 'px';
+            };
+            textarea.addEventListener('input', autoResize);
+            // 初期表示時も調整
+            autoResize();
+
             // マウスホイールイベント
             textarea.addEventListener('wheel', (e) => {
                 // テキストエリア内でのスクロールを許可
