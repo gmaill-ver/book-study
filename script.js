@@ -875,51 +875,39 @@ class StudyBookApp {
 
     // 編集モードの切り替え
     toggleEdit() {
-        console.log('toggleEdit called');
-        console.log('  currentNote:', this.currentNote ? 'exists' : 'null');
-        console.log('  currentUser:', this.currentUser ? 'exists' : 'null');
-        console.log('  isEditing before:', this.isEditing);
-
-        if (!this.currentNote) {
-            console.log('  ERROR: No currentNote');
-            return;
-        }
-        if (!this.currentUser) {
-            console.log('  ERROR: No currentUser');
+        if (!this.currentNote || !this.currentUser) {
             return;
         }
 
         if (this.isEditing) {
-            console.log('  Switching to VIEW mode');
             this.viewMode();
         } else {
-            console.log('  Switching to EDIT mode');
             this.editMode();
         }
-        console.log('  isEditing after:', this.isEditing);
     }
 
     // 編集モードに切り替え
     editMode() {
-        console.log('editMode() called');
         this.isEditing = true;
         const editBtn = document.getElementById('editToggleBtn');
-        console.log('  editBtn found:', editBtn ? 'yes' : 'no');
         if (editBtn) {
             editBtn.textContent = '👁️';
             editBtn.title = '閲覧モード (e)';
             editBtn.className = 'btn btn-primary';
-            console.log('  Button changed to 👁️');
+        }
+        // ➕ボタンを表示
+        const addPageBtn = document.getElementById('addPageBtn');
+        if (addPageBtn) {
+            const isOwner = this.currentUser && this.currentNote?.authorId === this.currentUser.uid;
+            addPageBtn.style.display = isOwner ? 'inline-flex' : 'none';
         }
         this.updateViewer();
     }
 
     // 閲覧モードに切り替え
     viewMode() {
-        console.log('viewMode() called');
         if (this.isEditing) {
             const shouldSave = confirm('保存しますか？');
-            console.log('  shouldSave:', shouldSave);
             if (shouldSave) {
                 this.saveCurrentPage();
                 this.saveBook();
@@ -928,12 +916,15 @@ class StudyBookApp {
         }
         this.isEditing = false;
         const editBtn = document.getElementById('editToggleBtn');
-        console.log('  editBtn found:', editBtn ? 'yes' : 'no');
         if (editBtn) {
             editBtn.textContent = '✏️';
             editBtn.title = '編集 (e)';
             editBtn.className = 'btn btn-secondary';
-            console.log('  Button changed to ✏️');
+        }
+        // ➕ボタンを非表示
+        const addPageBtn = document.getElementById('addPageBtn');
+        if (addPageBtn) {
+            addPageBtn.style.display = 'none';
         }
         this.updateViewer();
     }
