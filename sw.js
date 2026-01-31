@@ -1,4 +1,4 @@
-const CACHE_NAME = 'studybook-v21';
+const CACHE_NAME = 'studybook-v22';
 const urlsToCache = [
   '/',
   '/index.html',
