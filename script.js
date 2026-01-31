@@ -899,7 +899,11 @@ class StudyBookApp {
     // 閲覧モードに切り替え
     viewMode() {
         if (this.isEditing) {
-            this.saveCurrentPage();
+            if (confirm('保存しますか？')) {
+                this.saveCurrentPage();
+                this.saveBook();
+                this.showToast('保存しました', 'success');
+            }
         }
         this.isEditing = false;
         this.updateViewer();
@@ -1845,11 +1849,6 @@ showSwipeHint() {
         const editToggleBtn = document.getElementById('editToggleBtn');
         if (editToggleBtn) {
             editToggleBtn.style.display = isOwner ? 'inline-flex' : 'none';
-        }
-
-        const addPageBtn = document.getElementById('addPageBtn');
-        if (addPageBtn) {
-            addPageBtn.style.display = this.isEditing ? 'inline-flex' : 'none';
         }
 
         const deleteBookBtn = document.getElementById('deleteBookBtn');
