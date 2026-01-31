@@ -1453,10 +1453,15 @@ body {
         padding-bottom: 80px !important; /* ページナビ用 */
     }
 
+    #editMode {
+        min-height: calc(100vh - 120px) !important; /* ヘッダー+ページナビ分を引く */
+    }
+
     #editMode textarea {
         font-size: 16px !important; /* iOS ズーム防止 */
-        min-height: 50vh !important; /* 最低でも画面の50% */
-        max-height: none !important; /* 制限なし */
+        min-height: calc(100vh - 300px) !important; /* 画面下まで */
+        max-height: none !important;
+        flex-grow: 1 !important;
     }
 
     /* 画像アップロードエリアを小さく */
