@@ -1827,6 +1827,13 @@ showSwipeHint() {
             }
         }
 
+        // ➕ボタンの表示制御（読むモードでは必ず非表示）
+        const addPageBtn = document.getElementById('addPageBtn');
+        if (addPageBtn) {
+            const isOwner = this.currentUser && note.authorId === this.currentUser.uid;
+            addPageBtn.style.display = (editMode && isOwner) ? 'inline-flex' : 'none';
+        }
+
         document.getElementById('homeView').style.display = 'none';
         document.getElementById('viewerContainer').style.display = 'block';
 
