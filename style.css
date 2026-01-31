@@ -1455,12 +1455,14 @@ body {
 
     #editMode textarea {
         font-size: 16px !important; /* iOS ズーム防止 */
-        max-height: 40vh !important; /* 画面の40%まで */
+        min-height: 50vh !important; /* 最低でも画面の50% */
+        max-height: none !important; /* 制限なし */
     }
 
     /* 画像アップロードエリアを小さく */
     #editMode div[onclick*="imageInput"] {
-        padding: 1rem !important;
+        padding: 0.5rem !important;
+        font-size: 0.8rem !important;
     }
 
     /* 編集モードでもページナビを常に表示 */
