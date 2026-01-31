@@ -2047,10 +2047,8 @@ showSwipeHint() {
             this.currentPage = pageIndex;
             this.updateViewer();
             this.saveReadingProgress(this.currentNote.id, pageIndex);
-            // モバイルの場合のみサイドバーを閉じる
-            if (window.innerWidth < 768) {
-                this.toggleSidebar();
-            }
+            // ページ切り替え後はサイドバーを閉じる
+            this.closeSidebar();
         }
     }
 
@@ -2676,7 +2674,7 @@ showSwipeHint() {
                 // メインコンテンツエリア（編集エリア・ノートエリア）のクリックで閉じる
                 const mainContent = e.target.closest('#pageContent, #viewMode, #editMode, main');
                 if (mainContent) {
-                    this.toggleSidebar();
+                    this.closeSidebar();
                 }
             }
         });
@@ -3320,16 +3318,30 @@ showSwipeHint() {
     toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebarOverlay');
-        if (sidebar) {
-            sidebar.classList.toggle('open');
-            if (overlay) {
-                overlay.classList.toggle('active');
-            }
-            // 開いた時に目次を更新（編集モードでも）
-            if (sidebar.classList.contains('open')) {
-                this.updateTOC();
-            }
+
+        if (!sidebar) return;
+
+        const isOpen = sidebar.classList.contains('open');
+
+        if (isOpen) {
+            // 閉じる
+            sidebar.classList.remove('open');
+            if (overlay) overlay.classList.remove('active');
+        } else {
+            // 開く
+            sidebar.classList.add('open');
+            if (overlay) overlay.classList.add('active');
+            // 目次を更新
+            this.updateTOC();
         }
+    }
+
+    // サイドバーを閉じる
+    closeSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        if (sidebar) sidebar.classList.remove('open');
+        if (overlay) overlay.classList.remove('active');
     }
 
     goHome() {
@@ -3342,13 +3354,7 @@ showSwipeHint() {
         document.getElementById('homeView').style.display = 'block';
         document.getElementById('viewerContainer').style.display = 'none';
         document.getElementById('publicNotesView').style.display = 'none';
-        document.getElementById('sidebar').classList.remove('open');
-
-        // サイドバーオーバーレイも閉じる
-        const overlay = document.getElementById('sidebarOverlay');
-        if (overlay) {
-            overlay.classList.remove('active');
-        }
+        this.closeSidebar();
 
         // ホーム画面の「みんなのノート」セクションも非表示にする
         document.getElementById('publicBooksSection').style.display = 'none';
