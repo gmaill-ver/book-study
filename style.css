@@ -1315,15 +1315,6 @@ body {
         transform: translateX(0) !important;
     }
 
-    /* 編集モードでもサイドバーを確実に動作させる */
-    body.mobile-editing .sidebar {
-        z-index: 10000 !important;
-    }
-
-    body.mobile-editing .sidebar-overlay {
-        z-index: 9999 !important;
-    }
-
     .bookshelf {
         grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
         gap: 1px;
@@ -1455,48 +1446,32 @@ body {
         padding-bottom: env(safe-area-inset-bottom, 1rem);
     }
 
-    /* スマホ編集時の拡大表示モード */
-    .mobile-edit-expanded {
-        position: fixed !important;
-        top: 56px !important; /* ヘッダーの高さ */
-        left: 0 !important;
-        right: 0 !important;
-        bottom: 60px !important; /* ページナビ用のスペース */
-        z-index: 90 !important; /* サイドバーより低く */
-        background: var(--bg-color) !important;
+    /* モバイル編集モード - シンプル版 */
+    /* 拡大表示は使わない、通常のスクロールレイアウトを維持 */
+
+    #editMode {
+        padding-bottom: 80px !important; /* ページナビ用 */
+    }
+
+    #editMode textarea {
+        font-size: 16px !important; /* iOS ズーム防止 */
+        max-height: 40vh !important; /* 画面の40%まで */
+    }
+
+    /* 画像アップロードエリアを小さく */
+    #editMode div[onclick*="imageInput"] {
         padding: 1rem !important;
-        overflow-y: auto !important;
     }
 
-    .mobile-edit-expanded #pageContentInput {
-        min-height: calc(100vh - 200px) !important;
-        max-height: none !important;
-        font-size: 16px !important;
-        resize: none !important;
-    }
-
-    /* 編集モードでもページナビを表示 */
-    body.mobile-editing .page-nav {
+    /* 編集モードでもページナビを常に表示 */
+    .page-nav {
         display: flex !important;
         position: fixed !important;
         bottom: 0 !important;
         left: 0 !important;
         right: 0 !important;
-        z-index: 100 !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-    }
-
-    /* 拡大表示時のビューアーヘッダーのボタン最適化 */
-    body.mobile-editing .viewer-header {
-        padding: 0.25rem 0.5rem !important;
-    }
-
-    body.mobile-editing .viewer-header .btn {
-        min-width: 44px !important; /* タッチ領域を拡大 */
-        min-height: 44px !important; /* タッチ領域を拡大 */
-        font-size: 1.1rem !important;
-        padding: 0.5rem !important; /* パディングを追加 */
+        z-index: 200 !important;
+        background: var(--bg-secondary) !important;
     }
 }
 
@@ -1559,13 +1534,7 @@ body {
         display: flex !important;
         position: fixed !important;
         bottom: 0 !important;
-        z-index: 100 !important;
-    }
-
-    /* 編集モードでもページナビ表示 */
-    body.mobile-editing .page-nav {
-        display: flex !important;
-        visibility: visible !important;
+        z-index: 200 !important;
     }
 
     /* サイドバーのセーフエリア対応 */
@@ -1577,15 +1546,6 @@ body {
 
     .sidebar.open {
         transform: translateX(0) !important;
-    }
-
-    /* 編集モードでもサイドバー動作 */
-    body.mobile-editing .sidebar {
-        z-index: 10000 !important;
-    }
-
-    body.mobile-editing .sidebar-overlay {
-        z-index: 9999 !important;
     }
 
     /* viewerContainerのオーバーフロー対策 */

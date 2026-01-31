@@ -4211,40 +4211,13 @@ showSwipeHint() {
         }
     }
 
-    // スマホ編集拡大表示モード
+    // スマホ編集モード - シンプル版（特別な処理なし）
     setupMobileEditMode() {
-        // モバイルデバイスかつ画面幅が768px以下で、かつテキストエリアにフォーカスされた場合のみ
-        if (window.innerWidth <= 768) {
-            const editMode = document.getElementById('editMode');
-            const body = document.body;
-
-            if (editMode && this.isEditing) {
-                // 軽微な最適化のみ適用（full拡大表示は避ける）
-                body.classList.add('mobile-editing');
-
-                // テキストエリアフォーカス時のみ拡大表示
-                const textarea = document.getElementById('pageContentInput');
-                if (textarea) {
-                    textarea.addEventListener('focus', () => {
-                        editMode.classList.add('mobile-edit-expanded');
-                    });
-
-                    textarea.addEventListener('blur', () => {
-                        editMode.classList.remove('mobile-edit-expanded');
-                    });
-                }
-            }
-        }
+        // 何もしない - 読む時と同じレイアウトを維持
     }
 
     exitMobileEditMode() {
-        const editMode = document.getElementById('editMode');
-        const body = document.body;
-
-        if (editMode) {
-            editMode.classList.remove('mobile-edit-expanded');
-            body.classList.remove('mobile-editing');
-        }
+        // 何もしない
     }
 
     // 慣性スクロール実装
