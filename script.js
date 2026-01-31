@@ -1851,6 +1851,12 @@ showSwipeHint() {
             editToggleBtn.style.display = isOwner ? 'inline-flex' : 'none';
         }
 
+        const addPageBtn = document.getElementById('addPageBtn');
+        if (addPageBtn) {
+            // 編集モードの時だけ表示
+            addPageBtn.style.display = (isOwner && this.isEditing) ? 'inline-flex' : 'none';
+        }
+
         const deleteBookBtn = document.getElementById('deleteBookBtn');
         if (deleteBookBtn) {
             deleteBookBtn.style.display = isOwner ? 'inline-flex' : 'none';
