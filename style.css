@@ -1589,6 +1589,20 @@ body.is-editing #addPageBtn {
         font-size: 0.9rem;
         margin: 0 1rem;
     }
+
+    /* PC用ページコンテンツの余白調整 */
+    .page-content {
+        padding: 2rem 3rem 2rem 4rem;
+        max-width: 950px;
+    }
+
+    .page-content-wrapper {
+        padding: 1.5rem 3rem;
+    }
+
+    .markdown-body {
+        padding: 0 1.5rem;
+    }
 }
 
 /* スマホ向けセーフエリアとオーバーフロー対策 */
