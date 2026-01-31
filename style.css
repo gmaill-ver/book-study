@@ -1453,9 +1453,9 @@ body {
         resize: none !important;
     }
 
-    /* 拡大表示時にページナビを隠す（サイドバーは表示可能にする） */
+    /* 編集モードでもページナビを表示 */
     body.mobile-editing .page-nav {
-        display: none !important;
+        display: flex !important;
     }
 
     /* 拡大表示時のビューアーヘッダーのボタン最適化 */
