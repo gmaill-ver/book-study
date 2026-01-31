@@ -2340,6 +2340,33 @@ showSwipeHint() {
         document.getElementById('settingsModal').classList.remove('active');
     }
 
+    // 設定に戻る（各モーダルから）
+    backToSettings() {
+        // 全てのサブモーダルを閉じる
+        document.getElementById('visibilityModal').classList.remove('active');
+        document.getElementById('shareModal').classList.remove('active');
+        document.getElementById('deleteConfirmModal').classList.remove('active');
+        // 設定モーダルを開く
+        this.showSettingsModal();
+    }
+
+    // 削除確認モーダルを表示
+    showDeleteConfirm() {
+        if (!this.currentNote) return;
+        document.getElementById('deleteBookTitle').textContent = `「${this.currentNote.title}」`;
+        document.getElementById('deleteConfirmModal').classList.add('active');
+    }
+
+    closeDeleteConfirm() {
+        document.getElementById('deleteConfirmModal').classList.remove('active');
+    }
+
+    // 削除を実行
+    async confirmDeleteBook() {
+        this.closeDeleteConfirm();
+        await this.deleteBook();
+    }
+
     // ===== シェア機能 =====
     showShareModal() {
         if (!this.currentNote) return;
@@ -3168,10 +3195,6 @@ showSwipeHint() {
     async deleteBook() {
         if (!this.currentUser || !this.currentNote || this.currentNote.authorId !== this.currentUser.uid) {
             this.showToast('自分のノートのみ削除できます', 'warning');
-            return;
-        }
-
-        if (!confirm(`「${this.currentNote.title}」を完全に削除しますか？この操作は取り消せません。`)) {
             return;
         }
 

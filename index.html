@@ -21,7 +21,7 @@
     <title>StudyBook - 学習ノート共有プラットフォーム</title>
     
     <!-- 外部CSS -->
-    <link rel="stylesheet" href="style.css?v=20260201c">
+    <link rel="stylesheet" href="style.css?v=20260201d">
 </head>
 <body>
     <!-- 接続状態インジケーター -->
@@ -493,7 +493,7 @@
 
     <!-- 設定モーダル -->
     <div id="settingsModal" class="modal-overlay" onclick="if(event.target.id === 'settingsModal') app.closeSettingsModal()">
-        <div class="modal-content" style="max-width: 320px;">
+        <div class="modal-content settings-modal-content">
             <h3 style="margin-bottom: 1.5rem; font-size: 1.1rem; text-align: center;">設定</h3>
 
             <div class="settings-list">
@@ -509,7 +509,7 @@
                     <span class="settings-arrow">›</span>
                 </button>
 
-                <button class="settings-item settings-danger" id="settingsDeleteBtn" onclick="app.deleteBook(); app.closeSettingsModal();" style="display: none;">
+                <button class="settings-item settings-danger" id="settingsDeleteBtn" onclick="app.showDeleteConfirm(); app.closeSettingsModal();" style="display: none;">
                     <span class="settings-icon">🗑️</span>
                     <span class="settings-label">ノートを削除</span>
                     <span class="settings-arrow">›</span>
@@ -518,6 +518,21 @@
 
             <div class="modal-buttons" style="margin-top: 1.5rem;">
                 <button class="btn-filled" onclick="app.closeSettingsModal()" style="background: var(--text-secondary); width: 100%;">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 削除確認モーダル -->
+    <div id="deleteConfirmModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 1rem; color: var(--error-color);">🗑️ ノートを削除</h3>
+            <p style="margin-bottom: 1rem; color: var(--text-secondary);">
+                このノートを完全に削除しますか？<br>この操作は取り消せません。
+            </p>
+            <p id="deleteBookTitle" style="font-weight: 600; margin-bottom: 1.5rem; padding: 0.75rem; background: var(--bg-color); border-radius: 6px;"></p>
+            <div class="modal-buttons">
+                <button class="btn-filled" onclick="app.confirmDeleteBook()" style="background: var(--error-color);">削除する</button>
+                <button class="btn-filled" onclick="app.backToSettings()" style="background: var(--text-secondary);">戻る</button>
             </div>
         </div>
     </div>
@@ -561,7 +576,7 @@
 
             <div class="modal-buttons">
                 <button class="btn-filled" onclick="app.saveVisibilitySettings()">保存</button>
-                <button class="btn-filled" onclick="app.closeVisibilityModal()" style="background: var(--text-secondary);">キャンセル</button>
+                <button class="btn-filled" onclick="app.backToSettings()" style="background: var(--text-secondary);">戻る</button>
             </div>
         </div>
     </div>
@@ -606,6 +621,9 @@
             </div>
             <button class="btn-filled" onclick="app.copyShareUrl()" style="width: 100%; margin-top: 1rem;">
                 URLをコピー
+            </button>
+            <button class="btn-filled" onclick="app.backToSettings()" style="width: 100%; margin-top: 0.5rem; background: var(--text-secondary);">
+                戻る
             </button>
         </div>
     </div>
@@ -754,7 +772,7 @@
     <script src="config.js"></script>
 
     <!-- メインスクリプト -->
-    <script src="script.js?v=20260201c"></script>
+    <script src="script.js?v=20260201d"></script>
 
     <!-- Service Worker登録 -->
     <script>

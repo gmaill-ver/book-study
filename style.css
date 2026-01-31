@@ -1063,6 +1063,25 @@ body.is-editing #addPageBtn {
     color: var(--error-color);
 }
 
+/* 設定モーダルの幅（PC用） */
+.settings-modal-content {
+    max-width: 320px;
+}
+
+@media (min-width: 769px) {
+    .settings-modal-content {
+        max-width: 450px;
+    }
+
+    .settings-item {
+        padding: 1.25rem;
+    }
+
+    .settings-label {
+        font-size: 1rem;
+    }
+}
+
 /* シェアボタン */
 .share-buttons {
     display: flex;
