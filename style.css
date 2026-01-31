@@ -1252,32 +1252,35 @@ body {
 
     /* スマホでのボタン最適化 */
     .viewer-header {
-        padding: 0.3rem 0.25rem !important;
+        padding: 0.25rem !important;
         flex-wrap: nowrap !important;
-        gap: 0.25rem !important;
+        gap: 0.15rem !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
     }
 
     .viewer-header .header-group {
-        gap: 0.2rem !important;
+        gap: 0.15rem !important;
         flex-shrink: 0 !important;
     }
 
     .viewer-header .btn {
-        min-width: 40px !important;
-        min-height: 40px !important;
-        width: 40px !important;
-        height: 40px !important;
-        padding: 0.5rem !important;
+        min-width: 32px !important;
+        min-height: 32px !important;
+        width: 32px !important;
+        height: 32px !important;
+        padding: 0.25rem !important;
         margin: 0 !important;
-        font-size: 1rem !important;
+        font-size: 0.875rem !important;
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
+        flex-shrink: 0 !important;
     }
 
     .page-info {
-        font-size: 0.75rem !important;
-        margin: 0 0.25rem !important;
+        font-size: 0.7rem !important;
+        margin: 0 0.15rem !important;
         white-space: nowrap !important;
         flex-shrink: 0 !important;
     }
@@ -1491,5 +1494,51 @@ body {
     .page-info {
         font-size: 0.9rem;
         margin: 0 1rem;
+    }
+}
+
+/* スマホ向けセーフエリアとオーバーフロー対策 */
+@media (max-width: 480px) {
+    /* ヘッダーが画面幅を超えないように */
+    .viewer-header {
+        width: 100% !important;
+        max-width: 100vw !important;
+        box-sizing: border-box !important;
+        overflow-x: auto !important;
+    }
+
+    /* ボタンをさらに小さく */
+    .viewer-header .btn {
+        min-width: 28px !important;
+        min-height: 28px !important;
+        width: 28px !important;
+        height: 28px !important;
+        font-size: 0.75rem !important;
+    }
+
+    .page-info {
+        font-size: 0.65rem !important;
+    }
+
+    /* ページナビゲーションをセーフエリア対応 */
+    .page-nav {
+        padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px)) !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+    }
+
+    /* サイドバーのセーフエリア対応 */
+    .sidebar {
+        padding-top: calc(56px + env(safe-area-inset-top, 0px)) !important;
+        padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+    }
+
+    /* viewerContainerのオーバーフロー対策 */
+    .viewer-container {
+        width: 100% !important;
+        max-width: 100vw !important;
+        overflow-x: hidden !important;
     }
 }
