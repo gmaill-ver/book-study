@@ -1265,13 +1265,13 @@ body {
     }
 
     .viewer-header .btn {
-        min-width: 44px !important;
-        min-height: 44px !important;
-        width: 44px !important;
-        height: 44px !important;
-        padding: 0.5rem !important;
+        min-width: 36px !important;
+        min-height: 36px !important;
+        width: 36px !important;
+        height: 36px !important;
+        padding: 0.35rem !important;
         margin: 0 !important;
-        font-size: 1.1rem !important;
+        font-size: 1rem !important;
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
@@ -1279,8 +1279,8 @@ body {
     }
 
     .page-info {
-        font-size: 0.85rem !important;
-        margin: 0 0.25rem !important;
+        font-size: 0.8rem !important;
+        margin: 0 0.2rem !important;
         white-space: nowrap !important;
         flex-shrink: 0 !important;
     }
