@@ -15,7 +15,7 @@ class StudyBookApp {
         this.isEditing = false;
         this.isOnline = navigator.onLine;
         this.isAuthMode = 'login';
-        this.viewMode = 'shelf';
+        this.displayMode = 'shelf';
 
         // Firebase インスタンス
         this.firebaseApp = null;
@@ -665,7 +665,7 @@ class StudyBookApp {
 
     // ===== 本棚UI =====
     setViewMode(mode) {
-        this.viewMode = mode;
+        this.displayMode = mode;
 
         // ホーム画面のフッターボタン更新
         const homeShelfBtn = document.getElementById('homeShelfBtn');
@@ -3239,7 +3239,7 @@ showSwipeHint() {
             .filter(n => n.authorId === this.currentUser.uid && !n.id.startsWith('public_'))
             .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
 
-        if (this.viewMode === 'shelf') {
+        if (this.displayMode === 'shelf') {
             this.updateBookshelf();
         }
 
