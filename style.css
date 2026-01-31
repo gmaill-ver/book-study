@@ -1236,6 +1236,10 @@ body {
 
 /* レスポンシブデザイン */
 @media (max-width: 768px) {
+    .hide-on-mobile {
+        display: none !important;
+    }
+
     .search-container {
         max-width: 150px;
         margin: 0 0.5rem;
