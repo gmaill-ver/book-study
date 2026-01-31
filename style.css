@@ -1454,11 +1454,9 @@ body {
     }
 
     #editMode textarea {
-        font-size: 16px !important; /* iOS ズーム防止 */
-        min-height: auto !important;
-        max-height: none !important;
+        font-size: 16px !important;
+        min-height: 60vh !important; /* 最低でも画面の60% */
         height: auto !important;
-        overflow: hidden !important; /* スクロールバー非表示、自動拡張 */
         resize: none !important;
     }
 

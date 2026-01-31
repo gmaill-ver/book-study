@@ -4100,14 +4100,13 @@ showSwipeHint() {
             // 重複設定を防ぐ
             textarea.setAttribute('data-scroll-setup', 'true');
 
-            // テキストエリア自動拡張
+            // テキストエリア自動拡張（最低60vhを維持）
             const autoResize = () => {
-                textarea.style.height = 'auto';
-                textarea.style.height = textarea.scrollHeight + 'px';
+                const minHeight = window.innerHeight * 0.6;
+                const newHeight = Math.max(textarea.scrollHeight, minHeight);
+                textarea.style.height = newHeight + 'px';
             };
             textarea.addEventListener('input', autoResize);
-            // 初期表示時も調整
-            autoResize();
 
             // マウスホイールイベント
             textarea.addEventListener('wheel', (e) => {
